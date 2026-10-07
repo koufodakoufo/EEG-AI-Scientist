@@ -1,0 +1,7 @@
+[project]
+name = "eeg-ai-scientist"
+version = "0.1.0"
+description = "Research project for EEG foundation models, representation learning, adn self-improving scientific workflows."
+requires-python = ">=3.12"
+dependencies = []
+
