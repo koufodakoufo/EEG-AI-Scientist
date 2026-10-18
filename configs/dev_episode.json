@@ -1,0 +1,26 @@
+{
+  "episode_id": "dev_e1_case_001_s0",
+  "case_id": "case_001",
+  "case_specs_path": "data/private/case_specs.json",
+  "rule_path": "prompts/S0.md",
+  "provider": {
+    "kind": "ollama_native",
+    "base_url": "http://127.0.0.1:11434",
+    "model": "qwen3.5:9b",
+    "timeout_seconds": 120,
+    "max_retries": 2,
+    "max_output_tokens": 1500,
+    "temperature": 0.0,
+    "seed": 42,
+    "num_ctx": 8192,
+    "use_schema": false
+  },
+  "backend": "real_llm",
+  "model": "qwen3.5:9b",
+  "max_actions": 3,
+  "max_calls": 4,
+  "max_attempts": 12,
+  "deadline": "2026-10-19T09:14:21+08:00",
+  "run_dir": "runs/dev_e1/case_001_s0",
+  "shared_facts_path": null
+}

@@ -68,3 +68,11 @@ temp/
 downloads/
 # bin/
 
+#------------------------Overnight study------------------------
+data/private/
+runs/
+artifacts/*.zip
+review_only/
+*.log
+
+
