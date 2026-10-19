@@ -64,3 +64,47 @@ Updated: 2026-10-19 01:59 +08:00 (Asia/Shanghai)
 ## Next action for the user
 
 Read `reports/MORNING_REPORT.md`, then inspect one complete trajectory (`runs/dev_e1/case_001_s0` or `runs/study_20261019/development/case_001/s0`) and the freeze manifest. Do not start a second seed or real EEG until the E2 caveat and the zero-action failure are reviewed.
+
+---
+
+# 2026-10-20 Flash overnight run (complete, wrapped up early)
+
+Updated: 2026-10-20 01:30 +08:00.
+
+## Contract
+
+- Run ID: `flash_20261020_0058`; branch `overnight/flash-20261020-0058` (created from `main` at `d0bbb6e`; the user's staged `.gitignore` change and untracked `docs/` were preserved).
+- T0: 2026-10-20 00:58 +08:00. Deadline 08:58; stop-new-research 08:13; 45-minute report reserve. The run finished early because the planned A–F tasks were complete; no artificial waiting was used.
+- Scientist: `deepseek-flash` (DeepSeek-V4.1-Flash-1017) via official Chat Completions, thinking high. No Claude, Ollama, Qwen, or Meta loop.
+- Project API cap: CNY 20, CNY 2 wrap-up reserve, peak-rate accounting. Model attempts 120; Search 60; Fetch 90.
+
+## Completed
+
+- **A:** `reports/flash_20261020_0058/PRECHECK.md`, `IMPLEMENTATION_MAP.md`, model/study configs, branch.
+- **B:** typed DeepSeek client, persistent budget ledger, evidence store, resumable native-tool research loop, dataset loader, CLI. Real capability check PASS for model, JSON/thinking, native tool cycle, Search, and Fetch+read. 8 new offline tests; 51 total passing.
+- **C:** explanation regression 6/6 rule checks (raw 99.3/49.6 → 99.2/50.8 table; no answer template). Two neutral synthetic cases both completed with real tool executions (3/3 and 2/2 prediction hits); no real EEG claim. Artifacts under `runs/flash_20261020_0058/diagnostics/`.
+- **D:** literature run completed at 01:18 with `finish_study`: 16 model calls, 42 tool calls, 8 searches, 10 successful fetches, 7 cited papers, 19 read slices, 10 evidence items (3 irrelevant, uncited). The Scientist's answer is `runs/flash_20261020_0058/research/literature_v1/final_answer.md`. No task book/reference answers/generator internals were in its input.
+- **E:** no real EEG dataset is configured; E2 fallback applied. `DATA_REQUIREMENTS.md`, strict CSV feature-table loader, split audit, and an artificial fixture check (exit 0). Explicitly not EEG evidence.
+- **F:** evidence audit checked every load-bearing number against the injection log; two Fallahi details are true in the source but outside the read range; one top-line synthesis claim is an inference. Reduced experiment protocol, second-branch handoff, code reading guide, resume/cost check, and method lessons written.
+- **G:** reports rendered, tests re-run (51 passed), local commit `4b902c6` for code/configs/docs. The report/state commit follows. No push.
+
+## Final budget
+
+- Project spend CNY 1.650076 of CNY 20 (peak-rate accounting; CNY 2 reserve untouched); CNY 0 unknown.
+- 30 model attempts / 120; 10 Search / 60; 18 Fetch / 90.
+- 560,786 input tokens / 2,000,000; 52,938 output tokens / 500,000.
+- Resume test after completion: 0 new attempts, 0 new spend (see `RESUME_CHECK.md`).
+
+## Honest limits
+
+- No recorded EEG experiment was run; all case data are synthetic and the fixture is artificial.
+- Prediction hits are not scientific correctness; they are reported separately from explanation quality.
+- The literature target was 8–12 papers; only 7 relevant papers were confirmed. Two fetches failed (EEGManyPipelines 504; one 404) and three successful fetches were irrelevant and uncited.
+- No paper was read end-to-end; read coverage was 5–21% of fetched text (Yin: abstract page only). Two 2026 papers are preprints.
+- The Scientist's top-line "low-dimensional spectral/rhythmic structure" is an inference, not a measured result. The evidence audit flags it.
+- `case_*` diagnostics are synthetic; no population-level EEG inference is made.
+
+## Next action
+
+Read `reports/flash_20261020_0058/MORNING_REPORT.md`, then the Scientist's `final_answer.md` and `EVIDENCE_AUDIT.md`. Decide whether to run the reduced M1 in `EXPERIMENT_PROTOCOL.md` on public data. Do not start a new paid run without a new decision; the existing run resumes completed with no new spend.
+

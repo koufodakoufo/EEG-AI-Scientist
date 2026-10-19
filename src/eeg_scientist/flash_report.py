@@ -59,7 +59,7 @@ def render_flash_reports(reports_dir: Path, *, run_id: str) -> dict[str, str]:
         f"| D literature | {research_state.get('phase') if research_state else 'NOT RUN'} | `{research_root}/` |",
         f"| E real-data branch | {'DONE (E2 fallback; no real EEG)' if (target / 'DATA_REQUIREMENTS.md').exists() else 'NOT RUN'} | `reports/{run_id}/DATA_REQUIREMENTS.md` |",
         f"| F audit/extension | {'DONE' if (target / 'EVIDENCE_AUDIT.md').exists() and (target / 'EXPERIMENT_PROTOCOL.md').exists() else 'IN PROGRESS'} | `reports/{run_id}/EVIDENCE_AUDIT.md`, `EXPERIMENT_PROTOCOL.md` |",
-        f"| G reports/commit | {'IN PROGRESS' if (target / 'MORNING_REPORT.md').exists() else 'PENDING'} | `reports/{run_id}/` |",
+        f"| G reports/commit | {'DONE (reports + local commits)' if (target / 'MORNING_REPORT.md').exists() else 'PENDING'} | `reports/{run_id}/` |",
         "",
         "## Budget",
         "",

@@ -1,18 +1,34 @@
 # NEXT ACTION
 
-The overnight study is complete; no new autonomous episodes should start without review.
+Current run: `flash_20261020_0058` (2026-10-20, DeepSeek Flash literature study). **Status: completed and wrapped up early at 01:30 +08:00.** The run did not use the full 8-hour window because the planned A–F tasks were finished; no synthetic waiting was added.
 
-1. Read `reports/MORNING_REPORT.md` and `reports/RESULTS_TABLE.md`.
-2. Open one complete real-LLM trajectory: `runs/dev_e1/case_001_s0/` (requests, sealed predictions, results, events, final), or the study development run `runs/study_20261019/development/case_001/s0/`.
-3. Check the freeze: `FREEZE_MANIFEST.json`; S0/S1 hashes; the Meta `no_update` and errors.
-4. Inspect the review bundle: `artifacts/review_bundle.zip`; the `review_only/` case specifications are evaluator-only and must not be copied into a Scientist prompt.
+## Read first
 
-The main unresolved failure: all 8 holdout arms stopped with 0 actions; E2 is only an engineering count. The substantive evidence is E1. The next scientific action is to decide whether to test a rule that requires at least one new experiment on a holdout case, in a new versioned study — not to modify the frozen S1 or start an unfrozen run.
+1. `reports/flash_20261020_0058/MORNING_REPORT.md` — one-page Chinese summary.
+2. `runs/flash_20261020_0058/research/literature_v1/final_answer.md` — the Scientist's own answer.
+3. `reports/flash_20261020_0058/EVIDENCE_AUDIT.md` — what was verified, what is outside the read trace, and which claims are inferences.
+4. `reports/flash_20261020_0058/EXPERIMENT_PROTOCOL.md` — reduced M1 and backup M2; nothing was run on real EEG.
 
-If a process must be resumed, first read `PROGRESS.md`, `StudyState`, and `FREEZE_MANIFEST.json`; do not re-run completed episodes.
+## State / recovery
+
+The literature process (PID 38684) exited at completion; `heartbeat.json` and `state.json` show `phase=completed`, `stop_reason=finish_study`. Re-running the command is safe and makes no new paid request (verified: attempts 30 → 30, spend CNY 1.650076 → 1.650076):
 
 ```powershell
 cd X:\projects\EEG-AI-Scientist
 $env:PYTHONPATH='src'
-C:\Users\14090\anaconda3\python.exe -m eeg_scientist.cli report --study runs\study_20261019
+C:\Users\14090\anaconda3\python.exe -m eeg_scientist.cli overnight-flash status
+C:\Users\14090\anaconda3\python.exe -m eeg_scientist.cli overnight-flash research --name literature_v1
 ```
+
+The ledger is `runs/flash_20261020_0058/budget.json`; do not delete it or reset the counters. Do not start a duplicate runner.
+
+## What remains
+
+- **E2:** no real EEG dataset is configured. If real data is added, follow `DATA_REQUIREMENTS.md` and run `check-dataset` first; then run the reduced M1 in `EXPERIMENT_PROTOCOL.md`.
+- **Second branch:** Card 2 (identity/device) needs PEERS-like multi-device data and a DUA; it is blocked, not failed.
+- **Open evidence gaps:** no direct task/subject/session/device decomposition; no cross-session task-decoding evidence; EEGManyPipelines fetch failed (504); only 7 relevant papers (<8–12 target); two preprints; Fallahi scale/cluster details are outside the actual read range.
+- **Do not** run Meta, Claude, Ollama/Qwen, or a new seed without a new user decision. Do not raise the CNY 20 cap.
+
+## Previous round (2026-10-19, Qwen synthetic study)
+
+The previous overnight study is complete; its reports remain valid for that run. Start with `reports/MORNING_REPORT.md` and `reports/RESULTS_TABLE.md`. Its main unresolved failure was that all 8 holdout arms stopped with 0 actions and Meta returned `no_update`; E2 was only an engineering count. Do not reinterpret that study as EEG evidence or as an effective method-rule comparison.
