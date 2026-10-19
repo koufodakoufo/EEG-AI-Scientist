@@ -86,7 +86,7 @@ Updated: 2026-10-20 01:30 +08:00.
 - **D:** literature run completed at 01:18 with `finish_study`: 16 model calls, 42 tool calls, 8 searches, 10 successful fetches, 7 cited papers, 19 read slices, 10 evidence items (3 irrelevant, uncited). The Scientist's answer is `runs/flash_20261020_0058/research/literature_v1/final_answer.md`. No task book/reference answers/generator internals were in its input.
 - **E:** no real EEG dataset is configured; E2 fallback applied. `DATA_REQUIREMENTS.md`, strict CSV feature-table loader, split audit, and an artificial fixture check (exit 0). Explicitly not EEG evidence.
 - **F:** evidence audit checked every load-bearing number against the injection log; two Fallahi details are true in the source but outside the read range; one top-line synthesis claim is an inference. Reduced experiment protocol, second-branch handoff, code reading guide, resume/cost check, and method lessons written.
-- **G:** reports rendered, tests re-run (51 passed), local commit `4b902c6` for code/configs/docs. The report/state commit follows. No push.
+- **G:** reports rendered, tests re-run (51 passed), local commits `4b902c6` (code/configs/docs) and `e0d1c7e` (reports/state). No push.
 
 ## Final budget
 
