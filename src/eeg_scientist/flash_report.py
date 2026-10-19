@@ -25,6 +25,7 @@ def render_flash_reports(reports_dir: Path, *, run_id: str) -> dict[str, str]:
     paths = study["paths"]
     target = ensure_dir(reports_dir)
     capability_path = Path(str(paths["capability_dir"])) / "capability.json"
+    capability_md_path = capability_path.with_name("CAPABILITY_CHECK.md")
     budget_path = Path(str(paths["budget_ledger"]))
     diagnostics_root = Path(str(paths["diagnostic_dir"]))
     research_root = Path(str(paths["research_dir"])) / "literature_v1"
@@ -177,11 +178,11 @@ def render_flash_reports(reports_dir: Path, *, run_id: str) -> dict[str, str]:
     result_lines.extend(["", "## Honest limits", "", "- Synthetic feature tables and artificial fixtures are not recorded EEG.", "- Windows are not independent participants; no population-level EEG inference is made.", "- Rule checks are not a scientific score.", "- `numeric_grounded=False` for the two synthetic cases means the final judgment did not quote a result value; it does not mean the tool results were wrong. The values remain in each trajectory's `history.json`.", "- Successful research searches/fetches are lower than ledger attempts because retries and failed requests are counted separately.", "- Project API spend is separate from the dsh development-agent account.", ""])
     atomic_write_text(target / "RESULTS.md", "\n".join(result_lines))
 
-    if capability_path.exists():
-        atomic_write_text(target / "CAPABILITY_CHECK.md", capability_path.read_text(encoding="utf-8"))
+    if capability_md_path.exists():
+        atomic_write_text(target / "CAPABILITY_CHECK.md", capability_md_path.read_text(encoding="utf-8"))
 
     return {
         "run_index": str(target / "RUN_INDEX.md"),
         "results": str(target / "RESULTS.md"),
-        "capability": str(target / "CAPABILITY_CHECK.md") if capability_path.exists() else "",
+        "capability": str(target / "CAPABILITY_CHECK.md") if capability_md_path.exists() else "",
     }
