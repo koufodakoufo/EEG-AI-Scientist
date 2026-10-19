@@ -1,6 +1,6 @@
 # RUN INDEX — flash_20261020_0058
 
-- rendered_at: 2026-10-19T17:27:32Z
+- rendered_at: 2026-10-19T17:28:46Z
 - study_config: `configs\studies\overnight_flash_20261020.json`
 - deadline: 2026-10-20T08:58:00+08:00
 - stop_new_research_at: 2026-10-20T08:13:00+08:00
@@ -48,6 +48,16 @@
 - `reports/flash_20261020_0058/EXPERIMENT_PROTOCOL.md` — reduced priority experiment and backup
 - `reports/flash_20261020_0058/DATA_REQUIREMENTS.md` — E2 fallback, no real EEG data
 - `runs/flash_20261020_0058/research/literature_v1/final_answer.md` — the Scientist's own answer
+
+## Local commits
+
+- `4b902c6` Add DeepSeek Flash research loop with evidence, budget, and diagnostics
+- `e0d1c7e` Record Flash overnight results, evidence audit, and recovery state
+- `843e15c` Record Flash run commit hashes in progress log
+- `6ae034d` Clarify Scientist-attributed search/fetch counts in morning report
+- `889e617` Copy capability markdown, not JSON, into the report bundle
+
+Branch: `overnight/flash-20261020-0058`. Not pushed. The user's staged `.gitignore` change remains staged and was not included in these commits.
 
 ## Commands
 
