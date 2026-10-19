@@ -30,7 +30,7 @@ from .schema import (
 )
 from .scientist import probe_request
 from .splits import build_all_splits
-from .storage import ensure_dir, sha256_text, utc_now
+from .storage import atomic_write_json, ensure_dir, sha256_text, utc_now
 
 
 def _now() -> datetime:
@@ -307,6 +307,182 @@ def command_calibrate(args: argparse.Namespace) -> int:
     return 0
 
 
+# ---------------------------------------------------------------------------
+# DeepSeek Flash overnight commands
+# ---------------------------------------------------------------------------
+
+FLASH_CONFIG = "configs/studies/overnight_flash_20261020.json"
+
+
+def _flash_paths(args: argparse.Namespace) -> tuple[dict[str, object], dict[str, object]]:
+    study = _read_json(Path(args.config))
+    model = _read_json(Path("configs/models/deepseek_flash.json"))
+    return study, model
+
+
+def _flash_client(args: argparse.Namespace):  # type: ignore[no-untyped-def]
+    from .credentials import load_deepseek_key
+    from .deepseek_api import DeepSeekClient
+    from .ledger import BudgetLedger
+
+    study, model = _flash_paths(args)
+    budget = study["budget"]
+    key, report = load_deepseek_key(Path(str(model["credential_file"])))
+    paths = study["paths"]
+    ledger = BudgetLedger(
+        Path(str(paths["budget_ledger"])),
+        run_id=str(study["run_id"]),
+        cap_cny=float(budget["project_api_cost_cny_cap"]),
+        wrap_up_reserve_cny=float(budget["wrap_up_reserve_cny"]),
+        model_attempts_limit=int(budget["model_attempts_cap"]),
+        search_attempts_limit=int(budget["search_attempts_cap"]),
+        fetch_attempts_limit=int(budget["fetch_attempts_cap"]),
+        input_tokens_limit=int(budget["input_tokens_cap"]),
+        output_tokens_limit=int(budget["output_tokens_cap"]),
+    )
+    client = DeepSeekClient(
+        api_key=key,
+        ledger=ledger,
+        base_url=str(model["base_url"]),
+        model=str(model["model"]),
+        timeout_seconds=int(model["request_timeout_seconds"]),
+        connect_timeout_seconds=int(model["connect_timeout_seconds"]),
+        search_timeout_seconds=int(model["search_timeout_seconds"]),
+        fetch_timeout_seconds=int(model["fetch_timeout_seconds"]),
+        max_retries=int(model["max_retries"]),
+        retry_wait_seconds=tuple(float(item) for item in model["retry_wait_seconds"]),
+    )
+    return study, model, client, ledger, report
+
+
+def command_flash_capability(args: argparse.Namespace) -> int:
+    from .capability import run_capability_check
+
+    study, _model, client, ledger, report = _flash_client(args)
+    if report.warnings:
+        print("credential warnings: " + "; ".join(report.warnings))
+    run_dir = Path(str(study["paths"]["capability_dir"]))
+    payload = run_capability_check(client, run_dir=run_dir)
+    print(json.dumps(payload, ensure_ascii=False, indent=2, default=str))
+    print(f"ledger: {json.dumps(ledger.snapshot(), ensure_ascii=False)}")
+    return 0 if payload["all_required_ok"] else 1
+
+
+def command_flash_diagnose(args: argparse.Namespace) -> int:
+    from .diagnostic import run_case_diagnostics, run_explanation_regression
+
+    study, _model, client, ledger, report = _flash_client(args)
+    root = Path(str(study["paths"]["diagnostic_dir"]))
+    ensure_dir(root)
+    if report.warnings:
+        print("credential warnings: " + "; ".join(report.warnings))
+    summary: dict[str, object] = {"run_id": study["run_id"]}
+    try:
+        summary["regression"] = run_explanation_regression(client, run_dir=root / "regression")
+    except Exception as error:  # noqa: BLE001 - diagnostic boundary
+        summary["regression_error"] = f"{type(error).__name__}: {error}"
+    try:
+        summary["cases"] = run_case_diagnostics(
+            client,
+            ledger=ledger,
+            source_specs_path=Path("data/private/case_specs.json"),
+            run_dir=root / "cases",
+            deadline=str(study["deadline"]),
+        )
+    except Exception as error:  # noqa: BLE001 - diagnostic boundary
+        summary["cases_error"] = f"{type(error).__name__}: {error}"
+    atomic_write_json(root / "diagnose_summary.json", summary)
+    print(json.dumps(summary, ensure_ascii=False, indent=2, default=str))
+    print(f"ledger: {json.dumps(ledger.snapshot(), ensure_ascii=False)}")
+    return 0
+
+
+def command_flash_research(args: argparse.Namespace) -> int:
+    from .research import ResearchConfig, ResearchRunner
+
+    study, _model, client, ledger, report = _flash_client(args)
+    paths = study["paths"]
+    research = study["research"]
+    research_dir = Path(str(paths["research_dir"])) / str(getattr(args, "name", "literature_v1"))
+    capability_path = Path(str(paths["capability_dir"])) / "capability.json"
+    if not bool(getattr(args, "allow_incomplete_capability", False)):
+        if not capability_path.exists():
+            print("capability check has not run; run `overnight-flash capability` first")
+            return 2
+        capability = json.loads(capability_path.read_text(encoding="utf-8"))
+        if not capability.get("all_required_ok"):
+            print("capability check did not pass; refusing to start paid research without a real tool route")
+            print(json.dumps(capability.get("checks", []), ensure_ascii=False, indent=2))
+            return 2
+    question = str(research["main_question"]) + "\n\nExtension choice: " + str(research["secondary_extension"])
+    config = ResearchConfig(
+        run_id=f"{study['run_id']}_literature_v1",
+        run_dir=str(research_dir),
+        question=question,
+        deadline=str(study["deadline"]),
+        stop_new_at=str(study["stop_new_research_at"]),
+        max_model_calls=int(getattr(args, "max_model_calls", 48)),
+        max_tool_calls=int(getattr(args, "max_tool_calls", 60)),
+    )
+    if report.warnings:
+        print("credential warnings: " + "; ".join(report.warnings))
+    runner = ResearchRunner(config, client=client, ledger=ledger)
+    summary = runner.run()
+    print(summary.model_dump_json(indent=2))
+    print(f"ledger: {json.dumps(ledger.snapshot(), ensure_ascii=False)}")
+    return 0 if summary.phase == "completed" else 1
+
+
+def command_flash_status(args: argparse.Namespace) -> int:
+    study, _model, client, ledger, report = _flash_client(args)
+    paths = study["paths"]
+    payload: dict[str, object] = {
+        "run_id": study["run_id"],
+        "started_at": study["started_at"],
+        "deadline": study["deadline"],
+        "stop_new_at": study["stop_new_research_at"],
+        "credential": report.public_dict(),
+        "ledger": ledger.snapshot(),
+        "paths": paths,
+    }
+    for name, key in (("capability", "capability_dir"), ("diagnostics", "diagnostic_dir"), ("research", "research_dir")):
+        root = Path(str(paths[key]))
+        state = root / "state.json"
+        if state.exists():
+            try:
+                payload[f"{name}_state"] = json.loads(state.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                payload[f"{name}_state"] = {"error": "unreadable state.json"}
+        heartbeat = root / "heartbeat.json"
+        if heartbeat.exists():
+            payload[f"{name}_heartbeat"] = json.loads(heartbeat.read_text(encoding="utf-8"))
+        final = root / "final.json"
+        if final.exists():
+            payload[f"{name}_final"] = str(final)
+    print(json.dumps(payload, ensure_ascii=False, indent=2, default=str))
+    return 0
+
+
+def command_flash_report(args: argparse.Namespace) -> int:
+    from .flash_report import render_flash_reports
+
+    study, _model, _client, _ledger, _report = _flash_client(args)
+    paths = render_flash_reports(Path(str(study["paths"]["reports_dir"])), run_id=str(study["run_id"]))
+    print(json.dumps(paths, ensure_ascii=False, indent=2))
+    return 0
+
+
+def command_check_dataset(args: argparse.Namespace) -> int:
+    from .dataset_io import check_feature_table, write_artificial_fixture
+
+    target = Path(args.path)
+    if args.write_fixture:
+        write_artificial_fixture(target)
+    summary = check_feature_table(target, split_seed=int(args.split_seed))
+    print(json.dumps(summary, ensure_ascii=False, indent=2, default=str))
+    return 0 if all(not audit.get("invalid_reason") for audit in summary["audits"].values()) else 1
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="eeg-scientist")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -334,8 +510,34 @@ def main(argv: list[str] | None = None) -> int:
     calibrate = subparsers.add_parser("calibrate")
     calibrate.set_defaults(func=command_calibrate)
 
+    flash = subparsers.add_parser("overnight-flash", help="DeepSeek Flash overnight research commands")
+    flash_sub = flash.add_subparsers(dest="flash_command", required=True)
+    for name, function in (
+        ("capability", command_flash_capability),
+        ("diagnose", command_flash_diagnose),
+        ("status", command_flash_status),
+        ("report", command_flash_report),
+    ):
+        sub = flash_sub.add_parser(name)
+        sub.add_argument("--config", default=FLASH_CONFIG)
+        sub.set_defaults(func=function)
+    research = flash_sub.add_parser("research")
+    research.add_argument("--config", default=FLASH_CONFIG)
+    research.add_argument("--name", default="literature_v1")
+    research.add_argument("--max-model-calls", type=int, default=48)
+    research.add_argument("--max-tool-calls", type=int, default=60)
+    research.add_argument("--allow-incomplete-capability", action="store_true")
+    research.set_defaults(func=command_flash_research)
+
+    check_dataset = subparsers.add_parser("check-dataset")
+    check_dataset.add_argument("--path", required=True)
+    check_dataset.add_argument("--split-seed", type=int, default=20261020)
+    check_dataset.add_argument("--write-fixture", action="store_true")
+    check_dataset.set_defaults(func=command_check_dataset)
+
     args = parser.parse_args(argv)
     return int(args.func(args))
+
 
 
 if __name__ == "__main__":

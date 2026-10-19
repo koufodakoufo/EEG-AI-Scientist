@@ -135,7 +135,7 @@ def _episode_config(tmp_path: Path, provider: object, responses: list[ProviderRe
         max_actions=max_actions,
         max_calls=4,
         max_attempts=12,
-        deadline="2026-10-19T09:14:21+08:00",
+        deadline="2099-01-01T00:00:00+08:00",
         run_dir=str(tmp_path / "run"),
         shared_facts_path=None,
     )
