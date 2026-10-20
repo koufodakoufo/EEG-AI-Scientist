@@ -423,4 +423,3 @@ def test_finish_study_requires_inline_and_listed_evidence_ids_to_match(tmp_path:
     final = json.loads((tmp_path / "research" / "final.json").read_text(encoding="utf-8"))
     assert final["evidence_ids"] == [first.evidence_id]
     assert final["inline_evidence_ids"] == [first.evidence_id]
-
