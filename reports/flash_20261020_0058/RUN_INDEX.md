@@ -69,6 +69,7 @@
 - `843e15c` Record Flash run commit hashes in progress log
 - `6ae034d` Clarify Scientist-attributed search/fetch counts in morning report
 - `889e617` Copy capability markdown, not JSON, into the report bundle
+- `92b2633` Harden finish citations, coverage, usage, and label parsing for handoff
 
 Branch: `overnight/flash-20261020-0058`. Not pushed. The user's staged `.gitignore` change remains staged and was not included in these commits.
 
