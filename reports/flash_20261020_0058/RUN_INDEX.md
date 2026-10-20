@@ -51,6 +51,7 @@
 - `reports/flash_20261020_0058/REASONING_REVIEW.md` — separate inference corrections; original answer untouched
 - `reports/flash_20261020_0058/COVERAGE_RECHECK.md` — interval-union coverage correction
 - `reports/flash_20261020_0058/coverage_union.json` — corrected coverage values
+- `artifacts/review_bundle_20261020.zip` — handoff bundle (no credentials/private raw data)
 - `runs/flash_20261020_0058/research/literature_v1/final_answer.md` — the Scientist's own answer
 
 ## Handoff checks (2026-10-20)
@@ -70,6 +71,7 @@
 - `6ae034d` Clarify Scientist-attributed search/fetch counts in morning report
 - `889e617` Copy capability markdown, not JSON, into the report bundle
 - `92b2633` Harden finish citations, coverage, usage, and label parsing for handoff
+- `1d6f105` Record handoff commit in the run index
 
 Branch: `overnight/flash-20261020-0058`. Not pushed. The user's staged `.gitignore` change remains staged and was not included in these commits.
 
