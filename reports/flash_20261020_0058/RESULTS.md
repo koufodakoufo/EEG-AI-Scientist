@@ -40,11 +40,20 @@ Only executed checks and measured values are listed. Synthetic data and fixture 
   - `ev_2f5e3fadf9f0`: 5500/97933 (5.6%)
   - `ev_825214c78a59`: 26700/148770 (17.9%)
   - `ev_8d41144afed7`: 0/36843 (0.0%)
-  - `ev_9da221287269`: 8579/8579 (100.0%)
+  - `ev_9da221287269`: 5100/8579 (59.4%; interval union; two overlapping reads)
   - `ev_a2ba747cdafd`: 0/92049 (0.0%)
   - `ev_a4cfb55eee84`: 0/2802 (0.0%)
   - `ev_b63c716fd707`: 21300/101545 (21.0%)
   - `ev_f42fa7111e36`: 15500/120604 (12.8%)
+
+## Handoff fixes (2026-10-20, no paid model calls)
+
+- `finish_study` now requires the inline `ev_...` citations in the answer to match `evidence_ids` exactly (both directions); new finals store `inline_evidence_ids` as well.
+- Reading coverage now counts the union of half-open character intervals; repeated/overlapping reads are not double-counted. See `COVERAGE_RECHECK.md`.
+- A chat response with missing or invalid `usage` is recorded as UNKNOWN spend, not settled as zero. The reservation is retained.
+- CSV labels must be integer text `-1`/`1`; decimal labels such as `1.0` or `1.5` are rejected. The entry remains binary-only.
+- Current data entry supports window/trial/subject splits only; **session split is not implemented** and is labelled as such in `dataset_io.py` and `DATA_REQUIREMENTS.md`.
+- Tests: 61 passed, exit 0 (offline; no network/model calls).
 
 ## Honest limits
 

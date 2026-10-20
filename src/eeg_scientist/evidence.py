@@ -243,27 +243,54 @@ class EvidenceStore:
         return target
 
 
-def estimate_injection_fraction(store: EvidenceStore) -> dict[str, object]:
-    """Summarize how much of each source has ever been injected."""
+def _union_length(intervals: list[tuple[int, int]]) -> int:
+    """Return the size of the union of half-open [start, end) intervals."""
 
-    injected: dict[str, int] = {}
+    ordered = sorted((max(0, start), max(0, end)) for start, end in intervals if end > start)
+    if not ordered:
+        return 0
+    total = 0
+    current_start, current_end = ordered[0]
+    for start, end in ordered[1:]:
+        if start > current_end:
+            total += current_end - current_start
+            current_start, current_end = start, end
+        else:
+            current_end = max(current_end, end)
+    total += current_end - current_start
+    return total
+
+
+def estimate_injection_fraction(store: EvidenceStore) -> dict[str, object]:
+    """Summarize how much of each source has ever been injected.
+
+    Overlapping and repeated reads are merged as character intervals before
+    counting.  Reading the same 1,000 characters twice does not mean 2,000
+    characters were read.
+    """
+
+    injected: dict[str, list[tuple[int, int]]] = {}
     if store.injection_path.exists():
         for line in store.injection_path.read_text(encoding="utf-8").splitlines():
             if not line.strip():
                 continue
             item = InjectionRecord.model_validate_json(line)
-            injected[item.evidence_id] = injected.get(item.evidence_id, 0) + (item.end_char - item.start_char)
+            injected.setdefault(item.evidence_id, []).append((item.start_char, item.end_char))
     rows: list[dict[str, object]] = []
     for meta in store.list_meta():
-        chars = injected.get(meta.evidence_id, 0)
+        clamped = [
+            (min(max(0, start), meta.char_count), min(max(0, end), meta.char_count))
+            for start, end in injected.get(meta.evidence_id, [])
+        ]
+        chars = _union_length(clamped)
         rows.append(
             {
                 "evidence_id": meta.evidence_id,
                 "title": meta.title,
                 "url": meta.url,
-                "read_chars": min(chars, meta.char_count),
+                "read_chars": chars,
                 "total_chars": meta.char_count,
-                "fraction_read": round(min(chars, meta.char_count) / max(meta.char_count, 1), 4),
+                "fraction_read": round(chars / max(meta.char_count, 1), 4),
             }
         )
     return {"sources": rows}

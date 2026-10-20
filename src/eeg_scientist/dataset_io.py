@@ -1,14 +1,22 @@
 """Minimal feature-table entry point for future real EEG features (Task E2).
 
 The format is intentionally narrow and documented: one row per window/sample,
-labelled at the trial level, with subject, session, and trial identifiers kept
-for split auditing.  The included fixture is artificial and only proves that
-the loader and split checks work; it is not EEG evidence.
+binary labels (-1 or 1) defined at the trial level, with subject, session, and
+trial identifiers kept for split auditing.
+
+Limitations are deliberate in this handoff:
+
+* labels are binary only; decimal labels are rejected, never truncated;
+* the implemented splits are window, trial, and subject; there is **no
+  session-held-out split** yet, even though ``session_id`` is retained for audit;
+* the included fixture is artificial and only proves that the loader and split
+  checks work; it is not EEG evidence.
 """
 
 from __future__ import annotations
 
 import csv
+import re
 from pathlib import Path
 
 import numpy as np
@@ -17,6 +25,8 @@ from .schema import FeatureDataset, SplitLevel
 from .splits import audit_all_splits, build_all_splits
 
 META_COLUMNS = ("sample_id", "subject_id", "session_id", "trial_id", "label")
+INTEGER_LABEL_PATTERN = re.compile(r"^[+-]?[0-9]+$")
+SUPPORTED_SPLIT_LEVELS: tuple[str, ...] = ("window", "trial", "subject")
 
 
 class DatasetFormatError(ValueError):
@@ -49,10 +59,11 @@ def load_feature_table(path: Path | str, *, case_id: str | None = None) -> Featu
     feature_rows: list[list[float]] = []
     for index, row in enumerate(rows, start=2):
         label_text = (row.get("label") or "").strip()
-        try:
-            label = int(float(label_text))
-        except ValueError as error:
-            raise DatasetFormatError(f"line {index}: label is not numeric") from error
+        if not INTEGER_LABEL_PATTERN.fullmatch(label_text):
+            raise DatasetFormatError(
+                f"line {index}: label must be the integer -1 or 1; decimal or non-integer labels are rejected"
+            )
+        label = int(label_text)
         if label not in {-1, 1}:
             raise DatasetFormatError(f"line {index}: label must be -1 or 1")
         try:
@@ -97,6 +108,9 @@ def check_feature_table(
         "n_trials": len(set(dataset.trial_uids)),
         "n_features": len(dataset.feature_names),
         "labels": {str(value): int((dataset.y == value).sum()) for value in (-1, 1)},
+        "label_domain": "binary_-1_1",
+        "split_levels_supported": list(SUPPORTED_SPLIT_LEVELS),
+        "session_split_supported": False,
         "split_seed": split_seed,
         "splits": {},
         "audits": {},
@@ -104,7 +118,7 @@ def check_feature_table(
         "fixture_only": fixture_only,
     }
     split_summary: dict[str, object] = {}
-    for level in ("window", "trial", "subject"):
+    for level in SUPPORTED_SPLIT_LEVELS:
         indices = splits[level]  # type: ignore[index]
         split_summary[level] = {
             "n_train": int(len(indices.train_indices)),
@@ -122,7 +136,7 @@ def check_feature_table(
             "n_groups": audits[level].get("n_groups", {}),
             "invalid_reason": audits[level].get("invalid_reason"),
         }
-        for level in ("window", "trial", "subject")
+        for level in SUPPORTED_SPLIT_LEVELS
     }
     return summary
 

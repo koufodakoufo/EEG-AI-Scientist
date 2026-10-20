@@ -46,8 +46,21 @@
 - `reports/flash_20261020_0058/HYPOTHESIS_CARDS.md` — three cards, priority/backup, dsh review notes
 - `reports/flash_20261020_0058/EVIDENCE_AUDIT.md` — number/claim audit against the injection log
 - `reports/flash_20261020_0058/EXPERIMENT_PROTOCOL.md` — reduced priority experiment and backup
-- `reports/flash_20261020_0058/DATA_REQUIREMENTS.md` — E2 fallback, no real EEG data
+- `reports/flash_20261020_0058/DATA_REQUIREMENTS.md` — E2 fallback, binary-only label entry, no session split
+- `reports/flash_20261020_0058/HANDOFF_SYSTEM.md` — one-page role and capability explanation
+- `reports/flash_20261020_0058/REASONING_REVIEW.md` — separate inference corrections; original answer untouched
+- `reports/flash_20261020_0058/COVERAGE_RECHECK.md` — interval-union coverage correction
+- `reports/flash_20261020_0058/coverage_union.json` — corrected coverage values
 - `runs/flash_20261020_0058/research/literature_v1/final_answer.md` — the Scientist's own answer
+
+## Handoff checks (2026-10-20)
+
+- 61 offline tests pass, exit 0; no paid model call, no new data, no rerun.
+- `finish_study` inline citations and `evidence_ids` must match exactly.
+- Usage missing/invalid is UNKNOWN spend, not zero.
+- Coverage is counted by interval union.
+- CSV labels are integer `-1`/`1` only; decimal labels are rejected.
+- Session split remains unimplemented; do not call any run session-held-out.
 
 ## Local commits
 

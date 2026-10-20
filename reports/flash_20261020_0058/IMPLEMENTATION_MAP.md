@@ -14,7 +14,7 @@ This maps the task book's suggested boundaries onto the actual repository. The e
 | ResearchRunner | `src/eeg_scientist/research.py` | Persists exact wire messages, state, events, request/response files, heartbeat; resumes without re-paying completed calls; detects interrupted tool-call messages and repairs them without pretending success. |
 | Diagnostic regression | `src/eeg_scientist/diagnostic.py` | Task C: raw 99%/50% table explanation with rule-based checks, and neutral-ID synthetic case episodes through the existing decision state machine. |
 | DeepSeek adapter for the old decision loop | `DeepSeekDecisionProvider` in `deepseek_api.py` | Implements the existing `decide(ModelRequest) -> ProviderResponse` protocol so `runner.py` can run case diagnostics with Flash without changing the frozen study. |
-| Dataset entry (E2) | `src/eeg_scientist/dataset_io.py` | Minimal documented feature-table format, fixture writer, and split/label integrity checks. Artificial fixture only; not EEG evidence. |
+| Dataset entry (E2) | `src/eeg_scientist/dataset_io.py` | Binary-only feature-table loader (decimal labels rejected), fixture writer, and window/trial/subject split audits. `session_id` is retained but **session-level splitting is not implemented**. Artificial fixture only; not EEG evidence. |
 | CLI | `src/eeg_scientist/cli.py` | `overnight-flash` subcommands: `capability`, `diagnose`, `research`, `status`, `report`; plus top-level `check-dataset`. Resume is the same `research` command, not a separate subcommand. |
 
 ## Reused existing code

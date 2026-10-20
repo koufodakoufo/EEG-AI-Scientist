@@ -14,12 +14,26 @@ import httpx
 import pytest
 
 from eeg_scientist.credentials import CredentialError, load_deepseek_key
-from eeg_scientist.dataset_io import check_feature_table, load_feature_table, write_artificial_fixture
-from eeg_scientist.deepseek_api import DeepSeekChatResult, DeepSeekClient, DeepSeekToolCall, DeepSeekUsage, FetchResponse, SearchItem, SearchResponse
+from eeg_scientist.dataset_io import (
+    DatasetFormatError,
+    check_feature_table,
+    load_feature_table,
+    write_artificial_fixture,
+)
+from eeg_scientist.deepseek_api import (
+    DeepSeekChatResult,
+    DeepSeekClient,
+    DeepSeekError,
+    DeepSeekToolCall,
+    DeepSeekUsage,
+    FetchResponse,
+    SearchItem,
+    SearchResponse,
+)
 from eeg_scientist.diagnostic import evaluate_regression
-from eeg_scientist.evidence import EvidenceError, EvidenceStore
+from eeg_scientist.evidence import EvidenceError, EvidenceStore, estimate_injection_fraction
 from eeg_scientist.ledger import BudgetExceeded, BudgetLedger
-from eeg_scientist.research import ResearchConfig, ResearchRunner
+from eeg_scientist.research import ResearchConfig, ResearchError, ResearchRunner
 
 
 def _ledger(tmp_path: Path) -> BudgetLedger:
@@ -149,6 +163,61 @@ def test_evidence_read_records_injection(tmp_path: Path) -> None:
     assert (tmp_path / "injections.jsonl").exists()
 
 
+def test_coverage_uses_union_not_sum_of_overlapping_reads(tmp_path: Path) -> None:
+    store = EvidenceStore(tmp_path)
+    record = store.add_text(url="https://example.org/long", title="Long", text="a" * 100)
+    store.read(record.evidence_id, start_char=0, max_chars=20)
+    store.read(record.evidence_id, start_char=10, max_chars=20)
+    store.read(record.evidence_id, start_char=15, max_chars=10)
+
+    coverage = estimate_injection_fraction(store)
+    row = next(item for item in coverage["sources"] if item["evidence_id"] == record.evidence_id)
+    assert row["read_chars"] == 30
+    assert row["fraction_read"] == pytest.approx(0.3)
+
+
+def test_usage_missing_is_unknown_not_zero_cost(tmp_path: Path) -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "id": "resp_no_usage",
+                "model": "deepseek-flash",
+                "choices": [{"message": {"role": "assistant", "content": "ok"}, "finish_reason": "stop"}],
+            },
+        )
+
+    ledger = _ledger(tmp_path)
+    client = DeepSeekClient(api_key="sk-test", ledger=ledger, transport=httpx.MockTransport(handler))
+    with pytest.raises(DeepSeekError, match="usage"):
+        client.chat([{"role": "user", "content": "hello"}])
+    assert ledger.state.spent_cny == pytest.approx(0.0)
+    assert ledger.state.unknown_cny > 0
+    assert ledger.state.reserved_cny == pytest.approx(0.0)
+    assert ledger.state.pending == {}
+
+
+def test_usage_invalid_is_unknown_not_zero_cost(tmp_path: Path) -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "id": "resp_bad_usage",
+                "model": "deepseek-flash",
+                "choices": [{"message": {"role": "assistant", "content": "ok"}, "finish_reason": "stop"}],
+                "usage": {"prompt_tokens": "not-a-number", "completion_tokens": 2},
+            },
+        )
+
+    ledger = _ledger(tmp_path)
+    client = DeepSeekClient(api_key="sk-test", ledger=ledger, transport=httpx.MockTransport(handler))
+    with pytest.raises(DeepSeekError, match="usage"):
+        client.chat([{"role": "user", "content": "hello"}])
+    assert ledger.state.spent_cny == pytest.approx(0.0)
+    assert ledger.state.unknown_cny > 0
+    assert ledger.state.pending == {}
+
+
 def test_dataset_fixture_roundtrip(tmp_path: Path) -> None:
     path = write_artificial_fixture(tmp_path / "fixture.csv")
     dataset = load_feature_table(path)
@@ -157,8 +226,34 @@ def test_dataset_fixture_roundtrip(tmp_path: Path) -> None:
     summary = check_feature_table(path)
     assert summary["n_subjects"] == 4
     assert summary["fixture_only"] is True
+    assert summary["label_domain"] == "binary_-1_1"
+    assert summary["split_levels_supported"] == ["window", "trial", "subject"]
+    assert summary["session_split_supported"] is False
     for audit in summary["audits"].values():
         assert audit["invalid_reason"] is None
+
+
+@pytest.mark.parametrize("label", ["1.5", "1.0", "-1.0", "1e0", ""])
+def test_csv_decimal_or_non_integer_label_is_rejected(tmp_path: Path, label: str) -> None:
+    path = tmp_path / "bad_label.csv"
+    path.write_text(
+        "sample_id,subject_id,session_id,trial_id,label,f0\n"
+        f"s1,sub-01,sub-01_ses-01,t1,{label},0.5\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(DatasetFormatError, match="integer"):
+        load_feature_table(path)
+
+
+def test_csv_integer_label_is_accepted(tmp_path: Path) -> None:
+    path = tmp_path / "good_label.csv"
+    path.write_text(
+        "sample_id,subject_id,session_id,trial_id,label,f0\n"
+        "s1,sub-01,sub-01_ses-01,t1,-1,0.5\n",
+        encoding="utf-8",
+    )
+    dataset = load_feature_table(path)
+    assert dataset.y.tolist() == [-1]
 
 
 def test_regression_rule_checks_detect_collapse_claim() -> None:
@@ -231,7 +326,13 @@ class _FakeClient:
                 DeepSeekToolCall(
                     id="c4",
                     name="finish_study",
-                    arguments=json.dumps({"answer": self.content, "evidence_ids": [self.evidence_id], "unresolved": ["test gap"]}),
+                    arguments=json.dumps(
+                        {
+                            "answer": self.content + f"\n\nCites [{self.evidence_id}].",
+                            "evidence_ids": [self.evidence_id],
+                            "unresolved": ["test gap"],
+                        }
+                    ),
                 )
             ],
             finish_reason="tool_calls",
@@ -267,6 +368,7 @@ def test_research_runner_completes_and_resumes(tmp_path: Path) -> None:
     assert summary.phase == "completed"
     final = json.loads((tmp_path / "research" / "final.json").read_text(encoding="utf-8"))
     assert final["evidence_ids"] == [client.evidence_id]
+    assert final["inline_evidence_ids"] == [client.evidence_id]
     assert (tmp_path / "research" / "evidence" / "sources" / f"{client.evidence_id}.json").exists()
     messages = json.loads((tmp_path / "research" / "messages.json").read_text(encoding="utf-8"))
     assistant = [message for message in messages if message.get("role") == "assistant"]
@@ -275,3 +377,50 @@ def test_research_runner_completes_and_resumes(tmp_path: Path) -> None:
     again = ResearchRunner(config, client=client, ledger=ledger).run()
     assert again.phase == "completed"
     assert len(client.calls) == calls_before
+
+
+def test_finish_study_requires_inline_and_listed_evidence_ids_to_match(tmp_path: Path) -> None:
+    content = "A synthetic document used only for citation-consistency tests. " * 10
+    client = _FakeClient(content)
+    config = ResearchConfig(
+        run_id="test_finish_citations",
+        run_dir=str(tmp_path / "research"),
+        question="test question",
+        deadline="2099-01-01T00:00:00+00:00",
+        stop_new_at="2099-01-01T00:00:00+00:00",
+    )
+    runner = ResearchRunner(config, client=client, ledger=_ledger(tmp_path))
+    first = runner.evidence.add_text(url="https://example.org/a", title="A", text="first source " * 20)
+    second = runner.evidence.add_text(url="https://example.org/b", title="B", text="second source " * 20)
+    runner.evidence.read(first.evidence_id, max_chars=10)
+    runner.evidence.read(second.evidence_id, max_chars=10)
+    call = DeepSeekToolCall(id="finish_1", name="finish_study", arguments="{}")
+    padding = "x" * 240
+
+    listed_only = {
+        "answer": f"Finding [{first.evidence_id}] {padding}",
+        "evidence_ids": [first.evidence_id, second.evidence_id],
+        "unresolved": [],
+    }
+    with pytest.raises(ResearchError, match="exactly the same evidence"):
+        runner._tool_finish(listed_only, call)
+
+    inline_only = {
+        "answer": f"Finding [{first.evidence_id}] and [{second.evidence_id}] {padding}",
+        "evidence_ids": [first.evidence_id],
+        "unresolved": [],
+    }
+    with pytest.raises(ResearchError, match="exactly the same evidence"):
+        runner._tool_finish(inline_only, call)
+
+    matching = {
+        "answer": f"Finding [{first.evidence_id}] {padding}",
+        "evidence_ids": [first.evidence_id],
+        "unresolved": [],
+    }
+    result = runner._tool_finish(matching, call)
+    assert result["status"] == "completed"
+    final = json.loads((tmp_path / "research" / "final.json").read_text(encoding="utf-8"))
+    assert final["evidence_ids"] == [first.evidence_id]
+    assert final["inline_evidence_ids"] == [first.evidence_id]
+

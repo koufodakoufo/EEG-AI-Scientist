@@ -108,3 +108,21 @@ Updated: 2026-10-20 01:30 +08:00.
 
 Read `reports/flash_20261020_0058/MORNING_REPORT.md`, then the Scientist's `final_answer.md` and `EVIDENCE_AUDIT.md`. Decide whether to run the reduced M1 in `EXPERIMENT_PROTOCOL.md` on public data. Do not start a new paid run without a new decision; the existing run resumes completed with no new spend.
 
+---
+
+# 2026-10-20 Handoff and small fixes (complete, no paid calls)
+
+Updated: 2026-10-20 21:40 +08:00.
+
+- Branch `overnight/flash-20261020-0058`; HEAD before handoff `cca1e77`. User's staged `.gitignore` and untracked `src.zip`/`tests.zip` preserved.
+- Read current `PROGRESS.md`, `NEXT_ACTION.md`, `reports/flash_20261020_0058/RUN_INDEX.md`, and the relevant code; did not rely on the old morning report alone.
+- Added `HANDOFF_SYSTEM.md` (one-page role/capability explanation), `REASONING_REVIEW.md` (three inference corrections; original Scientist answer untouched), and `COVERAGE_RECHECK.md` plus `coverage_union.json`.
+- Code fixes: finish_study inline/listed evidence-ID consistency; coverage by interval union; missing/invalid usage as UNKNOWN cost; strict integer binary CSV labels. Documented binary-only entry and unimplemented session split; did not expand the data system.
+- Tests: 61 offline tests pass; no model call, no new data, no rerun.
+- Review bundle: `artifacts/review_bundle_20261020.zip` (no credentials/private raw data; original run files unchanged). Exact contents and SHA-256 are in its `MANIFEST.json`.
+- No push.
+
+## Next action after handoff
+
+Read `reports/flash_20261020_0058/HANDOFF_SYSTEM.md` for the system map, then `REASONING_REVIEW.md` before reusing the Scientist's priority claim. The next scientific step remains a separate decision; no paid run was started.
+

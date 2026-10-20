@@ -14,7 +14,9 @@ One row per analysis window (or per chosen sample unit), stored as a UTF-8 CSV:
 | `subject_id` | yes | anonymised subject key (e.g. `sub-01`); no names, student IDs, or birth dates |
 | `session_id` | yes | recording session key (e.g. `sub-01_ses-01`) |
 | `trial_id` | yes | trial key unique within subject/session; all windows of a trial share it |
-| `label` | yes | binary label `-1` or `1`, constant within a trial |
+| `label` | yes | binary label `-1` or `1` only, constant within a trial; decimal labels such as `1.0` or `1.5` are rejected, not rounded |
+
+**Current entry is binary-only.** The loader does not accept multi-class labels and does not silently convert decimal or floating-point label text to integers. Supporting another label domain would be a separate, reviewed change, not part of this handoff.
 | `f_00 … f_NN` | yes, ≥ 2 columns | numeric features; no strings, no NaNs |
 
 Feature columns must be produced by a versioned, training-independent preprocessing pipeline. If a learned transform, ICA unmixing, channel selection, or normalization was fitted, record which data it was fitted on. Any transform fitted on the full dataset before cross-validation is a leakage risk and must be declared.
@@ -44,12 +46,25 @@ A defensible pilot (not a power calculation) would need at least:
 
 With fewer subjects/sessions, confidence intervals will be unstable. Do not report a single held-out split as if it estimated population performance.
 
-## 4. Splits and controls the loader must support
+## 4. Splits and controls: required by the protocol vs implemented now
+
+The research protocol would eventually need four split levels:
 
 1. **Window split:** some windows of a trial in train, other windows of the same trial in test. This is a seen-trial control, not a generalization estimate.
 2. **Trial split:** all windows of a trial on one side only; subjects/sessions may still overlap.
 3. **Session split:** test sessions unseen; subjects may overlap.
 4. **Subject split:** test subjects unseen; no subject/session/trial overlap.
+
+**Current implementation status (deliberately not expanded in this handoff):**
+
+| split level | implemented in `dataset_io.check_feature_table` | note |
+|---|---|---|
+| window | yes | same-trial windows can cross train/test |
+| trial | yes | trial overlap zero; subject/session may still overlap |
+| subject | yes | subject/session/trial overlap zero |
+| **session** | **no** | `session_id` is retained for audit only; there is **no** session-held-out split |
+
+Do not describe a run as “session-held-out” merely because the table contains `session_id`. The current `check_feature_table` output says `session_split_supported: false` and lists `split_levels_supported: ["window", "trial", "subject"]`. Expanding to session-level splitting is a separate data-system change and was intentionally **not** done now.
 
 Every run must save the subject/session/trial intersection audit. A trial-level permutation must be applied at the trial level and shared by all windows of that trial; a window-level permutation is a different control and must not be described as trial-level.
 
@@ -62,7 +77,7 @@ Every run must save the subject/session/trial intersection audit. A trial-level 
 
 ## 6. What was implemented instead
 
-- `src/eeg_scientist/dataset_io.py`: strict CSV loader, label/sample/trial validation, fixture writer, and split/overlap audit.
+- `src/eeg_scientist/dataset_io.py`: strict **binary** CSV loader (decimal labels rejected), label/sample/trial validation, fixture writer, and split/overlap audit for window/trial/subject. Session-level splitting is not implemented.
 - `eeg_scientist.cli check-dataset --path <csv> [--write-fixture]`: runnable entry point.
 - `tests/test_flash_stack.py::test_dataset_fixture_roundtrip`: verifies the loader and split audit on an artificial fixture.
 

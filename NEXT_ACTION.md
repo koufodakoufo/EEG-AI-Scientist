@@ -1,6 +1,13 @@
 # NEXT ACTION
 
-Current run: `flash_20261020_0058` (2026-10-20, DeepSeek Flash literature study). **Status: completed and wrapped up early at 01:30 +08:00.** The run did not use the full 8-hour window because the planned A–F tasks were finished; no synthetic waiting was added.
+Current run: `flash_20261020_0058` (2026-10-20, DeepSeek Flash literature study). **Status: completed and wrapped up early at 01:30 +08:00.** A later handoff pass (2026-10-20 evening) added small fixes and a review bundle without paid model calls, new data, or a rerun.
+
+## Handoff review (read before reusing the priority claim)
+
+1. `reports/flash_20261020_0058/HANDOFF_SYSTEM.md` — one-page explanation of dsh, the project program, the Scientist, the two synthetic cases, and literature_v1.
+2. `reports/flash_20261020_0058/REASONING_REVIEW.md` — three inference corrections; it does **not** modify the Scientist's original answer.
+3. `reports/flash_20261020_0058/COVERAGE_RECHECK.md` — corrected interval-union coverage.
+4. `artifacts/review_bundle_20261020.zip` — source, tests, configs, prompts, reports, literature trace, and two synthetic-case traces; no credentials or private raw data.
 
 ## Read first
 

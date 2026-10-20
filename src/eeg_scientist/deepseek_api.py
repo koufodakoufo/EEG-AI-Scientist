@@ -48,6 +48,8 @@ class DeepSeekUsage(BaseModel):
     total_tokens: int = 0
     prompt_cache_hit_tokens: int = 0
     prompt_cache_miss_tokens: int = 0
+    reported: bool = True
+    valid: bool = True
 
 
 class DeepSeekChatResult(BaseModel):
@@ -158,20 +160,45 @@ def _message_wire(message: dict[str, object]) -> dict[str, object]:
 
 
 def _usage_from(raw_usage: object) -> DeepSeekUsage:
+    """Parse vendor usage without turning missing/invalid values into zero cost."""
+
     if not isinstance(raw_usage, dict):
-        return DeepSeekUsage()
-    def number(name: str) -> int:
-        value = raw_usage.get(name, 0)
-        try:
-            return int(value)
-        except (TypeError, ValueError):
-            return 0
+        return DeepSeekUsage(reported=False, valid=False)
+    required = ("prompt_tokens", "completion_tokens")
+    if any(name not in raw_usage for name in required):
+        return DeepSeekUsage(reported=True, valid=False)
+
+    def nonnegative_integer(value: object) -> int | None:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return None
+        if isinstance(value, float) and not value.is_integer():
+            return None
+        number = int(value)
+        return number if number >= 0 else None
+
+    prompt_tokens = nonnegative_integer(raw_usage.get("prompt_tokens"))
+    completion_tokens = nonnegative_integer(raw_usage.get("completion_tokens"))
+    if prompt_tokens is None or completion_tokens is None:
+        return DeepSeekUsage(reported=True, valid=False)
+
+    optional: dict[str, int] = {}
+    for name in ("total_tokens", "prompt_cache_hit_tokens", "prompt_cache_miss_tokens"):
+        if name not in raw_usage:
+            optional[name] = 0
+            continue
+        value = nonnegative_integer(raw_usage.get(name))
+        if value is None:
+            return DeepSeekUsage(reported=True, valid=False)
+        optional[name] = value
+
     return DeepSeekUsage(
-        prompt_tokens=number("prompt_tokens"),
-        completion_tokens=number("completion_tokens"),
-        total_tokens=number("total_tokens"),
-        prompt_cache_hit_tokens=number("prompt_cache_hit_tokens"),
-        prompt_cache_miss_tokens=number("prompt_cache_miss_tokens"),
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        total_tokens=optional["total_tokens"] or prompt_tokens + completion_tokens,
+        prompt_cache_hit_tokens=optional["prompt_cache_hit_tokens"],
+        prompt_cache_miss_tokens=optional["prompt_cache_miss_tokens"],
+        reported=True,
+        valid=True,
     )
 
 
@@ -359,6 +386,13 @@ class DeepSeekClient:
                 self.ledger.mark_unknown(reservation.reservation_id, "unparseable 200 response")
                 raise DeepSeekError("protocol", self._redact(f"chat response parse: {type(error).__name__}")) from error
 
+            if not result.usage.valid:
+                self.ledger.mark_unknown(reservation.reservation_id, "usage missing or invalid")
+                raise DeepSeekError(
+                    "usage",
+                    "HTTP 200 response has missing or invalid token usage; "
+                    "the reservation is retained as UNKNOWN spend, not settled as zero",
+                )
             self.ledger.settle_model(
                 reservation.reservation_id,
                 prompt_tokens=result.usage.prompt_tokens,

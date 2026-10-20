@@ -32,7 +32,7 @@ Other confirmed numbers:
 | LaBraM ~2,500 h pretraining; TUAB/TUEV follow BIOT patient split | `ev_2085e5b7ba26` | 25,522 | yes (24,000–29,300) | confirmed |
 | Fallahi EER 6.7% after 1 day → 14.3% after 1 year | `ev_2f5e3fadf9f0` | 1,383 / 1,405 | yes (1,200–6,700) | confirmed |
 | Hebart & Baker: predictive voxels can sit in ventricles/physiological noise | `ev_200bb34828cd` | 7,282 | yes (2,500–8,000) | confirmed |
-| Yin et al.: current cross-subject splits leak validation/test into training and overestimate | `ev_9da221287269` | abstract page | 100% of the 8,579-char page | confirmed (abstract only) |
+| Yin et al.: current cross-subject splits leak validation/test into training and overestimate | `ev_9da221287269` | abstract page | 5,100 / 8,579 chars by interval union (59.4%; two overlapping read ranges) | confirmed (abstract only) |
 
 ## 2. Claims that are true in the source but outside the recorded read range
 

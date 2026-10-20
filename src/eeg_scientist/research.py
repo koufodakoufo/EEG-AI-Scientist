@@ -628,10 +628,24 @@ class ResearchRunner:
                 + ", ".join(not_read[:5])
                 + "; read them before citing"
             )
+        listed_ids = set(evidence_ids_raw)
+        inline_ids = set(re.findall(r"ev_[0-9a-f]{12}", answer))
+        listed_only = sorted(listed_ids - inline_ids)
+        inline_only = sorted(inline_ids - listed_ids)
+        if listed_only or inline_only:
+            problems: list[str] = []
+            if listed_only:
+                problems.append("listed in evidence_ids but not cited inline: " + ", ".join(listed_only[:5]))
+            if inline_only:
+                problems.append("cited inline but absent from evidence_ids: " + ", ".join(inline_only[:5]))
+            raise ResearchError(
+                "the final answer and evidence_ids must cite exactly the same evidence; " + "; ".join(problems)
+            )
         final = {
             "run_id": self.config.run_id,
             "answer": answer,
-            "evidence_ids": sorted(set(evidence_ids_raw)),
+            "evidence_ids": sorted(listed_ids),
+            "inline_evidence_ids": sorted(inline_ids),
             "unresolved": unresolved_raw,
             "limitations": limitations,
             "cited_but_never_read": not_read,
