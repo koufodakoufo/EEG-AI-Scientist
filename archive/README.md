@@ -1,7 +1,7 @@
 # Archive index
 
 This directory is **read-only history**. Original answers, trajectories, ledgers, and review text were moved without rewriting.
-Archived files: **830**; bytes: **26027395**; aggregate SHA-256: `a4af1823e97ce30f755daff1b65e7837770d5f8b36075100a4da86105bb2bcb4`.
+Archived files: **830**; total bytes: **26027618**. Payload: **819** files / **26014720** bytes; aggregate SHA-256 (excluding index README/MIGRATION_MAP): `1c6c972757e9a6a7da35bb1adc42149ad8109edd81cc66fba71d3900272825a6`.
 
 Full machine-readable paths and hashes: `MIGRATION_MAP.json`.
 

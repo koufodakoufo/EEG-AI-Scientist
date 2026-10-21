@@ -3,8 +3,11 @@
   "archived_at": "2026-10-21T19:30:00+08:00",
   "archive_root": "archive",
   "file_count": 830,
-  "bytes": 26027395,
-  "aggregate_sha256": "a4af1823e97ce30f755daff1b65e7837770d5f8b36075100a4da86105bb2bcb4",
+  "bytes": 26027618,
+  "payload_file_count": 819,
+  "payload_bytes": 26014720,
+  "aggregate_sha256": "1c6c972757e9a6a7da35bb1adc42149ad8109edd81cc66fba71d3900272825a6",
+  "aggregate_scope": "all files under archive/ except README.md and MIGRATION_MAP.json (index metadata)",
   "mapping": [
     {
       "old": "runs/dev_e1",
