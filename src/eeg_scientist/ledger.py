@@ -62,6 +62,20 @@ class LedgerState(BaseModel):
     updated_at: str = ""
 
 
+def _number(payload: dict[str, object], key: str, default: float = 0.0) -> float:
+    value = payload.get(key, default)
+    if isinstance(value, bool):
+        return default
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return default
+    return default
+
+
 class Reservation(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -228,7 +242,7 @@ class BudgetLedger:
             max(prompt_tokens, 0) / 1_000_000.0 * self.state.input_price_cny_per_mtok
             + max(completion_tokens, 0) / 1_000_000.0 * self.state.output_price_cny_per_mtok
         )
-        reserved_value = float(pending["reserved_cny"])
+        reserved_value = _number(pending, "reserved_cny")
         self.state.reserved_cny = max(0.0, self.state.reserved_cny - reserved_value)
         self.state.spent_cny += actual
         self.state.input_tokens += max(prompt_tokens, 0)
@@ -248,7 +262,7 @@ class BudgetLedger:
 
     def release(self, reservation_id: str, reason: str) -> None:
         pending = self._pop_pending(reservation_id, None)
-        reserved_value = float(pending.get("reserved_cny", 0.0))
+        reserved_value = _number(pending, "reserved_cny")
         self.state.reserved_cny = max(0.0, self.state.reserved_cny - reserved_value)
         self._record(
             "release",
@@ -261,7 +275,7 @@ class BudgetLedger:
 
     def mark_unknown(self, reservation_id: str, reason: str) -> None:
         pending = self._pop_pending(reservation_id, None)
-        reserved_value = float(pending.get("reserved_cny", 0.0))
+        reserved_value = _number(pending, "reserved_cny")
         self.state.reserved_cny = max(0.0, self.state.reserved_cny - reserved_value)
         self.state.unknown_cny += reserved_value
         self._record(
@@ -324,7 +338,7 @@ class BudgetLedger:
 
     def settle_tool(self, reservation_id: str, *, succeeded: bool, note: str = "") -> None:
         pending = self._pop_pending(reservation_id, None)
-        reserved_value = float(pending["reserved_cny"])
+        reserved_value = _number(pending, "reserved_cny")
         self.state.reserved_cny = max(0.0, self.state.reserved_cny - reserved_value)
         if succeeded:
             self.state.spent_cny += reserved_value
@@ -345,11 +359,11 @@ class BudgetLedger:
             action = entry.get("action")
             amount = 0.0
             if action == "settle_model":
-                amount = float(entry.get("actual_cny", 0.0))
+                amount = _number(entry, "actual_cny")
             elif action == "settle_tool":
-                amount = float(entry.get("charged_cny", 0.0))
+                amount = _number(entry, "charged_cny")
             elif action == "unknown":
-                amount = float(entry.get("unknown_cny", 0.0))
+                amount = _number(entry, "unknown_cny")
             if amount:
                 key = str(entry.get("attribution", "")) or "(unattributed)"
                 totals[key] = round(totals.get(key, 0.0) + amount, 6)

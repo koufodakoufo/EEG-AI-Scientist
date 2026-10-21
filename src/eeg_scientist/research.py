@@ -18,7 +18,7 @@ import socket
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Literal
+from typing import Literal, cast
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -160,6 +160,16 @@ def _local_time() -> str:
     return datetime.now().astimezone().isoformat(timespec="seconds")
 
 
+def _int_argument(arguments: dict[str, object], key: str, default: int) -> int:
+    raw = arguments.get(key, default)
+    if isinstance(raw, bool) or not isinstance(raw, (int, float, str)):
+        return default
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return default
+
+
 def _load_text(path: str, fallback: str) -> str:
     candidate = Path(path) if path else None
     if candidate is not None and candidate.exists():
@@ -218,6 +228,15 @@ Operational context:
 - {deadline_note}
 - Finish by calling finish_study. A prose answer without finish_study is recorded as unverified, not accepted.
 """
+
+
+def _tool_names(config: ResearchConfig) -> list[str]:
+    names: list[str] = []
+    for item in _tool_specs(config):
+        function = item.get("function")
+        if isinstance(function, dict) and isinstance(function.get("name"), str):
+            names.append(str(function["name"]))
+    return names
 
 
 def _tool_specs(config: ResearchConfig) -> list[dict[str, object]]:
@@ -323,10 +342,10 @@ class ResearchRunner:
         if model_client is None:
             if client is None:
                 raise ResearchError("model_client is required")
-            model_client = client  # type: ignore[assignment]
+            model_client = cast(ModelChatClient, client)
         if tool_client is None:
             if client is not None:
-                tool_client = client  # type: ignore[assignment]
+                tool_client = cast(SearchFetchClient, client)
             elif config.research_mode == "web":
                 raise ResearchError("tool_client is required for search/fetch mode")
         self.model_client: ModelChatClient = model_client
@@ -415,7 +434,11 @@ class ResearchRunner:
         if self.config.material_evidence_dir and not self.evidence.list_meta():
             imported = self.evidence.import_from(self.config.material_evidence_dir)
             self._event("materials_imported", {"count": imported, "source": self.config.material_evidence_dir})
-        material_ids = {item["evidence_id"] for item in _material_index(self.config)}
+        material_ids = {
+            str(item["evidence_id"])
+            for item in _material_index(self.config)
+            if isinstance(item.get("evidence_id"), str)
+        }
         missing = sorted(item for item in material_ids if not self.evidence.has(item))
         if missing:
             raise ResearchError(f"material package references missing evidence: {', '.join(missing[:5])}")
@@ -456,8 +479,8 @@ class ResearchRunner:
             self._event("research_resumed", {"run_id": self.config.run_id, "model_calls": self.state.model_calls})
         else:
             system_text = _load_text(self.config.system_prompt_path, GENERIC_SYSTEM_PROMPT)
-            system = {"role": "system", "content": system_text}
-            user = {"role": "user", "content": _user_prompt(self.config)}
+            system: dict[str, object] = {"role": "system", "content": system_text}
+            user: dict[str, object] = {"role": "user", "content": _user_prompt(self.config)}
             self.messages = [system, user]
             self._save_messages()
             atomic_write_text(
@@ -634,7 +657,7 @@ class ResearchRunner:
         if self.config.research_mode != "web" or self.tool_client is None:
             raise ResearchError("search_sources is disabled in this closed-material run")
         query = str(arguments.get("query", "")).strip()
-        count = int(arguments.get("count", 8))
+        count = _int_argument(arguments, "count", 8)
         count = max(1, min(count, 20))
         response = self.tool_client.search(query, count=count, need_content=False)
         self._search_counter += 1
@@ -711,8 +734,8 @@ class ResearchRunner:
 
     def _tool_read(self, arguments: dict[str, object]) -> dict[str, object]:
         evidence_id = str(arguments.get("evidence_id", "")).strip()
-        start = int(arguments.get("start_char", 0))
-        max_chars = int(arguments.get("max_chars", 4000))
+        start = _int_argument(arguments, "start_char", 0)
+        max_chars = _int_argument(arguments, "max_chars", 4000)
         result = self.evidence.read(evidence_id, start_char=start, max_chars=max_chars)
         return {
             "evidence_id": result.evidence_id,
@@ -808,10 +831,12 @@ class ResearchRunner:
         self.state.acceptance = "accepted"
         self.state.stop_reason = "finish_study"
         self._save_state()
-        self._event("research_finished", {"evidence_ids": final["evidence_ids"], "answer_chars": len(answer), "accepted": True})
+        raw_evidence_ids = final.get("evidence_ids")
+        evidence_ids = raw_evidence_ids if isinstance(raw_evidence_ids, list) else []
+        self._event("research_finished", {"evidence_ids": evidence_ids, "answer_chars": len(answer), "accepted": True})
         return {
             "status": "completed",
-            "evidence_count": len(final["evidence_ids"]),
+            "evidence_count": len(evidence_ids),
             "answer_chars": len(answer),
             "final_path": self.state.final_path,
         }
@@ -879,7 +904,7 @@ class ResearchRunner:
                 "at": utc_now(),
                 "messages": self.messages,
                 "message_count": len(self.messages),
-                "tools": [item["function"]["name"] for item in _tool_specs(self.config)],
+                "tools": _tool_names(self.config),
             },
         )
         atomic_write_json(

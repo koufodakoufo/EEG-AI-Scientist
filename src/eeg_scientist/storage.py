@@ -121,14 +121,22 @@ def append_event(run_dir: Path, event_type: str, payload: dict[str, object]) -> 
     events = read_events(run_dir)
     previous_hash = events[-1].event_hash if events else ""
     sequence = len(events) + 1
-    body = {
+    timestamp = utc_now()
+    body: dict[str, object] = {
         "sequence": sequence,
         "event_type": event_type,
-        "timestamp": utc_now(),
+        "timestamp": timestamp,
         "payload": payload,
         "prev_hash": previous_hash,
     }
-    event = RunEvent(**body, event_hash=_event_hash(body))
+    event = RunEvent(
+        sequence=sequence,
+        event_type=event_type,
+        timestamp=timestamp,
+        payload=payload,
+        prev_hash=previous_hash,
+        event_hash=_event_hash(body),
+    )
     with (run_dir / "events.jsonl").open("a", encoding="utf-8", newline="\n") as handle:
         handle.write(event.model_dump_json() + "\n")
         handle.flush()

@@ -1,0 +1,14 @@
+{
+  "include": ["src/eeg_scientist"],
+  "exclude": [
+    "src/eeg_scientist/legacy",
+    "archive",
+    "studies",
+    ".venv",
+    ".mypy_cache",
+    ".pytest_cache"
+  ],
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "basic",
+  "extraPaths": ["src"]
+}

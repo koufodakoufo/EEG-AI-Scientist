@@ -18,7 +18,7 @@ import httpx
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from .ledger import BudgetLedger, LedgerError
-from .schema import ModelRequest, ProviderResponse
+from .schema import ModelRequest, ProviderResponse, ProviderStatus
 from .storage import redact
 
 
@@ -386,16 +386,16 @@ class DeepSeekClient:
                 raise last_error from error
 
             if response.status_code != 200:
-                error = self._error_from_response(response, operation="chat")
-                if error.retryable and error.status_code == 408:
-                    self.ledger.mark_unknown(reservation.reservation_id, f"HTTP {error.status_code}")
+                http_error = self._error_from_response(response, operation="chat")
+                if http_error.retryable and http_error.status_code == 408:
+                    self.ledger.mark_unknown(reservation.reservation_id, f"HTTP {http_error.status_code}")
                 else:
-                    self.ledger.release(reservation.reservation_id, f"HTTP {error.status_code}")
-                last_error = error
-                if error.retryable and attempt < self.max_retries:
+                    self.ledger.release(reservation.reservation_id, f"HTTP {http_error.status_code}")
+                last_error = http_error
+                if http_error.retryable and attempt < self.max_retries:
                     self._sleep_before_retry(attempt, response)
                     continue
-                raise error
+                raise http_error
 
             try:
                 raw = response.json()
@@ -579,13 +579,13 @@ class DeepSeekClient:
                     raise DeepSeekError("protocol", f"{kind} response is not an object")
                 return raw
 
-            error = self._error_from_response(response, operation=kind)
-            self.ledger.settle_tool(reservation.reservation_id, succeeded=False, note=f"HTTP {error.status_code}")
-            last_error = error
-            if error.retryable and attempt < self.max_retries:
+            http_error = self._error_from_response(response, operation=kind)
+            self.ledger.settle_tool(reservation.reservation_id, succeeded=False, note=f"HTTP {http_error.status_code}")
+            last_error = http_error
+            if http_error.retryable and attempt < self.max_retries:
                 self._sleep_before_retry(attempt, response)
                 continue
-            raise error
+            raise http_error
         raise last_error or DeepSeekError("network", f"{kind} failed without a specific error")
 
 
@@ -633,7 +633,7 @@ class DeepSeekDecisionProvider:
                 error=f"budget ledger: {error}",
             )
         except DeepSeekError as error:
-            status = "unknown_completion" if error.kind == "timeout" else "http_error" if error.kind in {"http", "auth", "payment"} else "unavailable"
+            status: ProviderStatus = "unknown_completion" if error.kind == "timeout" else "http_error" if error.kind in {"http", "auth", "payment"} else "unavailable"
             return ProviderResponse(
                 status=status,
                 model_id=self.model_name,

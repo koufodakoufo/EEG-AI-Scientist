@@ -140,7 +140,7 @@ def _build_chat_client(
             backend.credential_variable,
             allowed_prefixes=("sk-ant-",),
         )
-        client = AnthropicClient(
+        anthropic_client = AnthropicClient(
             api_key=key,
             ledger=ledger,
             model=model,
@@ -149,8 +149,8 @@ def _build_chat_client(
             attribution=attribution,
             thinking=backend.thinking,
         )
-        client.backend_status = backend.status
-        return client
+        anthropic_client.backend_status = backend.status
+        return anthropic_client
     if backend.provider == "google":
         if not backend.credential_file:
             raise BackendError("Gemini backend has no credential_file configured")
@@ -159,7 +159,7 @@ def _build_chat_client(
             backend.credential_variable,
             allowed_prefixes=("AIza",),
         )
-        client = GeminiClient(
+        gemini_client = GeminiClient(
             api_key=key,
             ledger=ledger,
             model=model,
@@ -168,8 +168,8 @@ def _build_chat_client(
             attribution=attribution,
             thinking=backend.thinking,
         )
-        client.backend_status = backend.status
-        return client
+        gemini_client.backend_status = backend.status
+        return gemini_client
     raise BackendError(f"no real chat adapter for provider {backend.provider!r}")
 
 

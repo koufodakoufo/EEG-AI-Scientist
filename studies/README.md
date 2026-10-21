@@ -25,3 +25,26 @@ requires `--confirm-cost`; no paid run is started by `init/validate/status/repor
 
 Do not put historical runs here. Old completed experiments live in
 `archive/experiments/` and are read-only.
+
+
+
+
+# Portability
+源码层面
+可移植：
+src/
+tests/
+configs/
+studies/
+docs/
+pyproject.toml
+uv.lock
+.python-version
+到新机器：
+
+```powershell
+cd <项目目录>
+uv sync --extra dev
+uv run python -m eeg_scientist.cli --help
+uv run python -m pytest -q
+```
