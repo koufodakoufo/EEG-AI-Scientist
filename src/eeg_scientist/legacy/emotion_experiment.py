@@ -22,7 +22,7 @@ from ..backends import (
     load_registry,
 )
 from ..ledger import BudgetExceeded, BudgetLedger, LedgerError
-from ..meta import run_meta
+from .meta import run_meta
 from ..research import ResearchConfig, ResearchRunner
 from ..run_manifest import sha256_file, sha256_text
 from ..storage import atomic_write_json, atomic_write_text, ensure_dir, utc_now

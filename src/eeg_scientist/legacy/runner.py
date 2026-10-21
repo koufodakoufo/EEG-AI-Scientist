@@ -7,8 +7,8 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from ..cases import build_public_case, generate_case, hash_dataset, load_case_specs
-from ..experiments import (
+from .cases import build_public_case, generate_case, hash_dataset, load_case_specs
+from .experiments import (
     ExperimentError,
     compute_baselines,
     run_sealed_experiment,
@@ -25,7 +25,7 @@ from ..schema import (
     ExperimentResult,
     ProviderResponse,
 )
-from ..scientist import (
+from .scientist import (
     DecisionParseError,
     build_repair_request,
     build_request,
@@ -34,7 +34,7 @@ from ..scientist import (
     summarize_decision,
     summarize_result,
 )
-from ..splits import build_all_splits
+from .splits import build_all_splits
 from ..storage import (
     append_event,
     atomic_write_json,

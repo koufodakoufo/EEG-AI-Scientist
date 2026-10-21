@@ -27,3 +27,7 @@ packages = ["src/eeg_scientist"]
 testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = "-q"
+
+[tool.mypy]
+python_version = "3.12"
+exclude = ["src/eeg_scientist/legacy"]

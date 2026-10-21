@@ -151,7 +151,7 @@ def test_window_allows_trial_overlap_and_trial_isolates(t_dataset: FeatureDatase
 
 
 def test_scaler_fit_uses_training_rows_only(t_dataset: FeatureDataset, monkeypatch: pytest.MonkeyPatch) -> None:
-    import eeg_scientist.experiments as experiments
+    import eeg_scientist.legacy.experiments as experiments
 
     captured: dict[str, np.ndarray] = {}
 
@@ -212,7 +212,7 @@ def test_window_randomization_is_distinct_from_trial_randomization(t_dataset: Fe
 
 
 def test_ids_never_enter_feature_classifier(t_dataset: FeatureDataset, monkeypatch: pytest.MonkeyPatch) -> None:
-    import eeg_scientist.experiments as experiments
+    import eeg_scientist.legacy.experiments as experiments
 
     captured: dict[str, np.ndarray] = {}
 

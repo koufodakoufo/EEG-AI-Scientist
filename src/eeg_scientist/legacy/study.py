@@ -8,8 +8,8 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from ..cases import build_public_case, generate_case, load_case_specs
-from ..experiments import compute_baselines
+from .cases import build_public_case, generate_case, load_case_specs
+from .experiments import compute_baselines
 from .provider import ScientistProvider
 from ..schema import (
     EpisodeConfig,
@@ -23,7 +23,7 @@ from ..schema import (
     StudyState,
     StudySummary,
 )
-from ..scientist import (
+from .scientist import (
     TOOL_SPECS,
     DecisionParseError,
     build_meta_request,
@@ -32,7 +32,7 @@ from ..scientist import (
     load_rule_text,
     parse_meta,
 )
-from ..splits import build_all_splits
+from .splits import build_all_splits
 from ..storage import (
     append_event,
     atomic_write_json,

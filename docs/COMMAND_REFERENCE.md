@@ -76,3 +76,38 @@ The installed console script is equivalent:
 
 `study init/validate/status/report/review *` never start a paid run.
 `study run` without `--confirm-cost` is also a no-op.
+
+## Environment troubleshooting
+
+If your prompt shows both `(base)` and `(eeg-fm-rsi)`, that is **conda + venv
+nested activation**, not two projects. `(eeg-fm-rsi)` is only the old prompt name
+stored in `.venv/pyvenv.cfg`; it is still this project's `.venv`.
+
+The current `.venv/Scripts/activate` also contains a stale absolute
+`VIRTUAL_ENV` from an older copy (`X:\projects\EEG-FM-RSI\.venv`). `uv run` warns
+about that and deliberately uses the project environment. You can ignore the
+warning, or avoid activation:
+
+```bash
+unset VIRTUAL_ENV
+cd /x/projects/EEG-AI-Scientist
+uv run python -m eeg_scientist.cli study --help
+```
+
+There is no `uv activate` command. `uv run` is the command; use `--active` only
+if you deliberately want uv to target a currently activated environment.
+
+`--id` is a named option, not a number:
+
+```powershell
+# correct
+uv run python -m eeg_scientist.cli study init --id my_study
+
+# wrong: `null` is parsed as a subcommand, and `init null` misses --id
+uv run python -m eeg_scientist.cli study null
+uv run python -m eeg_scientist.cli study init null
+```
+
+`study_id` must be 3–80 characters of lowercase letters, digits, `_`, or `-`.
+Examples: `emotion_pilot_01`, `flash_compare_02`.
+

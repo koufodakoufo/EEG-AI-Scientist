@@ -48,6 +48,40 @@ def _read_json(path: Path) -> dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _as_dict(value: object) -> dict[str, object]:
+    return value if isinstance(value, dict) else {}
+
+
+def _as_str(value: object, default: str = "") -> str:
+    return value if isinstance(value, str) else default
+
+
+def _as_int(value: object, default: int = 0) -> int:
+    if isinstance(value, bool) or not isinstance(value, (int, float, str)):
+        return default
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _as_float(value: object, default: float = 0.0) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float, str)):
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _as_float_list(value: object) -> tuple[float, ...]:
+    if not isinstance(value, list):
+        return ()
+    return tuple(_as_float(item) for item in value)
+
+
+
+
 def _archived_path(path: Path | str) -> bool:
     return "archive" in Path(path).parts
 
@@ -121,7 +155,7 @@ def command_preflight(args: argparse.Namespace) -> int:
     deadline = _deadline(config.deadline)
     reports_dir = ensure_dir(Path(config.reports_dir))
     health = getattr(provider, "health", lambda: {"ok": False, "error": "no health method"})()
-    describe = getattr(provider, "describe", lambda: {})()
+    describe: dict[str, object] = getattr(provider, "describe", lambda: {})()
     probe_ok = False
     probe_status = "not_run"
     probe_latency = 0.0
@@ -350,31 +384,31 @@ def _flash_client(args: argparse.Namespace):  # type: ignore[no-untyped-def]
     from .ledger import BudgetLedger
 
     study, model = _flash_paths(args)
-    budget = study["budget"]
-    key, report = load_deepseek_key(Path(str(model["credential_file"])))
-    paths = study["paths"]
+    budget = _as_dict(study.get("budget"))
+    paths = _as_dict(study.get("paths"))
+    key, report = load_deepseek_key(Path(_as_str(model.get("credential_file"))))
     ledger = BudgetLedger(
-        Path(str(paths["budget_ledger"])),
-        run_id=str(study["run_id"]),
-        cap_cny=float(budget["project_api_cost_cny_cap"]),
-        wrap_up_reserve_cny=float(budget["wrap_up_reserve_cny"]),
-        model_attempts_limit=int(budget["model_attempts_cap"]),
-        search_attempts_limit=int(budget["search_attempts_cap"]),
-        fetch_attempts_limit=int(budget["fetch_attempts_cap"]),
-        input_tokens_limit=int(budget["input_tokens_cap"]),
-        output_tokens_limit=int(budget["output_tokens_cap"]),
+        Path(_as_str(paths.get("budget_ledger"))),
+        run_id=_as_str(study.get("run_id")),
+        cap_cny=_as_float(budget.get("project_api_cost_cny_cap")),
+        wrap_up_reserve_cny=_as_float(budget.get("wrap_up_reserve_cny")),
+        model_attempts_limit=_as_int(budget.get("model_attempts_cap")),
+        search_attempts_limit=_as_int(budget.get("search_attempts_cap")),
+        fetch_attempts_limit=_as_int(budget.get("fetch_attempts_cap")),
+        input_tokens_limit=_as_int(budget.get("input_tokens_cap")),
+        output_tokens_limit=_as_int(budget.get("output_tokens_cap")),
     )
     client = DeepSeekClient(
         api_key=key,
         ledger=ledger,
-        base_url=str(model["base_url"]),
-        model=str(model["model"]),
-        timeout_seconds=int(model["request_timeout_seconds"]),
-        connect_timeout_seconds=int(model["connect_timeout_seconds"]),
-        search_timeout_seconds=int(model["search_timeout_seconds"]),
-        fetch_timeout_seconds=int(model["fetch_timeout_seconds"]),
-        max_retries=int(model["max_retries"]),
-        retry_wait_seconds=tuple(float(item) for item in model["retry_wait_seconds"]),
+        base_url=_as_str(model.get("base_url")),
+        model=_as_str(model.get("model")),
+        timeout_seconds=_as_int(model.get("request_timeout_seconds"), 600),
+        connect_timeout_seconds=_as_int(model.get("connect_timeout_seconds"), 20),
+        search_timeout_seconds=_as_int(model.get("search_timeout_seconds"), 60),
+        fetch_timeout_seconds=_as_int(model.get("fetch_timeout_seconds"), 60),
+        max_retries=_as_int(model.get("max_retries"), 2),
+        retry_wait_seconds=_as_float_list(model.get("retry_wait_seconds")),
     )
     return study, model, client, ledger, report
 
