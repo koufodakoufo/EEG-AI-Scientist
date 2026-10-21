@@ -1,0 +1,711 @@
+{
+  "episode_id": "diag_case_c41a",
+  "case_id": "case_c41a",
+  "rule_version": "DIAGNOSTIC_v2",
+  "backend": "real_llm",
+  "provider": "deepseek_flash",
+  "model": "deepseek-flash",
+  "decision": {
+    "decision_type": "stop",
+    "hypotheses": [
+      {
+        "id": "H1",
+        "claim": "The high window-split score is driven by trial-specific information shared by windows of the same trial, which is learnable under arbitrary trial labels but does not transfer to unseen trials.",
+        "mechanism": "Same-trial windows in training and test share a trial signature or identity cue; the model associates that cue with trial-level labels, yielding high window BA and chance trial BA.",
+        "supporting_evidence_ids": [
+          "obs_1",
+          "req_1",
+          "req_2"
+        ],
+        "limitations": "The specific synthetic features remain unidentified, and a trial/collection artifact cannot be fully distinguished from genuine trial-shared task information."
+      },
+      {
+        "id": "H2",
+        "claim": "The high window score reflects a generalizable window-level class signal that should remain predictive under trial isolation.",
+        "mechanism": "Individual windows contain label-discriminative patterns independent of trial identity, so a model trained on some trials should transfer to unseen trials.",
+        "supporting_evidence_ids": [
+          "obs_1"
+        ],
+        "limitations": "Trial-split BA was near chance, and trial-random-label and per-window-randomization controls do not support transferable window-level signal."
+      }
+    ],
+    "action": null,
+    "stop": {
+      "reason": "Three diagnostic controls were executed. Window BA remained high under trial-level random labels while trial BA stayed near chance; independent window labels and metadata-only fell to chance. This pattern supports same-trial shared information and does not support a generalizable window signal or metadata identity effect.",
+      "final_judgment": "Within this synthetic feature table, the near-perfect window-split performance is non-transferable to unseen trials and is consistent with trial-specific information shared across same-trial windows. There is no measured support for a generalizable window-level class signal or for subject/session metadata explaining the result.",
+      "evidence_ids": [
+        "obs_1",
+        "req_1",
+        "req_2",
+        "req_3"
+      ],
+      "remaining_uncertainty": "The exact feature-level mechanism and whether the trial-shared information reflects a genuine synthetic trial signal versus a collection/leakage artifact cannot be determined from these controls. No real EEG conclusion is warranted."
+    },
+    "reasoning_summary": "Window performance persisted under trial-level label randomization but vanished with per-window randomization and metadata-only; trial-isolated scores stayed at chance. This supports same-trial window-shared information over generalizable or metadata effects, though the precise synthetic mechanism remains unidentified."
+  },
+  "scores": [
+    {
+      "request_id": "req_1",
+      "tool_id": "trial_random_labels",
+      "score": {
+        "status": "scored",
+        "hit": true,
+        "observed_direction": "positive",
+        "metric_key": "trial_random_gap_mean",
+        "value": 0.4839336759508486,
+        "reference": 0.0,
+        "delta": 0.4839336759508486
+      },
+      "result": {
+        "request_id": "req_1",
+        "tool_id": "trial_random_labels",
+        "valid": true,
+        "invalid_reason": null,
+        "metrics": {
+          "trial_random_window_ba_mean": 0.99189453125,
+          "trial_random_window_ba_std": 0.0015160326851816426,
+          "trial_random_window_ba_min": 0.9892578125,
+          "trial_random_window_ba_max": 0.994140625,
+          "trial_random_trial_ba_mean": 0.5079608552991515,
+          "trial_random_trial_ba_std": 0.012052657632144298,
+          "trial_random_trial_ba_min": 0.4826490713587488,
+          "trial_random_trial_ba_max": 0.5273194271481942,
+          "trial_random_gap_mean": 0.4839336759508486,
+          "trial_random_gap_std": 0.01131378619893426,
+          "trial_random_gap_min": 0.46682119785180576,
+          "trial_random_gap_max": 0.5075853036412512
+        },
+        "randomization": {
+          "tool_id": "trial_random",
+          "seeds": [
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            107,
+            108,
+            109,
+            110
+          ],
+          "per_seed": [
+            {
+              "seed": 101,
+              "valid": true,
+              "mapping_changed": true,
+              "window_ba": 0.9921875,
+              "trial_ba": 0.5149253731343284,
+              "gap": 0.4772621268656716,
+              "invalid_reason": null
+            },
+            {
+              "seed": 102,
+              "valid": true,
+              "mapping_changed": true,
+              "window_ba": 0.9931640625,
+              "trial_ba": 0.5044950738916256,
+              "gap": 0.4886689886083744,
+              "invalid_reason": null
+            },
+            {
+              "seed": 103,
+              "valid": true,
+              "mapping_changed": true,
+              "window_ba": 0.990234375,
+              "trial_ba": 0.4826490713587488,
+              "gap": 0.5075853036412512,
+              "invalid_reason": null
+            },
+            {
+              "seed": 104,
+              "valid": true,
+              "mapping_changed": true,
+              "window_ba": 0.9892578125,
+              "trial_ba": 0.5107843137254902,
+              "gap": 0.47847349877450984,
+              "invalid_reason": null
+            },
+            {
+              "seed": 105,
+              "valid": true,
+              "mapping_changed": true,
+              "window_ba": 0.994140625,
+              "trial_ba": 0.5162157153446998,
+              "gap": 0.4779249096553002,
+              "invalid_reason": null
+            },
+            {
+              "seed": 106,
+              "valid": true,
+              "mapping_changed": true,
+              "window_ba": 0.9912109375,
+              "trial_ba": 0.5013723843967967,
+              "gap": 0.48983855310320334,
+              "invalid_reason": null
+            },
+            {
+              "seed": 107,
+              "valid": true,
+              "mapping_changed": true,
+              "window_ba": 0.9912109375,
+              "trial_ba": 0.49691697191697193,
+              "gap": 0.49429396558302807,
+              "invalid_reason": null
+            },
+            {
+              "seed": 108,
+              "valid": true,
+              "mapping_changed": true,
+              "window_ba": 0.994140625,
+              "trial_ba": 0.5273194271481942,
+              "gap": 0.46682119785180576,
+              "invalid_reason": null
+            },
+            {
+              "seed": 109,
+              "valid": true,
+              "mapping_changed": true,
+              "window_ba": 0.9921875,
+              "trial_ba": 0.5055860805860806,
+              "gap": 0.48660141941391943,
+              "invalid_reason": null
+            },
+            {
+              "seed": 110,
+              "valid": true,
+              "mapping_changed": true,
+              "window_ba": 0.9912109375,
+              "trial_ba": 0.5193441414885778,
+              "gap": 0.47186679601142223,
+              "invalid_reason": null
+            }
+          ],
+          "n_valid_seeds": 10,
+          "invalid_reasons": []
+        },
+        "audit": {
+          "window": {
+            "split_level": "window",
+            "split_seed": 2101,
+            "overlap": {
+              "sample": 0,
+              "trial": 512,
+              "session": 32,
+              "subject": 16
+            },
+            "expected_overlap": {
+              "sample": 0
+            },
+            "counts": {
+              "train_rows": 3072,
+              "test_rows": 1024,
+              "train_trials": 512,
+              "test_trials": 512,
+              "train_sessions": 32,
+              "test_sessions": 32,
+              "train_subjects": 16,
+              "test_subjects": 16
+            },
+            "label_counts": {
+              "train": {
+                "negative": 1536,
+                "positive": 1536
+              },
+              "test": {
+                "negative": 512,
+                "positive": 512
+              }
+            },
+            "n_groups": {
+              "window": 6,
+              "trial": 512,
+              "subject": 16
+            },
+            "invalid_reason": null
+          },
+          "trial": {
+            "split_level": "trial",
+            "split_seed": 2101,
+            "overlap": {
+              "sample": 0,
+              "trial": 0,
+              "session": 32,
+              "subject": 16
+            },
+            "expected_overlap": {
+              "sample": 0,
+              "trial": 0
+            },
+            "counts": {
+              "train_rows": 3072,
+              "test_rows": 1024,
+              "train_trials": 384,
+              "test_trials": 128,
+              "train_sessions": 32,
+              "test_sessions": 32,
+              "train_subjects": 16,
+              "test_subjects": 16
+            },
+            "label_counts": {
+              "train": {
+                "negative": 1536,
+                "positive": 1536
+              },
+              "test": {
+                "negative": 512,
+                "positive": 512
+              }
+            },
+            "n_groups": {
+              "window": 8,
+              "trial": 384,
+              "subject": 16
+            },
+            "invalid_reason": null
+          },
+          "subject": {
+            "split_level": "subject",
+            "split_seed": 2101,
+            "overlap": {
+              "sample": 0,
+              "trial": 0,
+              "session": 0,
+              "subject": 0
+            },
+            "expected_overlap": {
+              "sample": 0,
+              "trial": 0,
+              "subject": 0
+            },
+            "counts": {
+              "train_rows": 3072,
+              "test_rows": 1024,
+              "train_trials": 384,
+              "test_trials": 128,
+              "train_sessions": 24,
+              "test_sessions": 8,
+              "train_subjects": 12,
+              "test_subjects": 4
+            },
+            "label_counts": {
+              "train": {
+                "negative": 1536,
+                "positive": 1536
+              },
+              "test": {
+                "negative": 512,
+                "positive": 512
+              }
+            },
+            "n_groups": {
+              "window": 8,
+              "trial": 384,
+              "subject": 12
+            },
+            "invalid_reason": null
+          }
+        },
+        "data_hash": "d698ffcd341d5c64875af114446ecdce9fc31238ae5ce6e84e45f7eff4df4b22",
+        "config_hash": "0a9e96591c557f9de6d9aa9fde0c1d5b95d54552e6ec2d7697e51e1534ea0250",
+        "elapsed_seconds": 1.012076499988325,
+        "details": {
+          "n_seeds": 10,
+          "n_valid_seeds": 10
+        }
+      }
+    },
+    {
+      "request_id": "req_2",
+      "tool_id": "window_random_labels",
+      "score": {
+        "status": "scored",
+        "hit": true,
+        "observed_direction": "near_zero",
+        "metric_key": "window_random_ba_mean",
+        "value": 0.49117719845528185,
+        "reference": 0.5,
+        "delta": -0.00882280154471815
+      },
+      "result": {
+        "request_id": "req_2",
+        "tool_id": "window_random_labels",
+        "valid": true,
+        "invalid_reason": null,
+        "metrics": {
+          "window_random_ba_mean": 0.49117719845528185,
+          "window_random_ba_std": 0.0182988365414286,
+          "window_random_ba_min": 0.45990359250027757,
+          "window_random_ba_max": 0.520587786259542,
+          "window_random_ba_minus_chance": -0.00882280154471815
+        },
+        "randomization": {
+          "tool_id": "window_random",
+          "seeds": [
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            107,
+            108,
+            109,
+            110
+          ],
+          "per_seed": [
+            {
+              "seed": 101,
+              "valid": true,
+              "balanced_accuracy": 0.46579625002384273
+            },
+            {
+              "seed": 102,
+              "valid": true,
+              "balanced_accuracy": 0.4785320540942644
+            },
+            {
+              "seed": 103,
+              "valid": true,
+              "balanced_accuracy": 0.5085041280693454
+            },
+            {
+              "seed": 104,
+              "valid": true,
+              "balanced_accuracy": 0.49305892094648995
+            },
+            {
+              "seed": 105,
+              "valid": true,
+              "balanced_accuracy": 0.49728342776474177
+            },
+            {
+              "seed": 106,
+              "valid": true,
+              "balanced_accuracy": 0.520587786259542
+            },
+            {
+              "seed": 107,
+              "valid": true,
+              "balanced_accuracy": 0.5098861273771148
+            },
+            {
+              "seed": 108,
+              "valid": true,
+              "balanced_accuracy": 0.45990359250027757
+            },
+            {
+              "seed": 109,
+              "valid": true,
+              "balanced_accuracy": 0.48817722681359044
+            },
+            {
+              "seed": 110,
+              "valid": true,
+              "balanced_accuracy": 0.49004247070360946
+            }
+          ],
+          "n_valid_seeds": 10
+        },
+        "audit": {
+          "window": {
+            "split_level": "window",
+            "split_seed": 2101,
+            "overlap": {
+              "sample": 0,
+              "trial": 512,
+              "session": 32,
+              "subject": 16
+            },
+            "expected_overlap": {
+              "sample": 0
+            },
+            "counts": {
+              "train_rows": 3072,
+              "test_rows": 1024,
+              "train_trials": 512,
+              "test_trials": 512,
+              "train_sessions": 32,
+              "test_sessions": 32,
+              "train_subjects": 16,
+              "test_subjects": 16
+            },
+            "label_counts": {
+              "train": {
+                "negative": 1536,
+                "positive": 1536
+              },
+              "test": {
+                "negative": 512,
+                "positive": 512
+              }
+            },
+            "n_groups": {
+              "window": 6,
+              "trial": 512,
+              "subject": 16
+            },
+            "invalid_reason": null
+          },
+          "trial": {
+            "split_level": "trial",
+            "split_seed": 2101,
+            "overlap": {
+              "sample": 0,
+              "trial": 0,
+              "session": 32,
+              "subject": 16
+            },
+            "expected_overlap": {
+              "sample": 0,
+              "trial": 0
+            },
+            "counts": {
+              "train_rows": 3072,
+              "test_rows": 1024,
+              "train_trials": 384,
+              "test_trials": 128,
+              "train_sessions": 32,
+              "test_sessions": 32,
+              "train_subjects": 16,
+              "test_subjects": 16
+            },
+            "label_counts": {
+              "train": {
+                "negative": 1536,
+                "positive": 1536
+              },
+              "test": {
+                "negative": 512,
+                "positive": 512
+              }
+            },
+            "n_groups": {
+              "window": 8,
+              "trial": 384,
+              "subject": 16
+            },
+            "invalid_reason": null
+          },
+          "subject": {
+            "split_level": "subject",
+            "split_seed": 2101,
+            "overlap": {
+              "sample": 0,
+              "trial": 0,
+              "session": 0,
+              "subject": 0
+            },
+            "expected_overlap": {
+              "sample": 0,
+              "trial": 0,
+              "subject": 0
+            },
+            "counts": {
+              "train_rows": 3072,
+              "test_rows": 1024,
+              "train_trials": 384,
+              "test_trials": 128,
+              "train_sessions": 24,
+              "test_sessions": 8,
+              "train_subjects": 12,
+              "test_subjects": 4
+            },
+            "label_counts": {
+              "train": {
+                "negative": 1536,
+                "positive": 1536
+              },
+              "test": {
+                "negative": 512,
+                "positive": 512
+              }
+            },
+            "n_groups": {
+              "window": 8,
+              "trial": 384,
+              "subject": 12
+            },
+            "invalid_reason": null
+          }
+        },
+        "data_hash": "d698ffcd341d5c64875af114446ecdce9fc31238ae5ce6e84e45f7eff4df4b22",
+        "config_hash": "0a9e96591c557f9de6d9aa9fde0c1d5b95d54552e6ec2d7697e51e1534ea0250",
+        "elapsed_seconds": 0.5248199999914505,
+        "details": {
+          "n_seeds": 10,
+          "trial_aggregation": "not applicable"
+        }
+      }
+    },
+    {
+      "request_id": "req_3",
+      "tool_id": "metadata_only",
+      "score": {
+        "status": "scored",
+        "hit": true,
+        "observed_direction": "near_zero",
+        "metric_key": "metadata_only_balanced_accuracy",
+        "value": 0.5,
+        "reference": 0.5,
+        "delta": 0.0
+      },
+      "result": {
+        "request_id": "req_3",
+        "tool_id": "metadata_only",
+        "valid": true,
+        "invalid_reason": null,
+        "metrics": {
+          "metadata_only_balanced_accuracy": 0.5,
+          "metadata_only_accuracy": 0.5,
+          "metadata_only_ba_minus_chance": 0.0
+        },
+        "randomization": {},
+        "audit": {
+          "window": {
+            "split_level": "window",
+            "split_seed": 2101,
+            "overlap": {
+              "sample": 0,
+              "trial": 512,
+              "session": 32,
+              "subject": 16
+            },
+            "expected_overlap": {
+              "sample": 0
+            },
+            "counts": {
+              "train_rows": 3072,
+              "test_rows": 1024,
+              "train_trials": 512,
+              "test_trials": 512,
+              "train_sessions": 32,
+              "test_sessions": 32,
+              "train_subjects": 16,
+              "test_subjects": 16
+            },
+            "label_counts": {
+              "train": {
+                "negative": 1536,
+                "positive": 1536
+              },
+              "test": {
+                "negative": 512,
+                "positive": 512
+              }
+            },
+            "n_groups": {
+              "window": 6,
+              "trial": 512,
+              "subject": 16
+            },
+            "invalid_reason": null
+          },
+          "trial": {
+            "split_level": "trial",
+            "split_seed": 2101,
+            "overlap": {
+              "sample": 0,
+              "trial": 0,
+              "session": 32,
+              "subject": 16
+            },
+            "expected_overlap": {
+              "sample": 0,
+              "trial": 0
+            },
+            "counts": {
+              "train_rows": 3072,
+              "test_rows": 1024,
+              "train_trials": 384,
+              "test_trials": 128,
+              "train_sessions": 32,
+              "test_sessions": 32,
+              "train_subjects": 16,
+              "test_subjects": 16
+            },
+            "label_counts": {
+              "train": {
+                "negative": 1536,
+                "positive": 1536
+              },
+              "test": {
+                "negative": 512,
+                "positive": 512
+              }
+            },
+            "n_groups": {
+              "window": 8,
+              "trial": 384,
+              "subject": 16
+            },
+            "invalid_reason": null
+          },
+          "subject": {
+            "split_level": "subject",
+            "split_seed": 2101,
+            "overlap": {
+              "sample": 0,
+              "trial": 0,
+              "session": 0,
+              "subject": 0
+            },
+            "expected_overlap": {
+              "sample": 0,
+              "trial": 0,
+              "subject": 0
+            },
+            "counts": {
+              "train_rows": 3072,
+              "test_rows": 1024,
+              "train_trials": 384,
+              "test_trials": 128,
+              "train_sessions": 24,
+              "test_sessions": 8,
+              "train_subjects": 12,
+              "test_subjects": 4
+            },
+            "label_counts": {
+              "train": {
+                "negative": 1536,
+                "positive": 1536
+              },
+              "test": {
+                "negative": 512,
+                "positive": 512
+              }
+            },
+            "n_groups": {
+              "window": 8,
+              "trial": 384,
+              "subject": 12
+            },
+            "invalid_reason": null
+          }
+        },
+        "data_hash": "d698ffcd341d5c64875af114446ecdce9fc31238ae5ce6e84e45f7eff4df4b22",
+        "config_hash": "0a9e96591c557f9de6d9aa9fde0c1d5b95d54552e6ec2d7697e51e1534ea0250",
+        "elapsed_seconds": 0.06458289999864064,
+        "details": {
+          "n_metadata_columns": 48,
+          "n_train": 3072,
+          "n_test": 1024,
+          "confusion_matrix": [
+            [
+              240,
+              272
+            ],
+            [
+              240,
+              272
+            ]
+          ]
+        }
+      }
+    }
+  ],
+  "predictions_total": 3,
+  "predictions_hit": 3,
+  "stop_reason": "Three diagnostic controls were executed. Window BA remained high under trial-level random labels while trial BA stayed near chance; independent window labels and metadata-only fell to chance. This pattern supports same-trial shared information and does not support a generalizable window signal or metadata identity effect.",
+  "created_at": "2026-10-19T17:10:16Z"
+}

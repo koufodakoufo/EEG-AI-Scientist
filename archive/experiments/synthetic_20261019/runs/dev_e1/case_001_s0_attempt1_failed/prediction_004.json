@@ -1,0 +1,36 @@
+{
+  "request": {
+    "request_id": "req_1",
+    "tool_id": "trial_random_labels",
+    "parameters": {},
+    "distinguishes": [
+      "H1",
+      "H2"
+    ],
+    "prediction": {
+      "scoring_status": "numeric",
+      "metric_key": "trial_random_trial_ba_mean",
+      "primary_direction": "near_zero",
+      "threshold": 0.05,
+      "check_facts": [],
+      "conditional_predictions": [
+        {
+          "hypothesis_id": "H1",
+          "direction": "positive",
+          "rationale": "If trial-specific signatures exist, randomizing labels at the trial level should destroy performance on test trials."
+        },
+        {
+          "hypothesis_id": "H2",
+          "direction": "negative",
+          "rationale": "Subject identity alone cannot explain high window accuracy if subjects are shared; however, this metric tests label reassignment, not subject isolation directly."
+        }
+      ],
+      "update_rule_if_opposite": "If trial_random_trial_ba_mean is positive (>0.05), H1 gains support as it suggests labels matter at the trial level for performance degradation."
+    }
+  },
+  "canonical_json": "{\"distinguishes\":[\"H1\",\"H2\"],\"parameters\":{},\"prediction\":{\"check_facts\":[],\"conditional_predictions\":[{\"direction\":\"positive\",\"hypothesis_id\":\"H1\",\"rationale\":\"If trial-specific signatures exist, randomizing labels at the trial level should destroy performance on test trials.\"},{\"direction\":\"negative\",\"hypothesis_id\":\"H2\",\"rationale\":\"Subject identity alone cannot explain high window accuracy if subjects are shared; however, this metric tests label reassignment, not subject isolation directly.\"}],\"metric_key\":\"trial_random_trial_ba_mean\",\"primary_direction\":\"near_zero\",\"scoring_status\":\"numeric\",\"threshold\":0.05,\"update_rule_if_opposite\":\"If trial_random_trial_ba_mean is positive (>0.05), H1 gains support as it suggests labels matter at the trial level for performance degradation.\"},\"request_id\":\"req_1\",\"tool_id\":\"trial_random_labels\"}",
+  "sha256": "fd3385127746fc239dc16fd4dc230710c9a7da36dd81458f0d8781814dc6993f",
+  "sealed_at": "2026-10-18T17:38:10Z",
+  "event_sequence": 4,
+  "run_dir": "X:\\projects\\EEG-AI-Scientist\\runs\\dev_e1\\case_001_s0"
+}

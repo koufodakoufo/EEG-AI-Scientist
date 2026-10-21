@@ -1,0 +1,79 @@
+{
+  "at": "2026-10-19T17:16:42Z",
+  "model": "deepseek-flash",
+  "request_id": "b7eb611a-bf00-46f0-850a-c7f7cddc3f0e",
+  "finish_reason": "tool_calls",
+  "usage": {
+    "prompt_tokens": 46658,
+    "completion_tokens": 192,
+    "total_tokens": 46850,
+    "prompt_cache_hit_tokens": 46080,
+    "prompt_cache_miss_tokens": 578
+  },
+  "content": "",
+  "reasoning_content": "Both failed. BIOT arxiv ID is wrong (2205.11408 is a math paper). BIOT is arXiv 2205.11408? Actually BIOT: \"BIOT: Biosignal Transformer for Cross-data Learning in the Wild\" — arXiv 2211.00391. Yes, BIOT is 2211.00391.\n\nRun fixture with empty parameters.\n\nLet me do both.",
+  "tool_calls": [
+    {
+      "id": "call_00_uaKlZpbzXk75JsAHex8V4084",
+      "name": "fetch_source",
+      "arguments": "{\"url\": \"https://arxiv-org.ezproxy.obspm.fr/html/2211.00391v2\"}"
+    },
+    {
+      "id": "call_01_MxXChEceZIN7PLGSogYd8159",
+      "name": "run_experiment",
+      "arguments": "{\"experiment_id\": \"fixture_split_check\", \"parameters\": {}}"
+    }
+  ],
+  "raw": {
+    "id": "b7eb611a-bf00-46f0-850a-c7f7cddc3f0e",
+    "object": "chat.completion",
+    "created": 1792430201,
+    "model": "deepseek-flash",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "Both failed. BIOT arxiv ID is wrong (2205.11408 is a math paper). BIOT is arXiv 2205.11408? Actually BIOT: \"BIOT: Biosignal Transformer for Cross-data Learning in the Wild\" — arXiv 2211.00391. Yes, BIOT is 2211.00391.\n\nRun fixture with empty parameters.\n\nLet me do both.",
+          "tool_calls": [
+            {
+              "index": 0,
+              "id": "call_00_uaKlZpbzXk75JsAHex8V4084",
+              "type": "function",
+              "function": {
+                "name": "fetch_source",
+                "arguments": "{\"url\": \"https://arxiv-org.ezproxy.obspm.fr/html/2211.00391v2\"}"
+              }
+            },
+            {
+              "index": 1,
+              "id": "call_01_MxXChEceZIN7PLGSogYd8159",
+              "type": "function",
+              "function": {
+                "name": "run_experiment",
+                "arguments": "{\"experiment_id\": \"fixture_split_check\", \"parameters\": {}}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 46658,
+      "completion_tokens": 192,
+      "total_tokens": 46850,
+      "prompt_tokens_details": {
+        "cached_tokens": 46080
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 83
+      },
+      "prompt_cache_hit_tokens": 46080,
+      "prompt_cache_miss_tokens": 578
+    },
+    "system_fingerprint": "e72d3c7f663d3e1383b00b3884cb4501"
+  }
+}

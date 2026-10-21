@@ -1,0 +1,58 @@
+{
+  "episode_id": "study_20261019_case_005_s0",
+  "case_id": "case_005",
+  "rule_version": "S0",
+  "backend": "real_llm",
+  "provider": "ollama_local",
+  "model": "qwen3.5:9b",
+  "decision": {
+    "decision_type": "stop",
+    "hypotheses": [
+      {
+        "id": "H1",
+        "claim": "Trial-specific content signatures drive model performance.",
+        "mechanism": "The model learns specific feature-label mappings unique to each trial's data distribution. Permuting labels at the trial level (randomization) or within subjects should destroy this signal, causing balanced accuracy (BA) to drop to chance (~0.5).",
+        "supporting_evidence_ids": [
+          "dev-case_001-action-3",
+          "dev-case_002-action-3"
+        ],
+        "limitations": "In Case 1, trial randomization did not significantly reduce BA above chance (delta ~+0.008), suggesting the signal wasn't robustly tied to specific trial content in that setup."
+      },
+      {
+        "id": "H2",
+        "claim": "Subject identity effects drive performance.",
+        "mechanism": "The model predicts labels based on subject metadata (e.g., ID) rather than data features. Shuffling labels within a subject should preserve this ability if the underlying feature-label mapping for that specific subject remains intact or irrelevant, keeping BA high (~0.97 in Case 1 window split).",
+        "supporting_evidence_ids": [
+          "dev-case_002-action-3"
+        ],
+        "limitations": "In Case 2, trial shuffling within subjects reduced BA to chance (delta ~-0.02), contradicting the idea that subject identity alone sustains high performance when labels are permuted."
+      },
+      {
+        "id": "H3",
+        "claim": "Session-level overlap or metadata drives performance.",
+        "mechanism": "Performance is driven by factors preserved across sessions (e.g., session ID, global data distribution) rather than specific trial content. Window splits show high BA because they share the same session context; trial splits drop to chance when that shared context's predictive power for *specific* labels is broken.",
+        "supporting_evidence_ids": [
+          "dev-case_001-action-3",
+          "dev-case_002-action-1"
+        ],
+        "limitations": "In Case 1, the high window split BA (0.96) vs trial split drop suggests session overlap matters, but since randomization at trial level didn't break it in H1's prediction for that case, we must weigh if 'session' is a proxy or distinct mechanism."
+      }
+    ],
+    "action": null,
+    "stop": {
+      "reason": "Evidence from both cases indicates that neither pure subject identity (H2) nor robust trial-specific content signatures (H1) consistently explain the high window split performance. In Case 1, randomization failed to drop BA significantly above chance in trials, while session overlap was noted. In Case 2, shuffling within subjects dropped BA to chance, refuting H2 for that setup and supporting a mechanism where specific trial content or subject-specific feature-label mappings are required but fragile (supporting aspects of H1/H3). The most consistent conclusion is that performance relies on specific data-feature-to-label associations tied to the training set's structure (subject/session), which vanish when labels are randomized, aligning with a modified view of H1 where 'trial content' implies the specific feature distribution within the subject/session context.",
+      "final_judgment": "The high window split performance is driven by the preservation of specific feature-label associations inherent to the training subjects/sessions. When these associations are broken via randomization (Case 2) or when trial-specific signals aren't robustly learned (Case 1), performance drops to chance. This supports a nuanced version of H1: 'Trial content' refers to the specific data distribution within the subject/session, not just arbitrary labels; breaking this mapping destroys signal.",
+      "evidence_ids": [
+        "dev-case_001-action-3",
+        "dev-case_002-action-3"
+      ],
+      "remaining_uncertainty": "Whether 'session overlap' (H3) is a distinct mechanism or simply the container for subject-specific distributions. The data suggests performance depends on intact feature-label mappings within subjects/sessions, which are destroyed by label permutation."
+    },
+    "reasoning_summary": "Performance relies on specific feature-label associations within subjects/sessions. Randomization breaks these, dropping BA to chance (supporting H1's core mechanism). High window splits occur because the underlying subject/session distributions remain intact. Subject identity alone (H2) is insufficient if labels are permuted."
+  },
+  "scores": [],
+  "predictions_total": 0,
+  "predictions_hit": 0,
+  "stop_reason": "Evidence from both cases indicates that neither pure subject identity (H2) nor robust trial-specific content signatures (H1) consistently explain the high window split performance. In Case 1, randomization failed to drop BA significantly above chance in trials, while session overlap was noted. In Case 2, shuffling within subjects dropped BA to chance, refuting H2 for that setup and supporting a mechanism where specific trial content or subject-specific feature-label mappings are required but fragile (supporting aspects of H1/H3). The most consistent conclusion is that performance relies on specific data-feature-to-label associations tied to the training set's structure (subject/session), which vanish when labels are randomized, aligning with a modified view of H1 where 'trial content' implies the specific feature distribution within the subject/session context.",
+  "created_at": "2026-10-18T17:53:21Z"
+}

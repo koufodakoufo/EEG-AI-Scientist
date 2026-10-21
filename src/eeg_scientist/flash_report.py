@@ -13,7 +13,7 @@ from pathlib import Path
 
 from .storage import atomic_write_text, ensure_dir, utc_now
 
-DEFAULT_FLASH_STUDY = Path("configs/studies/overnight_flash_20261020.json")
+DEFAULT_FLASH_STUDY = Path("archive/experiments/flash_20261020_0058/configs/study.json")
 
 
 def _read_json(path: Path) -> dict[str, object]:

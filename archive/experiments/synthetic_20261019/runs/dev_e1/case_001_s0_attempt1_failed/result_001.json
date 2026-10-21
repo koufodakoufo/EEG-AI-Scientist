@@ -1,0 +1,258 @@
+{
+  "request_id": "req_1",
+  "tool_id": "trial_random_labels",
+  "valid": true,
+  "invalid_reason": null,
+  "metrics": {
+    "trial_random_window_ba_mean": 0.99189453125,
+    "trial_random_window_ba_std": 0.0015160326851816426,
+    "trial_random_window_ba_min": 0.9892578125,
+    "trial_random_window_ba_max": 0.994140625,
+    "trial_random_trial_ba_mean": 0.5079608552991515,
+    "trial_random_trial_ba_std": 0.012052657632144298,
+    "trial_random_trial_ba_min": 0.4826490713587488,
+    "trial_random_trial_ba_max": 0.5273194271481942,
+    "trial_random_gap_mean": 0.4839336759508486,
+    "trial_random_gap_std": 0.01131378619893426,
+    "trial_random_gap_min": 0.46682119785180576,
+    "trial_random_gap_max": 0.5075853036412512
+  },
+  "randomization": {
+    "tool_id": "trial_random",
+    "seeds": [
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110
+    ],
+    "per_seed": [
+      {
+        "seed": 101,
+        "valid": true,
+        "mapping_changed": true,
+        "window_ba": 0.9921875,
+        "trial_ba": 0.5149253731343284,
+        "gap": 0.4772621268656716,
+        "invalid_reason": null
+      },
+      {
+        "seed": 102,
+        "valid": true,
+        "mapping_changed": true,
+        "window_ba": 0.9931640625,
+        "trial_ba": 0.5044950738916256,
+        "gap": 0.4886689886083744,
+        "invalid_reason": null
+      },
+      {
+        "seed": 103,
+        "valid": true,
+        "mapping_changed": true,
+        "window_ba": 0.990234375,
+        "trial_ba": 0.4826490713587488,
+        "gap": 0.5075853036412512,
+        "invalid_reason": null
+      },
+      {
+        "seed": 104,
+        "valid": true,
+        "mapping_changed": true,
+        "window_ba": 0.9892578125,
+        "trial_ba": 0.5107843137254902,
+        "gap": 0.47847349877450984,
+        "invalid_reason": null
+      },
+      {
+        "seed": 105,
+        "valid": true,
+        "mapping_changed": true,
+        "window_ba": 0.994140625,
+        "trial_ba": 0.5162157153446998,
+        "gap": 0.4779249096553002,
+        "invalid_reason": null
+      },
+      {
+        "seed": 106,
+        "valid": true,
+        "mapping_changed": true,
+        "window_ba": 0.9912109375,
+        "trial_ba": 0.5013723843967967,
+        "gap": 0.48983855310320334,
+        "invalid_reason": null
+      },
+      {
+        "seed": 107,
+        "valid": true,
+        "mapping_changed": true,
+        "window_ba": 0.9912109375,
+        "trial_ba": 0.49691697191697193,
+        "gap": 0.49429396558302807,
+        "invalid_reason": null
+      },
+      {
+        "seed": 108,
+        "valid": true,
+        "mapping_changed": true,
+        "window_ba": 0.994140625,
+        "trial_ba": 0.5273194271481942,
+        "gap": 0.46682119785180576,
+        "invalid_reason": null
+      },
+      {
+        "seed": 109,
+        "valid": true,
+        "mapping_changed": true,
+        "window_ba": 0.9921875,
+        "trial_ba": 0.5055860805860806,
+        "gap": 0.48660141941391943,
+        "invalid_reason": null
+      },
+      {
+        "seed": 110,
+        "valid": true,
+        "mapping_changed": true,
+        "window_ba": 0.9912109375,
+        "trial_ba": 0.5193441414885778,
+        "gap": 0.47186679601142223,
+        "invalid_reason": null
+      }
+    ],
+    "n_valid_seeds": 10,
+    "invalid_reasons": []
+  },
+  "audit": {
+    "window": {
+      "split_level": "window",
+      "split_seed": 2101,
+      "overlap": {
+        "sample": 0,
+        "trial": 512,
+        "session": 32,
+        "subject": 16
+      },
+      "expected_overlap": {
+        "sample": 0
+      },
+      "counts": {
+        "train_rows": 3072,
+        "test_rows": 1024,
+        "train_trials": 512,
+        "test_trials": 512,
+        "train_sessions": 32,
+        "test_sessions": 32,
+        "train_subjects": 16,
+        "test_subjects": 16
+      },
+      "label_counts": {
+        "train": {
+          "negative": 1536,
+          "positive": 1536
+        },
+        "test": {
+          "negative": 512,
+          "positive": 512
+        }
+      },
+      "n_groups": {
+        "window": 6,
+        "trial": 512,
+        "subject": 16
+      },
+      "invalid_reason": null
+    },
+    "trial": {
+      "split_level": "trial",
+      "split_seed": 2101,
+      "overlap": {
+        "sample": 0,
+        "trial": 0,
+        "session": 32,
+        "subject": 16
+      },
+      "expected_overlap": {
+        "sample": 0,
+        "trial": 0
+      },
+      "counts": {
+        "train_rows": 3072,
+        "test_rows": 1024,
+        "train_trials": 384,
+        "test_trials": 128,
+        "train_sessions": 32,
+        "test_sessions": 32,
+        "train_subjects": 16,
+        "test_subjects": 16
+      },
+      "label_counts": {
+        "train": {
+          "negative": 1536,
+          "positive": 1536
+        },
+        "test": {
+          "negative": 512,
+          "positive": 512
+        }
+      },
+      "n_groups": {
+        "window": 8,
+        "trial": 384,
+        "subject": 16
+      },
+      "invalid_reason": null
+    },
+    "subject": {
+      "split_level": "subject",
+      "split_seed": 2101,
+      "overlap": {
+        "sample": 0,
+        "trial": 0,
+        "session": 0,
+        "subject": 0
+      },
+      "expected_overlap": {
+        "sample": 0,
+        "trial": 0,
+        "subject": 0
+      },
+      "counts": {
+        "train_rows": 3072,
+        "test_rows": 1024,
+        "train_trials": 384,
+        "test_trials": 128,
+        "train_sessions": 24,
+        "test_sessions": 8,
+        "train_subjects": 12,
+        "test_subjects": 4
+      },
+      "label_counts": {
+        "train": {
+          "negative": 1536,
+          "positive": 1536
+        },
+        "test": {
+          "negative": 512,
+          "positive": 512
+        }
+      },
+      "n_groups": {
+        "window": 8,
+        "trial": 384,
+        "subject": 12
+      },
+      "invalid_reason": null
+    }
+  },
+  "data_hash": "6a24308f96bf4b83e7ba84d287cdb9e4e15108d43b5ee34096d987a7d6ea6462",
+  "config_hash": "e38f3f34329e844459dda1b742c744995758faf77c62227497c2ec8ab4dc6540",
+  "elapsed_seconds": 1.2554996000035317,
+  "details": {
+    "n_seeds": 10,
+    "n_valid_seeds": 10
+  }
+}

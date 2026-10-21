@@ -1,0 +1,93 @@
+{
+  "at": "2026-10-19T17:11:52Z",
+  "model": "deepseek-flash",
+  "request_id": "12c4fda8-94a9-4301-b51d-3e0c8e569180",
+  "finish_reason": "tool_calls",
+  "usage": {
+    "prompt_tokens": 2145,
+    "completion_tokens": 935,
+    "total_tokens": 3080,
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 2145
+  },
+  "content": "I'll map the literature first, in parallel batches.",
+  "reasoning_content": "Let me plan. I need to search for literature on EEG representations, cross-subject/session/trial generalization, linear probe vs fine-tuning, self-supervised pretraining (masked reconstruction, contrastive), identity/environment confounds.\n\nLet me do searches in parallel batches.\n\nKey papers I anticipate:\n- EEGNet (Lawhern et al. 2018) - within-subject decoding.\n- Banville et al. 2021 \"Uncovering the structure of clinical EEG signals with self-supervised learning\" (Contrastive Predictive Coding, Sleep/Pathology).\n- Banville et al. 2020 \"Self-supervised representation learning from electroencephalography signals\".\n- Yang, Westover, Sun 2022 \"BIOT: cross-data biosignal learning in the wild\" (masked reconstruction).\n- Yang et al. 2023 \"A large-scale EEG pretrained model\" (LaBraM) — NeurIPS 2024.\n- Song, Wang et al. \"EEG-Conformer\".\n- Kostas, Aroca-Ouellette, Rudzicz 2021 \"BENDR: using transformers and a contrastive self-supervised learning task to learn from massive amounts of EEG data\".\n- Zhang et al. \"Separating brain activity from noise/spontaneous EEG\" — maybe not.\n- Sasse et al.? \n- \"Deep learning-based electroencephalography analysis: a systematic review\" Roy et al. 2019.\n- \"The brain imaging data structure\" not relevant.\n- Cross-subject/session generalization: \"EEG-based cross-subject... inter-subject variability\" critiques.\n- Li et al. \"Theoretical analysis of accuracy... \" \n- Important counter-evidence: \"Deep learning for EEG: ... is it better than FBCSP?\" \n- \"Decoding EEG: within-subject vs cross-subject\" \n- Also relevant: \"Braindecode\" / MOABB (Jayaram & Barachant 2018) — benchmark showing cross-subject difficulty.\n- \"Within-subject vs between-subject variability\" \n- Miccini? \n- A key methodological critique: \"Mind the gap: ... trial-level vs subject-level\".\n- \"Beyond Subject-Level: ... decoding accuracy inflation\" \n- Also: \"Trivial classifiers on EEG due to impedance/amplifier/impedance/eye movements\" — e.g., \"Big data ... preprocessing confound\".\n- \"Confounds in EEG analysis\" — e.g., \"The perils of using EEG as a measure of individual differences\" (Cooper? no).\n- Important: \"EEGManyPipelines\" (2025) — multiverse analysis of EEG, showing analytic variability.\n- \"Insights from EEGManyPipelines\" \n- Also \"EEGManyLabs\".\n- For \"missing information vs limited readout\": linear probe vs fine-tuning literature from vision (e.g., \"On the effectiveness of linear probes\"?) but for EEG: \"Probing EEG foundation models\" — maybe \"Are EEG foundation models good?\" — There's \"EEG-FM\" evaluations, e.g., \"A critical review of EEG foundation models\" maybe.\n- There's a 2024/2025 paper: \"Position: On the Feasibility of EEG Foundation Models\" or \"EEGPT\".\n- \"Evaluating EEG foundation models: ... linear probing vs fine-tuning\".\n- Also \"Deep learning-based EEG decoding with pretraining: ... subject-adaptive\".\n\nLet me search.\n\nI should be efficient: maybe ~12-16 searches and ~10-14 fetches, reading selectively.\n\nLet me start.",
+  "tool_calls": [
+    {
+      "id": "call_00_k0f3lBf5qpEXevxcuErS9603",
+      "name": "search_sources",
+      "arguments": "{\"query\": \"EEG self-supervised pretraining masked reconstruction contrastive predicting clinical outcomes Banville\", \"count\": 8}"
+    },
+    {
+      "id": "call_01_VwReUPUUxCI1Nc5HyxKZ1781",
+      "name": "search_sources",
+      "arguments": "{\"query\": \"cross-subject EEG decoding generalization inter-subject variability benchmark MOABB\", \"count\": 8}"
+    },
+    {
+      "id": "call_02_YvlDPtcsgJwfZOca1DRK4303",
+      "name": "search_sources",
+      "arguments": "{\"query\": \"EEG foundation model linear probe versus fine-tuning evaluation critique\", \"count\": 8}"
+    }
+  ],
+  "raw": {
+    "id": "12c4fda8-94a9-4301-b51d-3e0c8e569180",
+    "object": "chat.completion",
+    "created": 1792429907,
+    "model": "deepseek-flash",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "I'll map the literature first, in parallel batches.",
+          "reasoning_content": "Let me plan. I need to search for literature on EEG representations, cross-subject/session/trial generalization, linear probe vs fine-tuning, self-supervised pretraining (masked reconstruction, contrastive), identity/environment confounds.\n\nLet me do searches in parallel batches.\n\nKey papers I anticipate:\n- EEGNet (Lawhern et al. 2018) - within-subject decoding.\n- Banville et al. 2021 \"Uncovering the structure of clinical EEG signals with self-supervised learning\" (Contrastive Predictive Coding, Sleep/Pathology).\n- Banville et al. 2020 \"Self-supervised representation learning from electroencephalography signals\".\n- Yang, Westover, Sun 2022 \"BIOT: cross-data biosignal learning in the wild\" (masked reconstruction).\n- Yang et al. 2023 \"A large-scale EEG pretrained model\" (LaBraM) — NeurIPS 2024.\n- Song, Wang et al. \"EEG-Conformer\".\n- Kostas, Aroca-Ouellette, Rudzicz 2021 \"BENDR: using transformers and a contrastive self-supervised learning task to learn from massive amounts of EEG data\".\n- Zhang et al. \"Separating brain activity from noise/spontaneous EEG\" — maybe not.\n- Sasse et al.? \n- \"Deep learning-based electroencephalography analysis: a systematic review\" Roy et al. 2019.\n- \"The brain imaging data structure\" not relevant.\n- Cross-subject/session generalization: \"EEG-based cross-subject... inter-subject variability\" critiques.\n- Li et al. \"Theoretical analysis of accuracy... \" \n- Important counter-evidence: \"Deep learning for EEG: ... is it better than FBCSP?\" \n- \"Decoding EEG: within-subject vs cross-subject\" \n- Also relevant: \"Braindecode\" / MOABB (Jayaram & Barachant 2018) — benchmark showing cross-subject difficulty.\n- \"Within-subject vs between-subject variability\" \n- Miccini? \n- A key methodological critique: \"Mind the gap: ... trial-level vs subject-level\".\n- \"Beyond Subject-Level: ... decoding accuracy inflation\" \n- Also: \"Trivial classifiers on EEG due to impedance/amplifier/impedance/eye movements\" — e.g., \"Big data ... preprocessing confound\".\n- \"Confounds in EEG analysis\" — e.g., \"The perils of using EEG as a measure of individual differences\" (Cooper? no).\n- Important: \"EEGManyPipelines\" (2025) — multiverse analysis of EEG, showing analytic variability.\n- \"Insights from EEGManyPipelines\" \n- Also \"EEGManyLabs\".\n- For \"missing information vs limited readout\": linear probe vs fine-tuning literature from vision (e.g., \"On the effectiveness of linear probes\"?) but for EEG: \"Probing EEG foundation models\" — maybe \"Are EEG foundation models good?\" — There's \"EEG-FM\" evaluations, e.g., \"A critical review of EEG foundation models\" maybe.\n- There's a 2024/2025 paper: \"Position: On the Feasibility of EEG Foundation Models\" or \"EEGPT\".\n- \"Evaluating EEG foundation models: ... linear probing vs fine-tuning\".\n- Also \"Deep learning-based EEG decoding with pretraining: ... subject-adaptive\".\n\nLet me search.\n\nI should be efficient: maybe ~12-16 searches and ~10-14 fetches, reading selectively.\n\nLet me start.",
+          "tool_calls": [
+            {
+              "index": 0,
+              "id": "call_00_k0f3lBf5qpEXevxcuErS9603",
+              "type": "function",
+              "function": {
+                "name": "search_sources",
+                "arguments": "{\"query\": \"EEG self-supervised pretraining masked reconstruction contrastive predicting clinical outcomes Banville\", \"count\": 8}"
+              }
+            },
+            {
+              "index": 1,
+              "id": "call_01_VwReUPUUxCI1Nc5HyxKZ1781",
+              "type": "function",
+              "function": {
+                "name": "search_sources",
+                "arguments": "{\"query\": \"cross-subject EEG decoding generalization inter-subject variability benchmark MOABB\", \"count\": 8}"
+              }
+            },
+            {
+              "index": 2,
+              "id": "call_02_YvlDPtcsgJwfZOca1DRK4303",
+              "type": "function",
+              "function": {
+                "name": "search_sources",
+                "arguments": "{\"query\": \"EEG foundation model linear probe versus fine-tuning evaluation critique\", \"count\": 8}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 2145,
+      "completion_tokens": 935,
+      "total_tokens": 3080,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 743
+      },
+      "prompt_cache_hit_tokens": 0,
+      "prompt_cache_miss_tokens": 2145
+    },
+    "system_fingerprint": "e72d3c7f663d3e1383b00b3884cb4501"
+  }
+}

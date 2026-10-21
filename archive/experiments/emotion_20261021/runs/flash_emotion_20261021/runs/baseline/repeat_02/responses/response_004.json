@@ -1,0 +1,81 @@
+{
+  "at": "2026-10-21T01:33:47Z",
+  "model": "deepseek-flash",
+  "request_id": "fa5ff16f-fbd1-4326-8bbd-b73ea67ba8e2",
+  "finish_reason": "tool_calls",
+  "usage": {
+    "prompt_tokens": 12008,
+    "completion_tokens": 184,
+    "total_tokens": 12192,
+    "prompt_cache_hit_tokens": 8832,
+    "prompt_cache_miss_tokens": 3176,
+    "reported": true,
+    "valid": true
+  },
+  "content": "",
+  "reasoning_content": "Continue reading non-stationarity results (20000-32000) for key findings on intra vs inter individual reproducibility.",
+  "tool_calls": [
+    {
+      "id": "call_00_VukNBZiWskU2WLkCuBEV5650",
+      "name": "read_evidence",
+      "arguments": "{\"evidence_id\": \"ev_d3f89ccca87f\", \"max_chars\": 6000, \"start_char\": 20000}"
+    },
+    {
+      "id": "call_01_KK2zrIzFtuQZhgZexEci2638",
+      "name": "read_evidence",
+      "arguments": "{\"evidence_id\": \"ev_d3f89ccca87f\", \"max_chars\": 6000, \"start_char\": 32000}"
+    }
+  ],
+  "raw": {
+    "id": "fa5ff16f-fbd1-4326-8bbd-b73ea67ba8e2",
+    "object": "chat.completion",
+    "created": 1792546428,
+    "model": "deepseek-flash",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "Continue reading non-stationarity results (20000-32000) for key findings on intra vs inter individual reproducibility.",
+          "tool_calls": [
+            {
+              "index": 0,
+              "id": "call_00_VukNBZiWskU2WLkCuBEV5650",
+              "type": "function",
+              "function": {
+                "name": "read_evidence",
+                "arguments": "{\"evidence_id\": \"ev_d3f89ccca87f\", \"max_chars\": 6000, \"start_char\": 20000}"
+              }
+            },
+            {
+              "index": 1,
+              "id": "call_01_KK2zrIzFtuQZhgZexEci2638",
+              "type": "function",
+              "function": {
+                "name": "read_evidence",
+                "arguments": "{\"evidence_id\": \"ev_d3f89ccca87f\", \"max_chars\": 6000, \"start_char\": 32000}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 12008,
+      "completion_tokens": 184,
+      "total_tokens": 12192,
+      "prompt_tokens_details": {
+        "cached_tokens": 8832
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 24
+      },
+      "prompt_cache_hit_tokens": 8832,
+      "prompt_cache_miss_tokens": 3176
+    },
+    "system_fingerprint": "e72d3c7f663d3e1383b00b3884cb4501"
+  }
+}

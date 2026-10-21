@@ -1,0 +1,307 @@
+{
+  "request_id": "req_1",
+  "tool_id": "split_audit",
+  "valid": true,
+  "invalid_reason": null,
+  "metrics": {
+    "window_balanced_accuracy": 0.9931640625,
+    "window_accuracy": 0.9931640625,
+    "window_n_train": 3072.0,
+    "window_n_test": 1024.0,
+    "window_n_train_trials": 512.0,
+    "window_n_test_trials": 512.0,
+    "window_n_train_subjects": 16.0,
+    "window_n_test_subjects": 16.0,
+    "window_trial_aggregated_balanced_accuracy": 0.990234375,
+    "window_trial_aggregated_n_trials": 512.0,
+    "trial_balanced_accuracy": 0.49609375,
+    "trial_accuracy": 0.49609375,
+    "trial_n_train": 3072.0,
+    "trial_n_test": 1024.0,
+    "trial_n_train_trials": 384.0,
+    "trial_n_test_trials": 128.0,
+    "trial_n_train_subjects": 16.0,
+    "trial_n_test_subjects": 16.0,
+    "trial_trial_aggregated_balanced_accuracy": 0.515625,
+    "trial_trial_aggregated_n_trials": 128.0,
+    "subject_balanced_accuracy": 0.517578125,
+    "subject_accuracy": 0.517578125,
+    "subject_n_train": 3072.0,
+    "subject_n_test": 1024.0,
+    "subject_n_train_trials": 384.0,
+    "subject_n_test_trials": 128.0,
+    "subject_n_train_subjects": 12.0,
+    "subject_n_test_subjects": 4.0,
+    "subject_trial_aggregated_balanced_accuracy": 0.5546875,
+    "subject_trial_aggregated_n_trials": 128.0,
+    "gap_window_minus_trial": 0.4970703125,
+    "gap_window_minus_subject": 0.4755859375,
+    "gap_trial_minus_subject": -0.021484375
+  },
+  "randomization": {},
+  "audit": {
+    "window": {
+      "split_level": "window",
+      "split_seed": 2101,
+      "overlap": {
+        "sample": 0,
+        "trial": 512,
+        "session": 32,
+        "subject": 16
+      },
+      "expected_overlap": {
+        "sample": 0
+      },
+      "counts": {
+        "train_rows": 3072,
+        "test_rows": 1024,
+        "train_trials": 512,
+        "test_trials": 512,
+        "train_sessions": 32,
+        "test_sessions": 32,
+        "train_subjects": 16,
+        "test_subjects": 16
+      },
+      "label_counts": {
+        "train": {
+          "negative": 1536,
+          "positive": 1536
+        },
+        "test": {
+          "negative": 512,
+          "positive": 512
+        }
+      },
+      "n_groups": {
+        "window": 6,
+        "trial": 512,
+        "subject": 16
+      },
+      "invalid_reason": null,
+      "details": {
+        "confusion_matrix": [
+          [
+            510,
+            2
+          ],
+          [
+            5,
+            507
+          ]
+        ],
+        "classes": [
+          -1,
+          1
+        ],
+        "per_subject_balanced_accuracy": {
+          "sub-00": 1.0,
+          "sub-01": 0.984375,
+          "sub-02": 1.0,
+          "sub-03": 1.0,
+          "sub-04": 0.96875,
+          "sub-05": 0.984375,
+          "sub-06": 1.0,
+          "sub-07": 1.0,
+          "sub-08": 1.0,
+          "sub-09": 0.984375,
+          "sub-10": 1.0,
+          "sub-11": 1.0,
+          "sub-12": 1.0,
+          "sub-13": 1.0,
+          "sub-14": 0.984375,
+          "sub-15": 0.984375
+        },
+        "trial_aggregated_n_trials": 512
+      }
+    },
+    "trial": {
+      "split_level": "trial",
+      "split_seed": 2101,
+      "overlap": {
+        "sample": 0,
+        "trial": 0,
+        "session": 32,
+        "subject": 16
+      },
+      "expected_overlap": {
+        "sample": 0,
+        "trial": 0
+      },
+      "counts": {
+        "train_rows": 3072,
+        "test_rows": 1024,
+        "train_trials": 384,
+        "test_trials": 128,
+        "train_sessions": 32,
+        "test_sessions": 32,
+        "train_subjects": 16,
+        "test_subjects": 16
+      },
+      "label_counts": {
+        "train": {
+          "negative": 1536,
+          "positive": 1536
+        },
+        "test": {
+          "negative": 512,
+          "positive": 512
+        }
+      },
+      "n_groups": {
+        "window": 8,
+        "trial": 384,
+        "subject": 16
+      },
+      "invalid_reason": null,
+      "details": {
+        "confusion_matrix": [
+          [
+            258,
+            254
+          ],
+          [
+            262,
+            250
+          ]
+        ],
+        "classes": [
+          -1,
+          1
+        ],
+        "per_subject_balanced_accuracy": {
+          "sub-00": 0.515625,
+          "sub-01": 0.4375,
+          "sub-02": 0.484375,
+          "sub-03": 0.375,
+          "sub-04": 0.5,
+          "sub-05": 0.421875,
+          "sub-06": 0.4375,
+          "sub-07": 0.640625,
+          "sub-08": 0.53125,
+          "sub-09": 0.53125,
+          "sub-10": 0.359375,
+          "sub-11": 0.546875,
+          "sub-12": 0.46875,
+          "sub-13": 0.734375,
+          "sub-14": 0.53125,
+          "sub-15": 0.421875
+        },
+        "trial_aggregated_n_trials": 128
+      }
+    },
+    "subject": {
+      "split_level": "subject",
+      "split_seed": 2101,
+      "overlap": {
+        "sample": 0,
+        "trial": 0,
+        "session": 0,
+        "subject": 0
+      },
+      "expected_overlap": {
+        "sample": 0,
+        "trial": 0,
+        "subject": 0
+      },
+      "counts": {
+        "train_rows": 3072,
+        "test_rows": 1024,
+        "train_trials": 384,
+        "test_trials": 128,
+        "train_sessions": 24,
+        "test_sessions": 8,
+        "train_subjects": 12,
+        "test_subjects": 4
+      },
+      "label_counts": {
+        "train": {
+          "negative": 1536,
+          "positive": 1536
+        },
+        "test": {
+          "negative": 512,
+          "positive": 512
+        }
+      },
+      "n_groups": {
+        "window": 8,
+        "trial": 384,
+        "subject": 12
+      },
+      "invalid_reason": null,
+      "details": {
+        "confusion_matrix": [
+          [
+            270,
+            242
+          ],
+          [
+            252,
+            260
+          ]
+        ],
+        "classes": [
+          -1,
+          1
+        ],
+        "per_subject_balanced_accuracy": {
+          "sub-01": 0.515625,
+          "sub-03": 0.48828125,
+          "sub-05": 0.50390625,
+          "sub-11": 0.5625
+        },
+        "trial_aggregated_n_trials": 128
+      }
+    }
+  },
+  "data_hash": "6a24308f96bf4b83e7ba84d287cdb9e4e15108d43b5ee34096d987a7d6ea6462",
+  "config_hash": "e38f3f34329e844459dda1b742c744995758faf77c62227497c2ec8ab4dc6540",
+  "elapsed_seconds": 0.2410466000001179,
+  "details": {
+    "per_subject_balanced_accuracy": {
+      "window": {
+        "sub-00": 1.0,
+        "sub-01": 0.984375,
+        "sub-02": 1.0,
+        "sub-03": 1.0,
+        "sub-04": 0.96875,
+        "sub-05": 0.984375,
+        "sub-06": 1.0,
+        "sub-07": 1.0,
+        "sub-08": 1.0,
+        "sub-09": 0.984375,
+        "sub-10": 1.0,
+        "sub-11": 1.0,
+        "sub-12": 1.0,
+        "sub-13": 1.0,
+        "sub-14": 0.984375,
+        "sub-15": 0.984375
+      },
+      "trial": {
+        "sub-00": 0.515625,
+        "sub-01": 0.4375,
+        "sub-02": 0.484375,
+        "sub-03": 0.375,
+        "sub-04": 0.5,
+        "sub-05": 0.421875,
+        "sub-06": 0.4375,
+        "sub-07": 0.640625,
+        "sub-08": 0.53125,
+        "sub-09": 0.53125,
+        "sub-10": 0.359375,
+        "sub-11": 0.546875,
+        "sub-12": 0.46875,
+        "sub-13": 0.734375,
+        "sub-14": 0.53125,
+        "sub-15": 0.421875
+      },
+      "subject": {
+        "sub-01": 0.515625,
+        "sub-03": 0.48828125,
+        "sub-05": 0.50390625,
+        "sub-11": 0.5625
+      }
+    },
+    "estimand_note": "window split shares trials; its trial aggregation is diagnostic only"
+  }
+}

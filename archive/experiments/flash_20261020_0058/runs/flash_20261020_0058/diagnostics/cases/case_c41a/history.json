@@ -1,0 +1,670 @@
+[
+  {
+    "action": {
+      "decision_type": "action",
+      "hypotheses": [
+        {
+          "id": "H1",
+          "claim": "The high window score comes from trial-specific information shared by windows of the same trial, which lets a window split learn a trial-label association that does not transfer to unseen trials.",
+          "mechanism": "Same-trial windows in train and test provide a trial signature/identity cue; the trial split removes this cue, so performance falls to chance.",
+          "supporting_evidence_ids": [
+            "obs_1"
+          ],
+          "limitations": "Cannot identify the specific feature or rule out coexisting genuine window signal; synthetic data only."
+        },
+        {
+          "id": "H2",
+          "claim": "The high window score reflects a genuine window-level class signal that should generalize to unseen trials; the chance trial score is due to noise or split instability rather than trial-specific leakage.",
+          "mechanism": "Class-discriminative patterns are present in individual windows independent of trial identity, so trial isolation should retain some signal.",
+          "supporting_evidence_ids": [
+            "obs_1"
+          ],
+          "limitations": "Baseline trial and subject scores are near chance, which is difficult to reconcile with a strong generalizable signal."
+        }
+      ],
+      "action": {
+        "request_id": "req_1",
+        "tool_id": "trial_random_labels",
+        "parameters": {},
+        "distinguishes": [
+          "H1",
+          "H2"
+        ],
+        "prediction": {
+          "scoring_status": "numeric",
+          "metric_key": "trial_random_gap_mean",
+          "primary_direction": "positive",
+          "threshold": 0.05,
+          "check_facts": [],
+          "conditional_predictions": [
+            {
+              "hypothesis_id": "H1",
+              "direction": "positive",
+              "rationale": "Trial-level random labels remain learnable through same-trial windows, producing high window BA and chance trial BA, hence a positive gap."
+            },
+            {
+              "hypothesis_id": "H2",
+              "direction": "near_zero",
+              "rationale": "With true trial labels randomized at the trial level, no genuine transferable window signal remains, so window and trial BA should both be near chance and the gap near zero."
+            }
+          ],
+          "update_rule_if_opposite": "If trial_random_gap_mean is near zero or negative, reject H1's trial-specific explanation and favor H2 or an unresolved noise/identity explanation."
+        }
+      },
+      "stop": null,
+      "reasoning_summary": "Baseline shows near-perfect window BA but chance trial BA, suggesting same-trial leakage. Randomizing labels at trial level should still be learnable in a window split if trial-specific signatures drive performance, while a genuine window signal would not survive randomization."
+    },
+    "result": {
+      "request_id": "req_1",
+      "tool_id": "trial_random_labels",
+      "valid": true,
+      "invalid_reason": null,
+      "metrics": {
+        "trial_random_window_ba_mean": 0.99189453125,
+        "trial_random_window_ba_std": 0.0015160326851816426,
+        "trial_random_window_ba_min": 0.9892578125,
+        "trial_random_window_ba_max": 0.994140625,
+        "trial_random_trial_ba_mean": 0.5079608552991515,
+        "trial_random_trial_ba_std": 0.012052657632144298,
+        "trial_random_trial_ba_min": 0.4826490713587488,
+        "trial_random_trial_ba_max": 0.5273194271481942,
+        "trial_random_gap_mean": 0.4839336759508486,
+        "trial_random_gap_std": 0.01131378619893426,
+        "trial_random_gap_min": 0.46682119785180576,
+        "trial_random_gap_max": 0.5075853036412512
+      },
+      "randomization": {
+        "seeds": [
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110
+        ],
+        "n_valid_seeds": 10,
+        "per_seed": [
+          {
+            "seed": 101,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9921875,
+            "trial_ba": 0.5149253731343284,
+            "gap": 0.4772621268656716,
+            "invalid_reason": null
+          },
+          {
+            "seed": 102,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9931640625,
+            "trial_ba": 0.5044950738916256,
+            "gap": 0.4886689886083744,
+            "invalid_reason": null
+          },
+          {
+            "seed": 103,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.990234375,
+            "trial_ba": 0.4826490713587488,
+            "gap": 0.5075853036412512,
+            "invalid_reason": null
+          },
+          {
+            "seed": 104,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9892578125,
+            "trial_ba": 0.5107843137254902,
+            "gap": 0.47847349877450984,
+            "invalid_reason": null
+          },
+          {
+            "seed": 105,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.994140625,
+            "trial_ba": 0.5162157153446998,
+            "gap": 0.4779249096553002,
+            "invalid_reason": null
+          },
+          {
+            "seed": 106,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9912109375,
+            "trial_ba": 0.5013723843967967,
+            "gap": 0.48983855310320334,
+            "invalid_reason": null
+          },
+          {
+            "seed": 107,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9912109375,
+            "trial_ba": 0.49691697191697193,
+            "gap": 0.49429396558302807,
+            "invalid_reason": null
+          },
+          {
+            "seed": 108,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.994140625,
+            "trial_ba": 0.5273194271481942,
+            "gap": 0.46682119785180576,
+            "invalid_reason": null
+          },
+          {
+            "seed": 109,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9921875,
+            "trial_ba": 0.5055860805860806,
+            "gap": 0.48660141941391943,
+            "invalid_reason": null
+          },
+          {
+            "seed": 110,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9912109375,
+            "trial_ba": 0.5193441414885778,
+            "gap": 0.47186679601142223,
+            "invalid_reason": null
+          }
+        ],
+        "invalid_reasons": []
+      },
+      "audit": {
+        "window": {
+          "overlap": {
+            "sample": 0,
+            "trial": 512,
+            "session": 32,
+            "subject": 16
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 6,
+            "trial": 512,
+            "subject": 16
+          },
+          "invalid_reason": null
+        },
+        "trial": {
+          "overlap": {
+            "sample": 0,
+            "trial": 0,
+            "session": 32,
+            "subject": 16
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 8,
+            "trial": 384,
+            "subject": 16
+          },
+          "invalid_reason": null
+        },
+        "subject": {
+          "overlap": {
+            "sample": 0,
+            "trial": 0,
+            "session": 0,
+            "subject": 0
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 8,
+            "trial": 384,
+            "subject": 12
+          },
+          "invalid_reason": null
+        }
+      },
+      "details": {
+        "n_seeds": 10,
+        "n_valid_seeds": 10
+      },
+      "elapsed_seconds": 1.012076499988325
+    },
+    "prediction_score": {
+      "status": "scored",
+      "hit": true,
+      "observed_direction": "positive",
+      "metric_key": "trial_random_gap_mean",
+      "value": 0.4839336759508486,
+      "reference": 0.0,
+      "delta": 0.4839336759508486
+    }
+  },
+  {
+    "action": {
+      "decision_type": "action",
+      "hypotheses": [
+        {
+          "id": "H1",
+          "claim": "Window-split performance is driven by trial-specific feature signatures shared by all windows of a trial, allowing arbitrary trial-level labels to be learned in-window but not transferred to unseen trials.",
+          "mechanism": "Same-trial windows in train and test share a trial signature; the model associates that signature with the randomized trial label, yielding high window BA and chance trial BA.",
+          "supporting_evidence_ids": [
+            "obs_1",
+            "req_1"
+          ],
+          "limitations": "Does not identify which features encode the trial signature; synthetic data only."
+        },
+        {
+          "id": "H2",
+          "claim": "The high window BA under trial-level randomization reflects a window-level pipeline artifact or leakage rather than a genuine trial-shared feature signature.",
+          "mechanism": "If duplicate/near-duplicate windows or hidden label leakage let the model memorize individual window labels, window BA can stay high even when labels are randomized.",
+          "supporting_evidence_ids": [
+            "req_1"
+          ],
+          "limitations": "The audit reports no sample overlap, so this explanation requires a subtler artifact or near-duplicate structure not captured by the audit."
+        }
+      ],
+      "action": {
+        "request_id": "req_2",
+        "tool_id": "window_random_labels",
+        "parameters": {},
+        "distinguishes": [
+          "H1",
+          "H2"
+        ],
+        "prediction": {
+          "scoring_status": "numeric",
+          "metric_key": "window_random_ba_mean",
+          "primary_direction": "near_zero",
+          "threshold": 0.05,
+          "check_facts": [],
+          "conditional_predictions": [
+            {
+              "hypothesis_id": "H1",
+              "direction": "near_zero",
+              "rationale": "Independent per-window labels destroy trial-level label consistency, so a trial-signature model should fall to chance."
+            },
+            {
+              "hypothesis_id": "H2",
+              "direction": "positive",
+              "rationale": "A leakage/artifact mechanism that memorizes individual windows could remain above chance even with independent labels."
+            }
+          ],
+          "update_rule_if_opposite": "If window_random_ba_mean is above chance by more than 0.05, the trial-signature explanation is insufficient and a window-level artifact/leakage explanation gains support."
+        }
+      },
+      "stop": null,
+      "reasoning_summary": "Trial-level randomization left window BA near perfect but trial BA at chance, supporting a trial-shared signature. Independent per-window labels should remove that consistency; a remaining above-chance score would indicate a window-level artifact."
+    },
+    "result": {
+      "request_id": "req_2",
+      "tool_id": "window_random_labels",
+      "valid": true,
+      "invalid_reason": null,
+      "metrics": {
+        "window_random_ba_mean": 0.49117719845528185,
+        "window_random_ba_std": 0.0182988365414286,
+        "window_random_ba_min": 0.45990359250027757,
+        "window_random_ba_max": 0.520587786259542,
+        "window_random_ba_minus_chance": -0.00882280154471815
+      },
+      "randomization": {
+        "seeds": [
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110
+        ],
+        "n_valid_seeds": 10,
+        "per_seed": [
+          {
+            "seed": 101,
+            "valid": true,
+            "balanced_accuracy": 0.46579625002384273
+          },
+          {
+            "seed": 102,
+            "valid": true,
+            "balanced_accuracy": 0.4785320540942644
+          },
+          {
+            "seed": 103,
+            "valid": true,
+            "balanced_accuracy": 0.5085041280693454
+          },
+          {
+            "seed": 104,
+            "valid": true,
+            "balanced_accuracy": 0.49305892094648995
+          },
+          {
+            "seed": 105,
+            "valid": true,
+            "balanced_accuracy": 0.49728342776474177
+          },
+          {
+            "seed": 106,
+            "valid": true,
+            "balanced_accuracy": 0.520587786259542
+          },
+          {
+            "seed": 107,
+            "valid": true,
+            "balanced_accuracy": 0.5098861273771148
+          },
+          {
+            "seed": 108,
+            "valid": true,
+            "balanced_accuracy": 0.45990359250027757
+          },
+          {
+            "seed": 109,
+            "valid": true,
+            "balanced_accuracy": 0.48817722681359044
+          },
+          {
+            "seed": 110,
+            "valid": true,
+            "balanced_accuracy": 0.49004247070360946
+          }
+        ],
+        "invalid_reasons": null
+      },
+      "audit": {
+        "window": {
+          "overlap": {
+            "sample": 0,
+            "trial": 512,
+            "session": 32,
+            "subject": 16
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 6,
+            "trial": 512,
+            "subject": 16
+          },
+          "invalid_reason": null
+        },
+        "trial": {
+          "overlap": {
+            "sample": 0,
+            "trial": 0,
+            "session": 32,
+            "subject": 16
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 8,
+            "trial": 384,
+            "subject": 16
+          },
+          "invalid_reason": null
+        },
+        "subject": {
+          "overlap": {
+            "sample": 0,
+            "trial": 0,
+            "session": 0,
+            "subject": 0
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 8,
+            "trial": 384,
+            "subject": 12
+          },
+          "invalid_reason": null
+        }
+      },
+      "details": {
+        "n_seeds": 10,
+        "trial_aggregation": "not applicable"
+      },
+      "elapsed_seconds": 0.5248199999914505
+    },
+    "prediction_score": {
+      "status": "scored",
+      "hit": true,
+      "observed_direction": "near_zero",
+      "metric_key": "window_random_ba_mean",
+      "value": 0.49117719845528185,
+      "reference": 0.5,
+      "delta": -0.00882280154471815
+    }
+  },
+  {
+    "action": {
+      "decision_type": "action",
+      "hypotheses": [
+        {
+          "id": "H1",
+          "claim": "The window-split advantage is driven by a trial-specific feature signature shared by windows of the same trial, which is learnable under arbitrary trial labels but does not transfer to unseen trials.",
+          "mechanism": "Same-trial windows share a trial signature; models associate that signature with trial-level labels, producing high window BA and chance trial BA.",
+          "supporting_evidence_ids": [
+            "obs_1",
+            "req_1",
+            "req_2"
+          ],
+          "limitations": "The specific signature features remain unidentified; synthetic data only."
+        },
+        {
+          "id": "H2",
+          "claim": "The apparent trial-shared signal is instead an identity/collection effect from subject or session metadata that aligns with trial labels.",
+          "mechanism": "Windows inherit subject/session identity; if labels are confounded with those metadata, a model may exploit them under window splitting even without a genuine trial-specific feature signature.",
+          "supporting_evidence_ids": [
+            "obs_1",
+            "req_1"
+          ],
+          "limitations": "Trial-split and subject-split baselines are near chance, making this less likely but not directly excluded for the trial split."
+        }
+      ],
+      "action": {
+        "request_id": "req_3",
+        "tool_id": "metadata_only",
+        "parameters": {},
+        "distinguishes": [
+          "H1",
+          "H2"
+        ],
+        "prediction": {
+          "scoring_status": "numeric",
+          "metric_key": "metadata_only_balanced_accuracy",
+          "primary_direction": "near_zero",
+          "threshold": 0.05,
+          "check_facts": [],
+          "conditional_predictions": [
+            {
+              "hypothesis_id": "H1",
+              "direction": "near_zero",
+              "rationale": "If the effect is a trial-specific feature signature rather than subject/session identity, one-hot metadata alone should not predict labels under trial isolation."
+            },
+            {
+              "hypothesis_id": "H2",
+              "direction": "positive",
+              "rationale": "A metadata/identity confound would allow subject/session identity alone to predict labels above chance."
+            }
+          ],
+          "update_rule_if_opposite": "If metadata_only_balanced_accuracy is above chance by more than 0.05, identity/collection effects may contribute, and H1 must be qualified as not solely a trial-feature effect."
+        }
+      },
+      "stop": null,
+      "reasoning_summary": "Two controls support a trial-shared signature: trial-level random labels remain learnable in windows but not trials, while independent window labels abolish signal. Metadata-only now tests whether subject/session identity, rather than trial-specific features, explains that pattern."
+    },
+    "result": {
+      "request_id": "req_3",
+      "tool_id": "metadata_only",
+      "valid": true,
+      "invalid_reason": null,
+      "metrics": {
+        "metadata_only_balanced_accuracy": 0.5,
+        "metadata_only_accuracy": 0.5,
+        "metadata_only_ba_minus_chance": 0.0
+      },
+      "randomization": {},
+      "audit": {
+        "window": {
+          "overlap": {
+            "sample": 0,
+            "trial": 512,
+            "session": 32,
+            "subject": 16
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 6,
+            "trial": 512,
+            "subject": 16
+          },
+          "invalid_reason": null
+        },
+        "trial": {
+          "overlap": {
+            "sample": 0,
+            "trial": 0,
+            "session": 32,
+            "subject": 16
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 8,
+            "trial": 384,
+            "subject": 16
+          },
+          "invalid_reason": null
+        },
+        "subject": {
+          "overlap": {
+            "sample": 0,
+            "trial": 0,
+            "session": 0,
+            "subject": 0
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 8,
+            "trial": 384,
+            "subject": 12
+          },
+          "invalid_reason": null
+        }
+      },
+      "details": {
+        "n_metadata_columns": 48,
+        "n_train": 3072,
+        "n_test": 1024,
+        "confusion_matrix": [
+          [
+            240,
+            272
+          ],
+          [
+            240,
+            272
+          ]
+        ]
+      },
+      "elapsed_seconds": 0.06458289999864064
+    },
+    "prediction_score": {
+      "status": "scored",
+      "hit": true,
+      "observed_direction": "near_zero",
+      "metric_key": "metadata_only_balanced_accuracy",
+      "value": 0.5,
+      "reference": 0.5,
+      "delta": 0.0
+    }
+  }
+]

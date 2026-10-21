@@ -1,0 +1,36 @@
+{
+  "request": {
+    "request_id": "req_1",
+    "tool_id": "trial_random_labels",
+    "parameters": {},
+    "distinguishes": [
+      "H1",
+      "H2"
+    ],
+    "prediction": {
+      "scoring_status": "numeric",
+      "metric_key": "trial_random_trial_ba_mean",
+      "primary_direction": "near_zero",
+      "threshold": 0.05,
+      "check_facts": [],
+      "conditional_predictions": [
+        {
+          "hypothesis_id": "H1",
+          "direction": "positive",
+          "rationale": "If trial-specific signatures exist, randomizing labels at the trial level should not destroy performance if the signature is structural (e.g., task direction) rather than label-dependent. However, since we are testing for signal transfer to new trials, a positive gap suggests H1."
+        },
+        {
+          "hypothesis_id": "H2",
+          "direction": "negative",
+          "rationale": "If subject identity drives performance, randomizing labels at the trial level (which preserves subjects) might still show high accuracy if subjects are preserved. But since we want to distinguish between trial-specific and subject-specific, a near-zero or negative result suggests H1 is more likely."
+        }
+      ],
+      "update_rule_if_opposite": "If `trial_random_trial_ba_mean` > 0.5 + threshold (positive), it supports H2; if < 0.5 - threshold (negative), it supports H1."
+    }
+  },
+  "canonical_json": "{\"distinguishes\":[\"H1\",\"H2\"],\"parameters\":{},\"prediction\":{\"check_facts\":[],\"conditional_predictions\":[{\"direction\":\"positive\",\"hypothesis_id\":\"H1\",\"rationale\":\"If trial-specific signatures exist, randomizing labels at the trial level should not destroy performance if the signature is structural (e.g., task direction) rather than label-dependent. However, since we are testing for signal transfer to new trials, a positive gap suggests H1.\"},{\"direction\":\"negative\",\"hypothesis_id\":\"H2\",\"rationale\":\"If subject identity drives performance, randomizing labels at the trial level (which preserves subjects) might still show high accuracy if subjects are preserved. But since we want to distinguish between trial-specific and subject-specific, a near-zero or negative result suggests H1 is more likely.\"}],\"metric_key\":\"trial_random_trial_ba_mean\",\"primary_direction\":\"near_zero\",\"scoring_status\":\"numeric\",\"threshold\":0.05,\"update_rule_if_opposite\":\"If `trial_random_trial_ba_mean` > 0.5 + threshold (positive), it supports H2; if < 0.5 - threshold (negative), it supports H1.\"},\"request_id\":\"req_1\",\"tool_id\":\"trial_random_labels\"}",
+  "sha256": "3225fe609e0688f36b15cf86329c5532b448e690a2afa6256363e264b7584bf7",
+  "sealed_at": "2026-10-18T17:40:59Z",
+  "event_sequence": 4,
+  "run_dir": "X:\\projects\\EEG-AI-Scientist\\runs\\dev_e1\\case_001_s0"
+}

@@ -1,0 +1,17 @@
+{
+  "episode_id": "diag_case_c41a",
+  "case_id": "case_c41a",
+  "rule_version": "DIAGNOSTIC_v2",
+  "phase": "completed",
+  "actions_used": 3,
+  "calls_used": 4,
+  "attempts_used": 4,
+  "tokens_used": 32798,
+  "last_event_sequence": 19,
+  "stop_reason": "Three diagnostic controls were executed. Window BA remained high under trial-level random labels while trial BA stayed near chance; independent window labels and metadata-only fell to chance. This pattern supports same-trial shared information and does not support a generalizable window signal or metadata identity effect.",
+  "backend": "real_llm",
+  "provider": "deepseek_flash",
+  "model": "deepseek-flash",
+  "started_at": "2026-10-19T17:09:11Z",
+  "updated_at": "2026-10-19T17:10:16Z"
+}

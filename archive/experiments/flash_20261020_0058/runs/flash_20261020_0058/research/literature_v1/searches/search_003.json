@@ -1,0 +1,203 @@
+{
+  "search_id": "search_003",
+  "query": "EEG foundation model linear probe versus fine-tuning evaluation critique",
+  "at": "2026-10-19T17:11:56Z",
+  "results": [
+    {
+      "result_id": "sr_01",
+      "title": "Are EEG Foundation Models Worth It? Comparative Evaluation with Traditional Decoders in Diverse BCI Tasks",
+      "url": "https://iclr.cc/virtual/2026/poster/10011450",
+      "snippet": "Our results show that while fine-tuned foundation models perform well in data-rich ... Furthermore, linear probing remains consistently weak, and performance varies greatly across downstream tasks, with no clear scaling law observed among neural network decoders. These findings expose a substantial gap",
+      "summary": "# Are EEG Foundation Models Worth It? Comparative Evaluation with Traditional Decoders in Diverse BCI Tasks\n\nLiuyin Yang ⋅ Qiang Sun ⋅ Ang Li ⋅ Marc Van Hulle\n...\nFoundation models have recently emerged as a promising approach for learning generalizable EEG representations for brain–computer interfaces (BCIs). Yet, their true advantages over traditional methods—particularly classical non-neural approaches—remain unclear. In this work, we present a comprehensive benchmark of state-of-the-art EEG foundation models, evaluated across diverse datasets, decoding tasks, and six evaluation protocols, with rigorous statistical testing. We introduce spatiotemporal EEGFormer (ST-EEGFormer), a simple yet effective Vision Transformer (ViT)-based baseline, pre-trained solely with masked autoencoding (MAE) on over 8M EEG segments. Our results show that while fine-tuned foundation models perform well in data-rich, population-level settings, they often fail to significantly outperform compact neural networks or even classical non-neural decoders in data-scarce scenarios. Furthermore, linear probing remains consistently weak, and performance varies greatly across downstream tasks, with no clear scaling law observed among neural network decoders. These findings expose a substantial gap between pre-training and downstream fine-tuning, often diminishing the benefits of complex pre-training tasks. We further identify hidden architectural factors that affect performance and emphasize the need for transparent, statistically rigorous evaluation. Overall, this study calls for community-wide efforts to construct large-scale EEG datasets and for fair, reproducible benchmarks to advance EEG foundation models.",
+      "site_name": "ICLR 2026",
+      "date": "2026-02-05T16:00:00+00:00",
+      "authority": 3,
+      "rerank_score": 2.179729461669922,
+      "content": ""
+    },
+    {
+      "result_id": "sr_02",
+      "title": "Paper page - EEG Foundation Models: Progresses, Benchmarking, and Open Problems - Papers",
+      "url": "https://huggingface.co/papers/2601.17883#1",
+      "snippet": "We further compare full-parameter fine-tuning with linear probing to assess the transferability of pre-trained representations, and examine the relationship between model scale and downstream performance. Our results indicate that: 1) linear probing is frequently insufficient; 2) ... tasks; and, 3)",
+      "summary": "arxiv:2601.17883\n\n# EEG Foundation Models: Progresses, Benchmarking, and Open Problems\n\nPublished on Jan 25\n...\nEEG foundation models show mixed performance compared to specialist models, with larger models not always providing better generalization under current data regimes.\n\nElectroencephalography (EEG) foundation models have recently emerged as a promising paradigm for brain-computer interfaces (BCIs), aiming to learn transferable neural representations from large-scale heterogeneous recordings. Despite rapid progresses, there lacks fair and comprehensive comparisons of existing EEG foundation models, due to inconsistent pre-training objectives, preprocessing choices, and downstream evaluation protocols. This paper fills this gap.\n...\nWe then evaluate 12 open-source foundation models and competitive specialist baselines across 13 EEG datasets spanning nine BCI paradigms. Emphasizing real-world deployments, we consider both cross-subject generalization under a leave-one-subject-out protocol and rapid calibration under a within-subject few-shot setting. We further compare full-parameter fine-tuning with linear probing to assess the transferability of pre-trained representations, and examine the relationship between model scale and downstream performance. Our results indicate that: 1) linear probing is frequently insufficient; 2) specialist models trained from scratch remain competitive across many tasks; and, 3) larger foundation models do not necessarily yield better generalization performance under current data regimes and training practices.",
+      "site_name": "Hugging Face",
+      "date": "2026-02-01T16:00:00+00:00",
+      "authority": 3,
+      "rerank_score": 2.085979461669922,
+      "content": ""
+    },
+    {
+      "result_id": "sr_03",
+      "title": "EEG 基础模型：进展、基准测试与开放问题",
+      "url": "https://huggingface.ac.cn/papers/2601.17883",
+      "snippet": "我们进一步比较了全参数微调与线性探测（linear probing），以评估预训练表示的可迁移性，并考察了模型规模与下游性能之间的关系。我们的结果表明：1) 线性探测通常是不够的；2) 从头开始训练的专用模型在许多任务中仍具有竞争力...",
+      "summary": "# EEG 基础模型：进展、基准测试与开放问题\n...\n由 Dingkun Liu 提交\n\n作者: Dingkun Liu, Yuheng Chen, Zhu Chen, Zhenyao Cui, Yaozhi Wen, Jiayu An, Jingwei Luo, Dongrui Wu\n...\n与专家模型相比，EEG 基础模型表现出参差不齐的性能，在当前的数据状态下，较大的模型并不总能提供更好的泛化能力。\n脑电图（EEG）基础模型最近已成为脑机接口（BCI）领域一种极具前景的范式，旨在从大规模异构记录中学习可迁移的神经表示。尽管取得了快速进展，但由于预训练目标、预处理选择和下游评估协议的不一致，目前仍缺乏对现有 EEG 基础模型的公平且全面的比较。本文填补了这一空白。我们首先回顾了 50 个代表性模型，并将其设计选择组织成一个统一的分类框架，包括数据标准化、模型架构和自监督预训练策略。随后，我们在涵盖 9 种 BCI 范式的 13 个 EEG 数据集上，评估了 12 个开源基础模型和具有竞争力的专用基线模型。强调实际部署，我们同时考虑了“留一受试者”协议下的跨受试者泛化，以及受试者内少样本设置下的快速校准。我们进一步比较了全参数微调与线性探测（linear probing），以评估预训练表示的可迁移性，并考察了模型规模与下游性能之间的关系。我们的结果表明：1) 线性探测通常是不够的；2) 从头开始训练的专用模型在许多任务中仍具有竞争力；3) 在当前的数据规模和训练实践下，更大的基础模型并不一定会产生更好的泛化性能。\n...\n我们为开源脑电图（EEG）基础模型提出了公平且全面的基准测试。",
+      "site_name": "huggingface.ac.cn",
+      "date": "2026-01-30T16:00:00+00:00",
+      "authority": 3,
+      "rerank_score": 2.085979461669922,
+      "content": ""
+    },
+    {
+      "result_id": "sr_04",
+      "title": "Daily Papers - Hugging Face",
+      "url": "https://huggingface.co/papers?q=EEG+foundation+models",
+      "snippet": "We further compare full-parameter fine-tuning with linear probing to assess the transferability of pre-trained representations, and examine the relationship between model scale and downstream performance. Our results indicate that: 1) linear probing is frequently insufficient; 2)",
+      "summary": "22 EEG Foundation Models:\n...\nWe further compare full-parameter fine-tuning with linear probing to assess the transferability of pre-trained representations, and examine the relationship between model scale and downstream performance. Our results indicate that: 1) linear probing is frequently insufficient; 2) specialist models trained from scratch remain competitive across many tasks; and, 3) larger foundation models do not necessarily yield better generalization performance under current data regimes and training practices. Huazhong University of Science and Technology · Jan 25 4",
+      "site_name": "Hugging Face",
+      "date": null,
+      "authority": 3,
+      "rerank_score": 2.0248324871063232,
+      "content": ""
+    },
+    {
+      "result_id": "sr_05",
+      "title": "EEG Foundation Models for Brain-Computer Interfaces: Progress and Future Directions.",
+      "url": "https://openurl.ebsco.com/c/t4a2lo/EPDB%3Agcd%3A1%3A13838753/detailv2?sid=ebsco%3Aplink%3Aresult-item&id=ebsco%3Adoi%3A10.1007%2Fs12204-026-2922-0&bquery=IS%201007-1172%20AND%20VI%2031%20AND%20IP%203%20AND%20DT%202026&page=1&link_origin=none&searchDescription=Journal%20of%20Shanghai%20Jiaotong%20University%20(Science)%2C%202026%2C%20Vol%2031%2C%20Issue%203&crl=f&x-cgp-token=t4a2lo",
+      "snippet": "This review summarizes recent progress in EEG foundation models from three perspectives ... and downstream adaptation, comparing linear probing, full fine-tuning, and parameter-efficient tuning, while clarifying the conditions under which each setting is most informative. We emphasize that reported gains are often protocol-dependent, as differences in task scope...",
+      "summary": "# EEG Foundation Models for Brain-Computer Interfaces: Progress and Future Directions.\n\n作者： Dai, Renjie; Dong, Shenhua; Lü, Baoliang; ... 出版于： Journal of Shanghai Jiaotong University (Science), 2026, v. 31, n. 3, p. 783, doi. 10.1007/s12204-026-2922-0\n...\n## Dai, Renjie;\n...\nZheng, Weilong\n...\n## Electroencephalography (EEG) foundation models are increasingly used as general-purpose backbones for brain-computer interfaces (BCIs) by leveraging large-scale pretraining and task-specific adaptation. This review summarizes recent progress in EEG foundation models from three perspectives: datasets and task coverage, with emphasis on how generalization goals are operationalized by split protocols and concrete evaluation procedures; model design choices, including input construction and tokenization, masked pretraining objectives, and Transformer backbones for spatiotemporal modeling across heterogeneous channel layouts; and downstream adaptation, comparing linear probing, full fine-tuning, and parameter-efficient tuning, while clarifying the conditions under which each setting is most informative. We emphasize that reported gains are often protocol-dependent, as differences in task scope, preprocessing, training budget, and baseline selection can substantially affect comparability and the extent to which conclusions generalize. Finally, we outline future directions for EEG foundation models in BCI, focusing on standardized evaluation infrastructure, EEG-tailored modeling choices, and deployment-aware adaptation under real-world constraints.\n...\n## Brain-computer interfaces; Electroencephalography; Standardization; Deep learning;\n...\n## Journal of Shanghai Jiaotong University (Science), 2026, Vol 31, Issue 3, p783\n...\n## 1007-1172\n...\n## 10.1007/s12204-026-2922-0",
+      "site_name": "EBSCO",
+      "date": "2026-05-31T16:00:00+00:00",
+      "authority": 3,
+      "rerank_score": 1.994465708732605,
+      "content": ""
+    },
+    {
+      "result_id": "sr_06",
+      "title": "Do We Need Domain-Specific Time-Series Models? Insights from EEG Classification Benchmarks",
+      "url": "https://iclr.cc/virtual/2026/10013829",
+      "snippet": "We evaluate both models under linear probing and fine-tuning across four public datasets: TUEV ... Our results show that fine-tuned TS FMs can outperform some EEG-specific baselines, but linear probing remains weak, and performance varies across downstream tasks. These findings",
+      "summary": "# Do We Need Domain-Specific Time-Series Models? Insights from EEG Classification Benchmarks\n\nLiuyin Yang ⋅ Qiang Sun ⋅ Marc Van Hulle\n...\nTime-series foundation models (TS FMs) are becoming increasingly popular, alongside growing efforts to develop domain-specific foundation models such as EEG foundation models (EEG FMs). However, whether generic TS FMs reliably transfer to EEG remains unclear. This paper presents a broader investigation into the transferability of two state-of-the-art TS FMs—Mantis and MOMENT—to EEG classification. We evaluate both models under linear probing and fine-tuning across four public datasets: TUEV, FACED, BCI-IV-2A, and Error. We adopt cross-subject evaluation for TUEV and FACED, and compare population-level decoding with leave-one-out fine-tuning on BCI-IV-2A and Error. Our results show that fine-tuned TS FMs can outperform some EEG-specific baselines, but linear probing remains weak, and performance varies across downstream tasks. These findings extend prior benchmarks and highlight both the promise and limits of generic TS FMs for EEG decoding.",
+      "site_name": "ICLR 2026",
+      "date": null,
+      "authority": 3,
+      "rerank_score": 1.979282259941101,
+      "content": ""
+    },
+    {
+      "result_id": "sr_07",
+      "title": "Are EEG Foundation Models Worth It? Comparative Evaluation with Traditional Decoders in Diverse BCI Tasks",
+      "url": "https://slideslive.com/39060951/are-eeg-foundation-models-worth-it-comparative-evaluation-with-traditional-decoders-in-diverse-bci-tasks?locale=de",
+      "snippet": "Our results show that while fine-tuned foundation models perform well in data-rich, population-level settings ... Furthermore, linear probing remains consistently weak, and performance varies greatly across downstream tasks, with no clear scaling law observed among neural network decoders. These findings expose a substantial gap between",
+      "summary": "Are EEG Foundation Models Worth It? Comparative Evaluation with Traditional Decoders in Diverse BCI Tasks\n...\nApr 23, 2026\n...\nFoundation models have recently emerged as a promising approach for learning generalizable EEG representations for brain–computer interfaces (BCIs). Yet, their true advantages over traditional methods—particularly classical non-neural approaches—remain unclear. In this work, we present a comprehensive benchmark of state-of-the-art EEG foundation models, evaluated across diverse datasets, decoding tasks, and six evaluation protocols, with rigorous statistical testing. We introduce spatiotemporal EEGFormer (ST-EEGFormer), a simple yet effective Vision Transformer (ViT)-based baseline, pre-trained solely with masked autoencoding (MAE) on over 8M EEG segments. Our results show that while fine-tuned foundation models perform well in data-rich, population-level settings, they often fail to significantly outperform compact neural networks or even classical non-neural decoders in data-scarce scenarios. Furthermore, linear probing remains consistently weak, and performance varies greatly across downstream tasks, with no clear scaling law observed among neural network decoders. These findings expose a substantial gap between pre-training and downstream fine-tuning, often diminishing the benefits of complex pre-training tasks. We further identify hidden architectural factors that affect performance and emphasize the need for transparent, statistically rigorous evaluation. Overall, this study calls for community-wide efforts to construct large-scale EEG datasets and for fair, reproducible benchmarks to advance EEG foundation models.Foundation models have recently emerged as a promising approach for learning generalizable EEG representations for brain–computer interfaces (BCIs).",
+      "site_name": "SlidesLive",
+      "date": "2026-04-22T16:00:00+00:00",
+      "authority": 3,
+      "rerank_score": 1.9489153623580933,
+      "content": ""
+    },
+    {
+      "result_id": "sr_08",
+      "title": "A Multi-dimensional Framework for Evaluating Generalization in EEG Foundation Models - LoRA | 58.25±1.0458.25\\pm 1.04 | 63.06±1.5963.06\\pm 1.59 | 17.20±2.5817.20\\pm 2.58",
+      "url": "https://arxiv-org.ezproxy.obspm.fr/html/2605.28563v1#5",
+      "snippet": "Linear Probe | 57.72±0.5757.72\\pm 0.57 | 64.34±1.0664.34\\pm 1.06 | 17.33±1.3217.33\\pm 1.32 ... κ\\kappa) metrics are reported. Best value under each metric is reported in bold. ... LaBraM",
+      "summary": "LoRA | 58.25±1.0458.25\\pm 1.04 | 63.06±1.5963.06\\pm 1.59 | 17.20±2.5817.20\\pm 2.58 \nCBraMod \nFull-finetune | 61.47±1.2561.47\\pm 1.25 | 68.21±1.4368.21\\pm 1.43 | 24.49±2.4424.49\\pm 2.44 \nLinear Probe | 57.72±0.5757.72\\pm 0.57 | 64.34±1.0664.34\\pm 1.06 | 17.33±1.3217.33\\pm 1.32 \nLoRA | 60.71±1.0260.71\\pm 1.02 | 66.36±1.2066.36\\pm 1.20 | 22.24±1.9122.24\\pm 1.91 \nCSBrain \nFull-finetune | 63.19±1.6063.19\\pm 1.60 | 70.42±1.9970.42\\pm 1.99 | 28.16±2.3028.16\\pm 2.30 \nLinear Probe | 60.97±1.1960.97\\pm 1.19 | 65.48±0.8165.48\\pm 0.81 | 21.76±2.8421.76\\pm 2.84 \nLoRA | 61.55±1.2061.55\\pm 1.20 | 67.49±1.5367.49\\pm 1.53 | 24.53±1.8924.53\\pm 1.89 \n\nκ\\kappa) metrics are reported. Best value under each metric is reported in bold. \nModel | BAC | AUROC | 𝜿{\\bm{\\kappa}}\n...\nSupervised Models \nEEGNet | 86.89±3.8886.89\\pm 3.88 | 93.17±3.3393.17\\pm 3.33 | 72.39±7.9772.39\\pm 7.97 \nEEGNet Large | 84.98±6.8284.98\\pm 6.82 | 90.98±6.6590.98\\pm 6.65 | 68.83±13.1468.83\\pm 13.14 \nEEGNet Huge | 83.61±7.2183.61\\pm 7.21 | 90.64±4.2890.64\\pm 4.28 | 66.03±13.7866.03\\pm 13.78 \nEEGNeX | 86.21±8.3686.21\\pm 8.36 | 93.36±5.0893.36\\pm 5.08 | 71.44±16.6771.44\\pm 16.67 \nSparcNet | 79.32±6.2279.32\\pm 6.22 | 91.10±5.9291.10\\pm 5.92 | 57.74±12.0357.74\\pm 12.03 \nLaBraM \nFull-finetune | 88.72±3.1288.72\\pm 3.12 | 95.6...",
+      "site_name": "Observatoire de Paris",
+      "date": "2026-05-26T16:00:00+00:00",
+      "authority": 3,
+      "rerank_score": 1.7810938358306885,
+      "content": ""
+    }
+  ],
+  "raw": {
+    "results": [
+      {
+        "title": "Are EEG Foundation Models Worth It? Comparative Evaluation with Traditional Decoders in Diverse BCI Tasks",
+        "site_name": "ICLR 2026",
+        "site_icon": "https://cdn.deepseek.com/site-icons/iclr.cc",
+        "authority": 3,
+        "rerank_score": 2.179729461669922,
+        "date": "2026-02-05T16:00:00+00:00",
+        "url": "https://iclr.cc/virtual/2026/poster/10011450",
+        "summary": "# Are EEG Foundation Models Worth It? Comparative Evaluation with Traditional Decoders in Diverse BCI Tasks\n\nLiuyin Yang ⋅ Qiang Sun ⋅ Ang Li ⋅ Marc Van Hulle\n...\nFoundation models have recently emerged as a promising approach for learning generalizable EEG representations for brain–computer interfaces (BCIs). Yet, their true advantages over traditional methods—particularly classical non-neural approaches—remain unclear. In this work, we present a comprehensive benchmark of state-of-the-art EEG foundation models, evaluated across diverse datasets, decoding tasks, and six evaluation protocols, with rigorous statistical testing. We introduce spatiotemporal EEGFormer (ST-EEGFormer), a simple yet effective Vision Transformer (ViT)-based baseline, pre-trained solely with masked autoencoding (MAE) on over 8M EEG segments. Our results show that while fine-tuned foundation models perform well in data-rich, population-level settings, they often fail to significantly outperform compact neural networks or even classical non-neural decoders in data-scarce scenarios. Furthermore, linear probing remains consistently weak, and performance varies greatly across downstream tasks, with no clear scaling law observed among neural network decoders. These findings expose a substantial gap between pre-training and downstream fine-tuning, often diminishing the benefits of complex pre-training tasks. We further identify hidden architectural factors that affect performance and emphasize the need for transparent, statistically rigorous evaluation. Overall, this study calls for community-wide efforts to construct large-scale EEG datasets and for fair, reproducible benchmarks to advance EEG foundation models.",
+        "snippet": "Our results show that while fine-tuned foundation models perform well in data-rich ... Furthermore, linear probing remains consistently weak, and performance varies greatly across downstream tasks, with no clear scaling law observed among neural network decoders. These findings expose a substantial gap",
+        "content": ""
+      },
+      {
+        "title": "Paper page - EEG Foundation Models: Progresses, Benchmarking, and Open Problems - Papers",
+        "site_name": "Hugging Face",
+        "site_icon": "https://cdn.deepseek.com/site-icons/huggingface.co",
+        "authority": 3,
+        "rerank_score": 2.085979461669922,
+        "date": "2026-02-01T16:00:00+00:00",
+        "url": "https://huggingface.co/papers/2601.17883#1",
+        "summary": "arxiv:2601.17883\n\n# EEG Foundation Models: Progresses, Benchmarking, and Open Problems\n\nPublished on Jan 25\n...\nEEG foundation models show mixed performance compared to specialist models, with larger models not always providing better generalization under current data regimes.\n\nElectroencephalography (EEG) foundation models have recently emerged as a promising paradigm for brain-computer interfaces (BCIs), aiming to learn transferable neural representations from large-scale heterogeneous recordings. Despite rapid progresses, there lacks fair and comprehensive comparisons of existing EEG foundation models, due to inconsistent pre-training objectives, preprocessing choices, and downstream evaluation protocols. This paper fills this gap.\n...\nWe then evaluate 12 open-source foundation models and competitive specialist baselines across 13 EEG datasets spanning nine BCI paradigms. Emphasizing real-world deployments, we consider both cross-subject generalization under a leave-one-subject-out protocol and rapid calibration under a within-subject few-shot setting. We further compare full-parameter fine-tuning with linear probing to assess the transferability of pre-trained representations, and examine the relationship between model scale and downstream performance. Our results indicate that: 1) linear probing is frequently insufficient; 2) specialist models trained from scratch remain competitive across many tasks; and, 3) larger foundation models do not necessarily yield better generalization performance under current data regimes and training practices.",
+        "snippet": "We further compare full-parameter fine-tuning with linear probing to assess the transferability of pre-trained representations, and examine the relationship between model scale and downstream performance. Our results indicate that: 1) linear probing is frequently insufficient; 2) ... tasks; and, 3)",
+        "content": ""
+      },
+      {
+        "title": "EEG 基础模型：进展、基准测试与开放问题",
+        "site_name": "huggingface.ac.cn",
+        "site_icon": "https://cdn.deepseek.com/site-icons/huggingface.ac.cn",
+        "authority": 3,
+        "rerank_score": 2.085979461669922,
+        "date": "2026-01-30T16:00:00+00:00",
+        "url": "https://huggingface.ac.cn/papers/2601.17883",
+        "summary": "# EEG 基础模型：进展、基准测试与开放问题\n...\n由 Dingkun Liu 提交\n\n作者: Dingkun Liu, Yuheng Chen, Zhu Chen, Zhenyao Cui, Yaozhi Wen, Jiayu An, Jingwei Luo, Dongrui Wu\n...\n与专家模型相比，EEG 基础模型表现出参差不齐的性能，在当前的数据状态下，较大的模型并不总能提供更好的泛化能力。\n脑电图（EEG）基础模型最近已成为脑机接口（BCI）领域一种极具前景的范式，旨在从大规模异构记录中学习可迁移的神经表示。尽管取得了快速进展，但由于预训练目标、预处理选择和下游评估协议的不一致，目前仍缺乏对现有 EEG 基础模型的公平且全面的比较。本文填补了这一空白。我们首先回顾了 50 个代表性模型，并将其设计选择组织成一个统一的分类框架，包括数据标准化、模型架构和自监督预训练策略。随后，我们在涵盖 9 种 BCI 范式的 13 个 EEG 数据集上，评估了 12 个开源基础模型和具有竞争力的专用基线模型。强调实际部署，我们同时考虑了“留一受试者”协议下的跨受试者泛化，以及受试者内少样本设置下的快速校准。我们进一步比较了全参数微调与线性探测（linear probing），以评估预训练表示的可迁移性，并考察了模型规模与下游性能之间的关系。我们的结果表明：1) 线性探测通常是不够的；2) 从头开始训练的专用模型在许多任务中仍具有竞争力；3) 在当前的数据规模和训练实践下，更大的基础模型并不一定会产生更好的泛化性能。\n...\n我们为开源脑电图（EEG）基础模型提出了公平且全面的基准测试。",
+        "snippet": "我们进一步比较了全参数微调与线性探测（linear probing），以评估预训练表示的可迁移性，并考察了模型规模与下游性能之间的关系。我们的结果表明：1) 线性探测通常是不够的；2) 从头开始训练的专用模型在许多任务中仍具有竞争力...",
+        "content": ""
+      },
+      {
+        "title": "Daily Papers - Hugging Face",
+        "site_name": "Hugging Face",
+        "site_icon": "https://cdn.deepseek.com/site-icons/huggingface.co",
+        "authority": 3,
+        "rerank_score": 2.0248324871063232,
+        "date": null,
+        "url": "https://huggingface.co/papers?q=EEG+foundation+models",
+        "summary": "22 EEG Foundation Models:\n...\nWe further compare full-parameter fine-tuning with linear probing to assess the transferability of pre-trained representations, and examine the relationship between model scale and downstream performance. Our results indicate that: 1) linear probing is frequently insufficient; 2) specialist models trained from scratch remain competitive across many tasks; and, 3) larger foundation models do not necessarily yield better generalization performance under current data regimes and training practices. Huazhong University of Science and Technology · Jan 25 4",
+        "snippet": "We further compare full-parameter fine-tuning with linear probing to assess the transferability of pre-trained representations, and examine the relationship between model scale and downstream performance. Our results indicate that: 1) linear probing is frequently insufficient; 2)",
+        "content": ""
+      },
+      {
+        "title": "EEG Foundation Models for Brain-Computer Interfaces: Progress and Future Directions.",
+        "site_name": "EBSCO",
+        "site_icon": "https://cdn.deepseek.com/site-icons/ebsco.com",
+        "authority": 3,
+        "rerank_score": 1.994465708732605,
+        "date": "2026-05-31T16:00:00+00:00",
+        "url": "https://openurl.ebsco.com/c/t4a2lo/EPDB%3Agcd%3A1%3A13838753/detailv2?sid=ebsco%3Aplink%3Aresult-item&id=ebsco%3Adoi%3A10.1007%2Fs12204-026-2922-0&bquery=IS%201007-1172%20AND%20VI%2031%20AND%20IP%203%20AND%20DT%202026&page=1&link_origin=none&searchDescription=Journal%20of%20Shanghai%20Jiaotong%20University%20(Science)%2C%202026%2C%20Vol%2031%2C%20Issue%203&crl=f&x-cgp-token=t4a2lo",
+        "summary": "# EEG Foundation Models for Brain-Computer Interfaces: Progress and Future Directions.\n\n作者： Dai, Renjie; Dong, Shenhua; Lü, Baoliang; ... 出版于： Journal of Shanghai Jiaotong University (Science), 2026, v. 31, n. 3, p. 783, doi. 10.1007/s12204-026-2922-0\n...\n## Dai, Renjie;\n...\nZheng, Weilong\n...\n## Electroencephalography (EEG) foundation models are increasingly used as general-purpose backbones for brain-computer interfaces (BCIs) by leveraging large-scale pretraining and task-specific adaptation. This review summarizes recent progress in EEG foundation models from three perspectives: datasets and task coverage, with emphasis on how generalization goals are operationalized by split protocols and concrete evaluation procedures; model design choices, including input construction and tokenization, masked pretraining objectives, and Transformer backbones for spatiotemporal modeling across heterogeneous channel layouts; and downstream adaptation, comparing linear probing, full fine-tuning, and parameter-efficient tuning, while clarifying the conditions under which each setting is most informative. We emphasize that reported gains are often protocol-dependent, as differences in task scope, preprocessing, training budget, and baseline selection can substantially affect comparability and the extent to which conclusions generalize. Finally, we outline future directions for EEG foundation models in BCI, focusing on standardized evaluation infrastructure, EEG-tailored modeling choices, and deployment-aware adaptation under real-world constraints.\n...\n## Brain-computer interfaces; Electroencephalography; Standardization; Deep learning;\n...\n## Journal of Shanghai Jiaotong University (Science), 2026, Vol 31, Issue 3, p783\n...\n## 1007-1172\n...\n## 10.1007/s12204-026-2922-0",
+        "snippet": "This review summarizes recent progress in EEG foundation models from three perspectives ... and downstream adaptation, comparing linear probing, full fine-tuning, and parameter-efficient tuning, while clarifying the conditions under which each setting is most informative. We emphasize that reported gains are often protocol-dependent, as differences in task scope...",
+        "content": ""
+      },
+      {
+        "title": "Do We Need Domain-Specific Time-Series Models? Insights from EEG Classification Benchmarks",
+        "site_name": "ICLR 2026",
+        "site_icon": "https://cdn.deepseek.com/site-icons/iclr.cc",
+        "authority": 3,
+        "rerank_score": 1.979282259941101,
+        "date": null,
+        "url": "https://iclr.cc/virtual/2026/10013829",
+        "summary": "# Do We Need Domain-Specific Time-Series Models? Insights from EEG Classification Benchmarks\n\nLiuyin Yang ⋅ Qiang Sun ⋅ Marc Van Hulle\n...\nTime-series foundation models (TS FMs) are becoming increasingly popular, alongside growing efforts to develop domain-specific foundation models such as EEG foundation models (EEG FMs). However, whether generic TS FMs reliably transfer to EEG remains unclear. This paper presents a broader investigation into the transferability of two state-of-the-art TS FMs—Mantis and MOMENT—to EEG classification. We evaluate both models under linear probing and fine-tuning across four public datasets: TUEV, FACED, BCI-IV-2A, and Error. We adopt cross-subject evaluation for TUEV and FACED, and compare population-level decoding with leave-one-out fine-tuning on BCI-IV-2A and Error. Our results show that fine-tuned TS FMs can outperform some EEG-specific baselines, but linear probing remains weak, and performance varies across downstream tasks. These findings extend prior benchmarks and highlight both the promise and limits of generic TS FMs for EEG decoding.",
+        "snippet": "We evaluate both models under linear probing and fine-tuning across four public datasets: TUEV ... Our results show that fine-tuned TS FMs can outperform some EEG-specific baselines, but linear probing remains weak, and performance varies across downstream tasks. These findings",
+        "content": ""
+      },
+      {
+        "title": "Are EEG Foundation Models Worth It? Comparative Evaluation with Traditional Decoders in Diverse BCI Tasks",
+        "site_name": "SlidesLive",
+        "site_icon": "https://cdn.deepseek.com/site-icons/slideslive.com",
+        "authority": 3,
+        "rerank_score": 1.9489153623580933,
+        "date": "2026-04-22T16:00:00+00:00",
+        "url": "https://slideslive.com/39060951/are-eeg-foundation-models-worth-it-comparative-evaluation-with-traditional-decoders-in-diverse-bci-tasks?locale=de",
+        "summary": "Are EEG Foundation Models Worth It? Comparative Evaluation with Traditional Decoders in Diverse BCI Tasks\n...\nApr 23, 2026\n...\nFoundation models have recently emerged as a promising approach for learning generalizable EEG representations for brain–computer interfaces (BCIs). Yet, their true advantages over traditional methods—particularly classical non-neural approaches—remain unclear. In this work, we present a comprehensive benchmark of state-of-the-art EEG foundation models, evaluated across diverse datasets, decoding tasks, and six evaluation protocols, with rigorous statistical testing. We introduce spatiotemporal EEGFormer (ST-EEGFormer), a simple yet effective Vision Transformer (ViT)-based baseline, pre-trained solely with masked autoencoding (MAE) on over 8M EEG segments. Our results show that while fine-tuned foundation models perform well in data-rich, population-level settings, they often fail to significantly outperform compact neural networks or even classical non-neural decoders in data-scarce scenarios. Furthermore, linear probing remains consistently weak, and performance varies greatly across downstream tasks, with no clear scaling law observed among neural network decoders. These findings expose a substantial gap between pre-training and downstream fine-tuning, often diminishing the benefits of complex pre-training tasks. We further identify hidden architectural factors that affect performance and emphasize the need for transparent, statistically rigorous evaluation. Overall, this study calls for community-wide efforts to construct large-scale EEG datasets and for fair, reproducible benchmarks to advance EEG foundation models.Foundation models have recently emerged as a promising approach for learning generalizable EEG representations for brain–computer interfaces (BCIs).",
+        "snippet": "Our results show that while fine-tuned foundation models perform well in data-rich, population-level settings ... Furthermore, linear probing remains consistently weak, and performance varies greatly across downstream tasks, with no clear scaling law observed among neural network decoders. These findings expose a substantial gap between",
+        "content": ""
+      },
+      {
+        "title": "A Multi-dimensional Framework for Evaluating Generalization in EEG Foundation Models - LoRA | 58.25±1.0458.25\\pm 1.04 | 63.06±1.5963.06\\pm 1.59 | 17.20±2.5817.20\\pm 2.58",
+        "site_name": "Observatoire de Paris",
+        "site_icon": "https://cdn.deepseek.com/site-icons/obspm.fr",
+        "authority": 3,
+        "rerank_score": 1.7810938358306885,
+        "date": "2026-05-26T16:00:00+00:00",
+        "url": "https://arxiv-org.ezproxy.obspm.fr/html/2605.28563v1#5",
+        "summary": "LoRA | 58.25±1.0458.25\\pm 1.04 | 63.06±1.5963.06\\pm 1.59 | 17.20±2.5817.20\\pm 2.58 \nCBraMod \nFull-finetune | 61.47±1.2561.47\\pm 1.25 | 68.21±1.4368.21\\pm 1.43 | 24.49±2.4424.49\\pm 2.44 \nLinear Probe | 57.72±0.5757.72\\pm 0.57 | 64.34±1.0664.34\\pm 1.06 | 17.33±1.3217.33\\pm 1.32 \nLoRA | 60.71±1.0260.71\\pm 1.02 | 66.36±1.2066.36\\pm 1.20 | 22.24±1.9122.24\\pm 1.91 \nCSBrain \nFull-finetune | 63.19±1.6063.19\\pm 1.60 | 70.42±1.9970.42\\pm 1.99 | 28.16±2.3028.16\\pm 2.30 \nLinear Probe | 60.97±1.1960.97\\pm 1.19 | 65.48±0.8165.48\\pm 0.81 | 21.76±2.8421.76\\pm 2.84 \nLoRA | 61.55±1.2061.55\\pm 1.20 | 67.49±1.5367.49\\pm 1.53 | 24.53±1.8924.53\\pm 1.89 \n\nκ\\kappa) metrics are reported. Best value under each metric is reported in bold. \nModel | BAC | AUROC | 𝜿{\\bm{\\kappa}}\n...\nSupervised Models \nEEGNet | 86.89±3.8886.89\\pm 3.88 | 93.17±3.3393.17\\pm 3.33 | 72.39±7.9772.39\\pm 7.97 \nEEGNet Large | 84.98±6.8284.98\\pm 6.82 | 90.98±6.6590.98\\pm 6.65 | 68.83±13.1468.83\\pm 13.14 \nEEGNet Huge | 83.61±7.2183.61\\pm 7.21 | 90.64±4.2890.64\\pm 4.28 | 66.03±13.7866.03\\pm 13.78 \nEEGNeX | 86.21±8.3686.21\\pm 8.36 | 93.36±5.0893.36\\pm 5.08 | 71.44±16.6771.44\\pm 16.67 \nSparcNet | 79.32±6.2279.32\\pm 6.22 | 91.10±5.9291.10\\pm 5.92 | 57.74±12.0357.74\\pm 12.03 \nLaBraM \nFull-finetune | 88.72±3.1288.72\\pm 3.12 | 95.6...",
+        "snippet": "Linear Probe | 57.72±0.5757.72\\pm 0.57 | 64.34±1.0664.34\\pm 1.06 | 17.33±1.3217.33\\pm 1.32 ... κ\\kappa) metrics are reported. Best value under each metric is reported in bold. ... LaBraM",
+        "content": ""
+      }
+    ]
+  }
+}

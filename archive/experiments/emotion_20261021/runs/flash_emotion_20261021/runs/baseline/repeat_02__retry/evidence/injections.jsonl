@@ -1,0 +1,10 @@
+{"at":"2026-10-21T01:36:17Z","evidence_id":"ev_74eaf4bc0082","start_char":0,"end_char":6000,"slice_sha256":"d959701655b8782fc9bcce87d3133a1bb9a6c8db180a6eee4c543b8130e813df","purpose":"read_evidence"}
+{"at":"2026-10-21T01:36:17Z","evidence_id":"ev_6619560afa7e","start_char":0,"end_char":6000,"slice_sha256":"6b07129841c38e03a565cd3d85ab4b4a5d88e63145d83f4a6c7329c2c998adb1","purpose":"read_evidence"}
+{"at":"2026-10-21T01:36:19Z","evidence_id":"ev_d3f89ccca87f","start_char":0,"end_char":6000,"slice_sha256":"5c35e965373d4c84cc963513d660d21b207f45281c8a63cc6c95744e4a72cace","purpose":"read_evidence"}
+{"at":"2026-10-21T01:36:20Z","evidence_id":"ev_fad98f5a28bb","start_char":0,"end_char":6000,"slice_sha256":"5c584fc0bcb236dd2951346fc9e5a5553cf7dbff5c27d9853792718ce1a805f1","purpose":"read_evidence"}
+{"at":"2026-10-21T01:36:22Z","evidence_id":"ev_74eaf4bc0082","start_char":12000,"end_char":18000,"slice_sha256":"ef567ddde3a5c76053da8a514efd2d89ff92d0671dc1320dc260d6e588eb8ab7","purpose":"read_evidence"}
+{"at":"2026-10-21T01:36:22Z","evidence_id":"ev_6619560afa7e","start_char":9000,"end_char":15000,"slice_sha256":"5ac766eccf7611ba1b75c0059ff9d812ae302f373546de91ed1bf231369e0301","purpose":"read_evidence"}
+{"at":"2026-10-21T01:36:32Z","evidence_id":"ev_6619560afa7e","start_char":17000,"end_char":23000,"slice_sha256":"660dbd475a269f0ac28912da7eb18d0ea91204a42e4294e1417049eb00c377a5","purpose":"read_evidence"}
+{"at":"2026-10-21T01:36:32Z","evidence_id":"ev_74eaf4bc0082","start_char":20000,"end_char":26000,"slice_sha256":"749da399a04a7669b7bffa6f1e34270f0c3cf5e4e1a4748456114ac0b3afeee8","purpose":"read_evidence"}
+{"at":"2026-10-21T01:36:37Z","evidence_id":"ev_580a39dd545d","start_char":0,"end_char":5000,"slice_sha256":"2fe67a9f9a314df377748a07a8945898502a485ed7d3cdfe904b5d062e2192d0","purpose":"read_evidence"}
+{"at":"2026-10-21T01:36:37Z","evidence_id":"ev_97eaa43a3d81","start_char":0,"end_char":4000,"slice_sha256":"5c16f7d647a6c7d2c14a35d5dab28c72196319176ce07e7365e07652bbf67fee","purpose":"read_evidence"}

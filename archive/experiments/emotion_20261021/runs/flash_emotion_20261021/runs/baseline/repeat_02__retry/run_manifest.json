@@ -1,0 +1,338 @@
+{
+  "schema_version": "1",
+  "run_id": "flash_emotion_20261021__baseline__02__retry",
+  "study_id": "emotion_state_trait_20261021",
+  "created_at": "2026-10-21T01:36:14Z",
+  "git": {
+    "commit": "d70820b2d63f8d42b73b77ff7a73d44b64a9c811",
+    "branch": "overnight/flash-20261020-0058",
+    "dirty": true
+  },
+  "study_config": {
+    "study_id": "emotion_state_trait_20261021",
+    "run_id": "flash_emotion_20261021",
+    "created_at": "2026-10-21T09:40:00+08:00",
+    "deadline": "2026-10-21T23:59:00+08:00",
+    "stop_new_at": "2026-10-21T22:30:00+08:00",
+    "timezone": "Asia/Shanghai",
+    "question": "EEG 对情绪评分的预测，如何区分同一个人的状态变化与不同人的稳定差异？什么最小实验能区分竞争解释？",
+    "model_backend": "deepseek_flash",
+    "tool_backend": "deepseek_search_fetch",
+    "budget": {
+      "project_api_cost_cny_cap": 10.0,
+      "wrap_up_reserve_cny": 0.0,
+      "model_attempts_cap": 120,
+      "search_attempts_cap": 30,
+      "fetch_attempts_cap": 40,
+      "input_tokens_cap": 1000000,
+      "output_tokens_cap": 300000
+    },
+    "paths": {
+      "run_root": "runs/flash_emotion_20261021",
+      "budget_ledger": "runs/flash_emotion_20261021/budget.json",
+      "materials_dir": "runs/flash_emotion_20261021/materials",
+      "meta_dir": "runs/flash_emotion_20261021/meta",
+      "runs_dir": "runs/flash_emotion_20261021/runs",
+      "reviews_dir": "runs/flash_emotion_20261021/reviews",
+      "reports_dir": "reports/flash_emotion_20261021"
+    },
+    "materials": {
+      "version": "emotion_state_trait_v1",
+      "manifest_path": "configs/materials/emotion_state_trait_v1.json",
+      "evidence_dir": "runs/flash_emotion_20261021/materials/evidence",
+      "freeze_sha256": "0158adaeff9ea88d82602de43a8f316dd133a5aecef9bb5baaabd2c1696c9bcc",
+      "preparer": "dsh_developer",
+      "target_papers": 6
+    },
+    "rules": {
+      "baseline": {
+        "version": "emotion_baseline_v1",
+        "path": "configs/rules/emotion_baseline_v1.md"
+      },
+      "meta": {
+        "max_rules": 1,
+        "max_chars": 600,
+        "source_run": "runs/flash_20261020_0058/research/literature_v1",
+        "allowed_review_files": [
+          "reports/flash_20261020_0058/EVIDENCE_AUDIT.md",
+          "reports/flash_20261020_0058/REASONING_REVIEW.md"
+        ]
+      },
+      "isolate_snapshots_by_run": true
+    },
+    "prompt": {
+      "system_prompt_path": "configs/prompts/emotion_research_system.md"
+    },
+    "deliverables": [
+      "一份主要研究提案，不是机械凑三张卡或长篇综述。",
+      "明确区分同一个人的状态变化与不同人的稳定差异，并给出可操作定义。",
+      "至少两个竞争解释，说明各自需要的证据。",
+      "一个最小实验：数据、设计、对照、主要可观测量、预期结果和反证条件。",
+      "明确指出即使做完实验仍无法区分的解释。",
+      "引用材料包中实际读过的 evidence_id；不得把文献提案写成真实 EEG 实验结果。"
+    ],
+    "run_limits": {
+      "max_model_calls": 12,
+      "max_tool_calls": 14,
+      "max_turns": 3,
+      "max_model_calls_per_turn": 8,
+      "max_tool_calls_per_turn": 8,
+      "max_output_tokens": 12000,
+      "max_output_tokens_retry": 24000,
+      "context_char_target": 120000
+    },
+    "repeats": {
+      "baseline": 2,
+      "rule": 2
+    },
+    "meta": {
+      "model_backend": "deepseek_flash",
+      "max_output_tokens": 4000,
+      "max_rules": 1,
+      "max_rule_chars": 600,
+      "temperature_note": "thinking mode; no temperature claim"
+    },
+    "evaluation": {
+      "rubric_path": "configs/eval/emotion_rubric_v1.json",
+      "blinded": true
+    },
+    "notes": [
+      "No Claude/Gemini credential is available; those backend entries are unverified and must not be called.",
+      "No real EEG dataset is read; this is a literature-method proposal study.",
+      "The 10 CNY cap covers Search, Fetch, Meta, Scientist runs, and retries through one new ledger."
+    ]
+  },
+  "study_config_sha256": "20ae8ae3cee4adf19ff48d832e71c966600d98b87554b74d0aefb23a62cc38ad",
+  "run_config": {
+    "run_id": "flash_emotion_20261021__baseline__02__retry",
+    "run_dir": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_02__retry",
+    "question": "EEG 对情绪评分的预测，如何区分同一个人的状态变化与不同人的稳定差异？什么最小实验能区分竞争解释？",
+    "deadline": "2026-10-21T23:59:00+08:00",
+    "stop_new_at": "2026-10-21T22:30:00+08:00",
+    "system_prompt_path": "configs/prompts/emotion_research_system.md",
+    "deliverables": [
+      "一份主要研究提案，不是机械凑三张卡或长篇综述。",
+      "明确区分同一个人的状态变化与不同人的稳定差异，并给出可操作定义。",
+      "至少两个竞争解释，说明各自需要的证据。",
+      "一个最小实验：数据、设计、对照、主要可观测量、预期结果和反证条件。",
+      "明确指出即使做完实验仍无法区分的解释。",
+      "引用材料包中实际读过的 evidence_id；不得把文献提案写成真实 EEG 实验结果。"
+    ],
+    "materials_manifest_path": "configs/materials/emotion_state_trait_v1.json",
+    "material_evidence_dir": "runs/flash_emotion_20261021/materials/evidence",
+    "material_version": "emotion_state_trait_v1",
+    "material_manifest_sha256": "0158adaeff9ea88d82602de43a8f316dd133a5aecef9bb5baaabd2c1696c9bcc",
+    "rule_text_path": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_02\\rules\\emotion_baseline_v1.md",
+    "rule_version": "emotion_baseline_v1",
+    "research_mode": "materials_only",
+    "max_model_calls": 12,
+    "max_tool_calls": 14,
+    "max_turns": 3,
+    "max_model_calls_per_turn": 8,
+    "max_tool_calls_per_turn": 8,
+    "max_output_tokens": 12000,
+    "max_output_tokens_retry": 24000,
+    "context_char_target": 120000,
+    "allowed_experiments": [],
+    "language": "zh",
+    "study_config": {
+      "study_id": "emotion_state_trait_20261021",
+      "run_id": "flash_emotion_20261021",
+      "created_at": "2026-10-21T09:40:00+08:00",
+      "deadline": "2026-10-21T23:59:00+08:00",
+      "stop_new_at": "2026-10-21T22:30:00+08:00",
+      "timezone": "Asia/Shanghai",
+      "question": "EEG 对情绪评分的预测，如何区分同一个人的状态变化与不同人的稳定差异？什么最小实验能区分竞争解释？",
+      "model_backend": "deepseek_flash",
+      "tool_backend": "deepseek_search_fetch",
+      "budget": {
+        "project_api_cost_cny_cap": 10.0,
+        "wrap_up_reserve_cny": 0.0,
+        "model_attempts_cap": 120,
+        "search_attempts_cap": 30,
+        "fetch_attempts_cap": 40,
+        "input_tokens_cap": 1000000,
+        "output_tokens_cap": 300000
+      },
+      "paths": {
+        "run_root": "runs/flash_emotion_20261021",
+        "budget_ledger": "runs/flash_emotion_20261021/budget.json",
+        "materials_dir": "runs/flash_emotion_20261021/materials",
+        "meta_dir": "runs/flash_emotion_20261021/meta",
+        "runs_dir": "runs/flash_emotion_20261021/runs",
+        "reviews_dir": "runs/flash_emotion_20261021/reviews",
+        "reports_dir": "reports/flash_emotion_20261021"
+      },
+      "materials": {
+        "version": "emotion_state_trait_v1",
+        "manifest_path": "configs/materials/emotion_state_trait_v1.json",
+        "evidence_dir": "runs/flash_emotion_20261021/materials/evidence",
+        "freeze_sha256": "0158adaeff9ea88d82602de43a8f316dd133a5aecef9bb5baaabd2c1696c9bcc",
+        "preparer": "dsh_developer",
+        "target_papers": 6
+      },
+      "rules": {
+        "baseline": {
+          "version": "emotion_baseline_v1",
+          "path": "configs/rules/emotion_baseline_v1.md"
+        },
+        "meta": {
+          "max_rules": 1,
+          "max_chars": 600,
+          "source_run": "runs/flash_20261020_0058/research/literature_v1",
+          "allowed_review_files": [
+            "reports/flash_20261020_0058/EVIDENCE_AUDIT.md",
+            "reports/flash_20261020_0058/REASONING_REVIEW.md"
+          ]
+        },
+        "isolate_snapshots_by_run": true
+      },
+      "prompt": {
+        "system_prompt_path": "configs/prompts/emotion_research_system.md"
+      },
+      "deliverables": [
+        "一份主要研究提案，不是机械凑三张卡或长篇综述。",
+        "明确区分同一个人的状态变化与不同人的稳定差异，并给出可操作定义。",
+        "至少两个竞争解释，说明各自需要的证据。",
+        "一个最小实验：数据、设计、对照、主要可观测量、预期结果和反证条件。",
+        "明确指出即使做完实验仍无法区分的解释。",
+        "引用材料包中实际读过的 evidence_id；不得把文献提案写成真实 EEG 实验结果。"
+      ],
+      "run_limits": {
+        "max_model_calls": 12,
+        "max_tool_calls": 14,
+        "max_turns": 3,
+        "max_model_calls_per_turn": 8,
+        "max_tool_calls_per_turn": 8,
+        "max_output_tokens": 12000,
+        "max_output_tokens_retry": 24000,
+        "context_char_target": 120000
+      },
+      "repeats": {
+        "baseline": 2,
+        "rule": 2
+      },
+      "meta": {
+        "model_backend": "deepseek_flash",
+        "max_output_tokens": 4000,
+        "max_rules": 1,
+        "max_rule_chars": 600,
+        "temperature_note": "thinking mode; no temperature claim"
+      },
+      "evaluation": {
+        "rubric_path": "configs/eval/emotion_rubric_v1.json",
+        "blinded": true
+      },
+      "notes": [
+        "No Claude/Gemini credential is available; those backend entries are unverified and must not be called.",
+        "No real EEG dataset is read; this is a literature-method proposal study.",
+        "The 10 CNY cap covers Search, Fetch, Meta, Scientist runs, and retries through one new ledger."
+      ]
+    },
+    "model_info": {
+      "id": "deepseek_flash",
+      "provider": "deepseek",
+      "protocol": "openai_chat",
+      "status": "verified",
+      "reason": "Official endpoint and native tool loop were verified in the 2026-10-20 run and are re-used.",
+      "model_name": "deepseek-flash",
+      "model_version": "DeepSeek-V4.1-Flash-1017",
+      "base_url": "https://api.deepseek.com",
+      "price": {
+        "input_cache_miss_peak_cny_per_mtok": 2.0,
+        "output_peak_cny_per_mtok": 8.0,
+        "input_cache_miss_offpeak_cny_per_mtok": 1.0,
+        "output_offpeak_cny_per_mtok": 4.0,
+        "search_cny_per_success": 0.005,
+        "fetch_cny_per_success": 0.005,
+        "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/",
+        "checked_at": "2026-10-21T09:40:00+08:00"
+      },
+      "verified_in_this_project": true
+    },
+    "tool_info": {
+      "id": "deepseek_search_fetch",
+      "provider": "deepseek",
+      "protocol": "deepseek_search_fetch",
+      "status": "verified",
+      "reason": "Official Search/Fetch endpoints were verified with real requests in the 2026-10-20 run.",
+      "model_name": null,
+      "model_version": "",
+      "base_url": "https://api.deepseek.com",
+      "price": {
+        "input_cache_miss_peak_cny_per_mtok": 0.0,
+        "output_peak_cny_per_mtok": 0.0,
+        "input_cache_miss_offpeak_cny_per_mtok": 0.0,
+        "output_offpeak_cny_per_mtok": 0.0,
+        "search_cny_per_success": 0.005,
+        "fetch_cny_per_success": 0.005,
+        "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/",
+        "checked_at": "2026-10-21T09:40:00+08:00"
+      },
+      "verified_in_this_project": true
+    },
+    "ledger_path": "runs/flash_emotion_20261021/budget.json",
+    "code_root": "."
+  },
+  "run_config_sha256": "c60be32d8b509293cac645381a515b8099b41ddd0ba0412c3ce440324b0ab8d6",
+  "question": "EEG 对情绪评分的预测，如何区分同一个人的状态变化与不同人的稳定差异？什么最小实验能区分竞争解释？",
+  "question_sha256": "2a6f21a0495f231b3688ade2f502ddc3a8a76598112c254b3e5f142502647ef3",
+  "model": {
+    "id": "deepseek_flash",
+    "provider": "deepseek",
+    "protocol": "openai_chat",
+    "status": "verified",
+    "reason": "Official endpoint and native tool loop were verified in the 2026-10-20 run and are re-used.",
+    "model_name": "deepseek-flash",
+    "model_version": "DeepSeek-V4.1-Flash-1017",
+    "base_url": "https://api.deepseek.com",
+    "price": {
+      "input_cache_miss_peak_cny_per_mtok": 2.0,
+      "output_peak_cny_per_mtok": 8.0,
+      "input_cache_miss_offpeak_cny_per_mtok": 1.0,
+      "output_offpeak_cny_per_mtok": 4.0,
+      "search_cny_per_success": 0.005,
+      "fetch_cny_per_success": 0.005,
+      "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/",
+      "checked_at": "2026-10-21T09:40:00+08:00"
+    },
+    "verified_in_this_project": true
+  },
+  "tool": {
+    "id": "deepseek_search_fetch",
+    "provider": "deepseek",
+    "protocol": "deepseek_search_fetch",
+    "status": "verified",
+    "reason": "Official Search/Fetch endpoints were verified with real requests in the 2026-10-20 run.",
+    "model_name": null,
+    "model_version": "",
+    "base_url": "https://api.deepseek.com",
+    "price": {
+      "input_cache_miss_peak_cny_per_mtok": 0.0,
+      "output_peak_cny_per_mtok": 0.0,
+      "input_cache_miss_offpeak_cny_per_mtok": 0.0,
+      "output_offpeak_cny_per_mtok": 0.0,
+      "search_cny_per_success": 0.005,
+      "fetch_cny_per_success": 0.005,
+      "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/",
+      "checked_at": "2026-10-21T09:40:00+08:00"
+    },
+    "verified_in_this_project": true
+  },
+  "rule": {
+    "version": "emotion_baseline_v1",
+    "source": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_02\\rules\\emotion_baseline_v1.md",
+    "path": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_02__retry\\rules\\emotion_baseline_v1.md",
+    "sha256": "8f2b23028481a215d4ccf607d80c5a0dd75aca1363a7604b458e6f92f2c1141b",
+    "chars": 1618
+  },
+  "material": {
+    "version": "emotion_state_trait_v1",
+    "manifest_path": "configs\\materials\\emotion_state_trait_v1.json",
+    "manifest_sha256": "0158adaeff9ea88d82602de43a8f316dd133a5aecef9bb5baaabd2c1696c9bcc"
+  },
+  "cost_attribution": {
+    "ledger": "runs\\flash_emotion_20261021\\budget.json",
+    "attribution": "flash_emotion_20261021__baseline__02__retry"
+  }
+}

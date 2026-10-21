@@ -1,0 +1,28 @@
+{
+  "status": "ok",
+  "visible_text": "{\n  \"decision_type\": \"action\",\n  \"hypotheses\": [\n    {\n      \"id\": \"H1\",\n      \"claim\": \"The model exploits trial-specific signatures (e.g., temporal patterns) rather than subject identity.\",\n      \"mechanism\": \"Trial-level information transfer allows high window accuracy even when windows are split from the same trial, but fails on true test trials if labels are randomized at the trial level.\",\n      \"supporting_evidence_ids\": [\"obs_1\"],\n      \"limitations\": \"Does not rule out subject-specific mappings that happen to align with trial structure.\"\n    },\n    {\n      \"id\": \"H2\",\n      \"claim\": \"The model exploits subject identity or session-level domain shifts.\",\n      \"mechanism\": \"Performance drops significantly on test subjects (subject split) but remains high if only windows within seen trials are tested, suggesting reliance on unseen-subject invariance is low.\",\n      \"supporting_evidence_ids\": [\"obs_1\"],\n      \"limitations\": \"Does not distinguish between subject identity and trial-specific signatures that happen to be correlated with subjects.\"\n    }\n  ],\n  \"action\": {\n    \"request_id\": \"req_1\",\n    \"tool_id\": \"trial_random_labels\",\n    \"parameters\": {},\n    \"distinguishes\": [\"H1\", \"H2\"],\n    \"prediction\": {\n      \"scoring_status\": \"numeric\",\n      \"metric_key\": \"trial_random_trial_ba_mean\",\n      \"primary_direction\": \"near_zero\",\n      \"threshold\": 0.05,\n      \"check_facts\": [],\n      \"conditional_predictions\": [\n        {\"hypothesis_id\": \"H1\", \"direction\": \"positive\", \"rationale\": \"If trial-specific signatures exist, randomizing labels at the trial level should destroy performance on test trials.\"},\n        {\"hypothesis_id\": \"H2\", \"direction\": \"negative\", \"rationale\": \"Subject identity alone cannot explain high window accuracy if subjects are shared; however, this metric tests label reassignment, not subject isolation directly.\"}\n      ],\n      \"update_rule_if_opposite\": \"If trial_random_trial_ba_mean is positive (>0.05), H1 gains support as it suggests labels matter at the trial level for performance degradation.\"\n    }\n  },\n  \"stop\": null,\n  \"reasoning_summary\": \"Test if model relies on trial-specific signatures (H1) vs subject identity (H2). Randomizing labels at trial level should degrade H1-dependent models. Expect near-zero change if only window-level noise exists; positive drop suggests trial structure matters.\"\n}",
+  "model_id": "qwen3.5:9b",
+  "usage": {
+    "prompt_tokens": 3073,
+    "completion_tokens": 575,
+    "total_tokens": 3648
+  },
+  "latency_ms": 21685.023300000466,
+  "raw_response": {
+    "model": "qwen3.5:9b",
+    "created_at": "2026-10-18T17:38:10.9626379Z",
+    "message": {
+      "role": "assistant",
+      "content": "{\n  \"decision_type\": \"action\",\n  \"hypotheses\": [\n    {\n      \"id\": \"H1\",\n      \"claim\": \"The model exploits trial-specific signatures (e.g., temporal patterns) rather than subject identity.\",\n      \"mechanism\": \"Trial-level information transfer allows high window accuracy even when windows are split from the same trial, but fails on true test trials if labels are randomized at the trial level.\",\n      \"supporting_evidence_ids\": [\"obs_1\"],\n      \"limitations\": \"Does not rule out subject-specific mappings that happen to align with trial structure.\"\n    },\n    {\n      \"id\": \"H2\",\n      \"claim\": \"The model exploits subject identity or session-level domain shifts.\",\n      \"mechanism\": \"Performance drops significantly on test subjects (subject split) but remains high if only windows within seen trials are tested, suggesting reliance on unseen-subject invariance is low.\",\n      \"supporting_evidence_ids\": [\"obs_1\"],\n      \"limitations\": \"Does not distinguish between subject identity and trial-specific signatures that happen to be correlated with subjects.\"\n    }\n  ],\n  \"action\": {\n    \"request_id\": \"req_1\",\n    \"tool_id\": \"trial_random_labels\",\n    \"parameters\": {},\n    \"distinguishes\": [\"H1\", \"H2\"],\n    \"prediction\": {\n      \"scoring_status\": \"numeric\",\n      \"metric_key\": \"trial_random_trial_ba_mean\",\n      \"primary_direction\": \"near_zero\",\n      \"threshold\": 0.05,\n      \"check_facts\": [],\n      \"conditional_predictions\": [\n        {\"hypothesis_id\": \"H1\", \"direction\": \"positive\", \"rationale\": \"If trial-specific signatures exist, randomizing labels at the trial level should destroy performance on test trials.\"},\n        {\"hypothesis_id\": \"H2\", \"direction\": \"negative\", \"rationale\": \"Subject identity alone cannot explain high window accuracy if subjects are shared; however, this metric tests label reassignment, not subject isolation directly.\"}\n      ],\n      \"update_rule_if_opposite\": \"If trial_random_trial_ba_mean is positive (>0.05), H1 gains support as it suggests labels matter at the trial level for performance degradation.\"\n    }\n  },\n  \"stop\": null,\n  \"reasoning_summary\": \"Test if model relies on trial-specific signatures (H1) vs subject identity (H2). Randomizing labels at trial level should degrade H1-dependent models. Expect near-zero change if only window-level noise exists; positive drop suggests trial structure matters.\"\n}"
+    },
+    "done": true,
+    "done_reason": "stop",
+    "total_duration": 21016128400,
+    "load_duration": 968055300,
+    "prompt_eval_count": 3073,
+    "prompt_eval_duration": 2394008000,
+    "eval_count": 575,
+    "eval_duration": 17572204000
+  },
+  "error": null
+}

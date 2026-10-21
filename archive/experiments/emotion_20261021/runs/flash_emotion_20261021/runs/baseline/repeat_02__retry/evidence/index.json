@@ -1,0 +1,79 @@
+[
+  {
+    "evidence_id": "ev_580a39dd545d",
+    "url": "https://ar5iv.labs.arxiv.org/html/2404.15615",
+    "title": "M3D: Manifold-based Domain Adaptation with Dynamic Distribution for Non-Deep Transfer Learning in Cross-subject and Cross-session EEG-based Emotion Recognition",
+    "fetched_at": "2026-10-21T01:28:19Z",
+    "sha256": "580a39dd545d0a29d39e4d31f3ba6b2147aa75b954597a947cab7f7e7bc37681",
+    "char_count": 89189,
+    "source_kind": "web_html",
+    "extractor": "deepseek_fetch",
+    "page_count": 0
+  },
+  {
+    "evidence_id": "ev_6619560afa7e",
+    "url": "https://www.nature.com/articles/s41597-023-02650-w",
+    "title": "A Large Finer-grained Affective Computing EEG Dataset - Scientific Data",
+    "fetched_at": "2026-10-21T01:28:07Z",
+    "sha256": "6619560afa7e7853ba004d483dfd301af7de1f4da4706b752083fc956259153c",
+    "char_count": 35980,
+    "source_kind": "web_html",
+    "extractor": "deepseek_fetch",
+    "page_count": 0
+  },
+  {
+    "evidence_id": "ev_74eaf4bc0082",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6651152/",
+    "title": "Combining Inter-Subject Modeling with a Subject-Based Data Transformation to Improve Affect Recognition from EEG Signals",
+    "fetched_at": "2026-10-21T01:27:49Z",
+    "sha256": "74eaf4bc00826c36eb05164b19930a9b73c24a1dd5caf944fc0d950bcbccc6d9",
+    "char_count": 50373,
+    "source_kind": "web_html",
+    "extractor": "deepseek_fetch",
+    "page_count": 0
+  },
+  {
+    "evidence_id": "ev_97eaa43a3d81",
+    "url": "https://www.nature.com/articles/s41597-020-0507-6",
+    "title": "Neural and physiological data from participants listening to affective music - Scientific Data",
+    "fetched_at": "2026-10-21T01:28:15Z",
+    "sha256": "97eaa43a3d816b74bd5860e3bafcb753ce18c1e69f44606ddec67ea9295a6e71",
+    "char_count": 33856,
+    "source_kind": "web_html",
+    "extractor": "deepseek_fetch",
+    "page_count": 0
+  },
+  {
+    "evidence_id": "ev_c908ef06754c",
+    "url": "https://visualize.jove.com/42739948-subject-identity-confounds-qeeg-emotion-recognition-on-deap-and-dreamer",
+    "title": "Subject Identity Confounds qEEG Emotion Recognition on DEAP and DREAMER",
+    "fetched_at": "2026-10-21T01:28:37Z",
+    "sha256": "c908ef06754cef949f4edab5446adea49995e67edce8743f73b2eef708d7b430",
+    "char_count": 3845,
+    "source_kind": "web_html",
+    "extractor": "deepseek_fetch",
+    "page_count": 0
+  },
+  {
+    "evidence_id": "ev_d3f89ccca87f",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6831623/",
+    "title": "Challenge for Affective Brain-Computer Interfaces: Non-stationary Spatio-spectral EEG Oscillations of Emotional Responses",
+    "fetched_at": "2026-10-21T01:27:57Z",
+    "sha256": "d3f89ccca87ff0afc689970e02b3160abd0f6f51977d420476b22c131ec74581",
+    "char_count": 68775,
+    "source_kind": "web_html",
+    "extractor": "deepseek_fetch",
+    "page_count": 0
+  },
+  {
+    "evidence_id": "ev_fad98f5a28bb",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9470564/",
+    "title": "A test-retest resting, and cognitive state EEG dataset during multiple subject-driven states",
+    "fetched_at": "2026-10-21T01:29:04Z",
+    "sha256": "fad98f5a28bb4ff0a8dcc88aa38bf7e1816404d4bb72651dd67fa1634bd3b42f",
+    "char_count": 43794,
+    "source_kind": "web_html",
+    "extractor": "deepseek_fetch",
+    "page_count": 0
+  }
+]

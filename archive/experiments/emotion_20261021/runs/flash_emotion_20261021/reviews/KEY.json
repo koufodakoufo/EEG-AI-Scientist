@@ -1,0 +1,34 @@
+{
+  "proposal_01": {
+    "run_id": "flash_emotion_20261021__baseline__02__retry",
+    "arm": "baseline",
+    "repeat": 2,
+    "accepted": true,
+    "cost_cny": 0.21853,
+    "source_answer": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_02__retry\\final_answer.md"
+  },
+  "proposal_02": {
+    "run_id": "flash_emotion_20261021__baseline__01",
+    "arm": "baseline",
+    "repeat": 1,
+    "accepted": true,
+    "cost_cny": 0.236454,
+    "source_answer": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_01\\final_answer.md"
+  },
+  "proposal_03": {
+    "run_id": "flash_emotion_20261021__meta_rule__02__retry",
+    "arm": "meta_rule",
+    "repeat": 2,
+    "accepted": true,
+    "cost_cny": 0.22541,
+    "source_answer": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_02__retry\\final_answer.md"
+  },
+  "proposal_04": {
+    "run_id": "flash_emotion_20261021__meta_rule__01__retry2",
+    "arm": "meta_rule",
+    "repeat": 1,
+    "accepted": true,
+    "cost_cny": 0.198848,
+    "source_answer": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_01__retry2\\final_answer.md"
+  }
+}

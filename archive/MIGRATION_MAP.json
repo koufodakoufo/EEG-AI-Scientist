@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "archived_at": "2026-10-21T19:30:00+08:00",
+  "archive_root": "archive",
+  "file_count": 830,
+  "bytes": 26027395,
+  "aggregate_sha256": "a4af1823e97ce30f755daff1b65e7837770d5f8b36075100a4da86105bb2bcb4",
+  "mapping": [
+    {
+      "old": "runs/dev_e1",
+      "new": "archive/experiments/synthetic_20261019/runs/dev_e1"
+    },
+    {
+      "old": "runs/study_20261019",
+      "new": "archive/experiments/synthetic_20261019/runs/study_20261019"
+    },
+    {
+      "old": "runs/flash_20261020_0058",
+      "new": "archive/experiments/flash_20261020_0058/runs/flash_20261020_0058"
+    },
+    {
+      "old": "runs/flash_emotion_20261021",
+      "new": "archive/experiments/emotion_20261021/runs/flash_emotion_20261021"
+    },
+    {
+      "old": "reports/flash_20261020_0058",
+      "new": "archive/experiments/flash_20261020_0058/reports/flash_20261020_0058"
+    },
+    {
+      "old": "reports/flash_emotion_20261021",
+      "new": "archive/experiments/emotion_20261021/reports/flash_emotion_20261021"
+    },
+    {
+      "old": "reports/*.md (synthetic stage reports)",
+      "new": "archive/experiments/synthetic_20261019/reports/"
+    },
+    {
+      "old": "configs/studies/flash_emotion_20261021.json",
+      "new": "archive/experiments/emotion_20261021/configs/study.json (original in study.original.json)"
+    },
+    {
+      "old": "configs/studies/overnight_flash_20261020.json",
+      "new": "archive/experiments/flash_20261020_0058/configs/study.json (original in study.original.json)"
+    },
+    {
+      "old": "configs/dev_episode.json",
+      "new": "archive/experiments/synthetic_20261019/configs/dev_episode.json"
+    },
+    {
+      "old": "configs/overnight.json",
+      "new": "archive/experiments/synthetic_20261019/configs/overnight.json"
+    },
+    {
+      "old": "artifacts/review_bundle.zip",
+      "new": "archive/experiments/synthetic_20261019/artifacts/review_bundle.zip"
+    },
+    {
+      "old": "docs/plans/EEG_HARNESS_REFACTOR_PLAN.md",
+      "new": "archive/plans/EEG_HARNESS_REFACTOR_PLAN.md"
+    },
+    {
+      "old": "docs/FILE_INVENTORY.md / FILE_INVENTORY.csv / FILE_TREE.txt",
+      "new": "archive/reference/"
+    },
+    {
+      "old": "prompts/",
+      "new": "archive/experiments/synthetic_20261019/prompts/"
+    },
+    {
+      "old": "data/private/",
+      "new": "archive/experiments/synthetic_20261019/data/private/"
+    },
+    {
+      "old": "review_only/",
+      "new": "archive/experiments/synthetic_20261019/review_only/"
+    },
+    {
+      "old": "memory/",
+      "new": "archive/experiments/synthetic_20261019/memory/"
+    },
+    {
+      "old": "configs/models/deepseek_flash.json",
+      "new": "archive/experiments/flash_20261020_0058/configs/deepseek_flash.json"
+    },
+    {
+      "old": "artifacts/review_bundle_20261020.zip",
+      "new": "archive/experiments/flash_20261020_0058/artifacts/review_bundle_20261020.zip"
+    },
+    {
+      "old": "artifacts/review_bundle_emotion_20261021.zip",
+      "new": "archive/experiments/emotion_20261021/artifacts/review_bundle_emotion_20261021.zip"
+    },
+    {
+      "old": "PROGRESS.md / NEXT_ACTION.md / DECISIONS.md / FREEZE_MANIFEST.json",
+      "new": "archive/history/"
+    },
+    {
+      "old": "EEG_AI_Scientist_Overnight_Plan.md / docs/plans/EEG_AI_Scientist_Overnight_Run_v2.md",
+      "new": "archive/plans/"
+    }
+  ],
+  "key_hashes": {
+    "archive/experiments/emotion_20261021/runs/flash_emotion_20261021/budget.json": "50a55982fa446b0aafdf3f41718663b32aba46c46706a86129c16b3121ec34c4",
+    "archive/experiments/emotion_20261021/runs/flash_emotion_20261021/study_state.json": "ba61d11b103905e2d10a4c1c72ad8d792776b289c48f8785aece94bfbe4031b1",
+    "archive/experiments/emotion_20261021/runs/flash_emotion_20261021/study_lock.json": "dd6fc18c35970db3ce790ece09a2bff6798a6aae824dae42b8026ba0da667c8e",
+    "archive/experiments/emotion_20261021/runs/flash_emotion_20261021/runs/baseline/repeat_01/final_answer.md": "2bde001945a96c23ec41a534e6aafbbd311150ae97734e446a4f2395d00cd584",
+    "archive/experiments/emotion_20261021/runs/flash_emotion_20261021/runs/baseline/repeat_02__retry/final_answer.md": "eca85f2bfbf8b79cdab40dc23e6aa740637a6c9fb179533af7bd37242764a88d",
+    "archive/experiments/emotion_20261021/runs/flash_emotion_20261021/runs/meta_rule/repeat_01__retry2/final_answer.md": "908db8fd96f42a909ce40bf1d399431264943cf793404f4a0389a1a36ea1108f",
+    "archive/experiments/emotion_20261021/runs/flash_emotion_20261021/runs/meta_rule/repeat_02__retry/final_answer.md": "a2c8b6ed17715371666500f75b089b226f9579a2c10f49fe910cd6413a0bee17",
+    "archive/experiments/flash_20261020_0058/runs/flash_20261020_0058/budget.json": "4553d9bf0ae39431d2d1df909775eea27cb3ac367121688f3a276a2148c0266e",
+    "archive/experiments/flash_20261020_0058/runs/flash_20261020_0058/research/literature_v1/final_answer.md": "b6c5aba3b0c322da2451643d45e269e5874c65fa6c3cb235d7324f5cbade8119"
+  },
+  "artifacts": [
+    {
+      "path": "archive/experiments/emotion_20261021/artifacts/review_bundle_emotion_20261021.zip",
+      "bytes": 1165318,
+      "sha256": "4a6dcd7219231e8e24ddf25505a5bbdc07c85ef2703208b85770e0d31e1e4b22"
+    },
+    {
+      "path": "archive/experiments/flash_20261020_0058/artifacts/review_bundle_20261020.zip",
+      "bytes": 675391,
+      "sha256": "803d68fd245dccd8e742990702873952305cb236f0294506e4ba94863155f249"
+    },
+    {
+      "path": "archive/experiments/synthetic_20261019/artifacts/review_bundle.zip",
+      "bytes": 592534,
+      "sha256": "771c3ba764da15cd80811396fb666a96135cf77c193165966dc8dabe27fa0d35"
+    }
+  ],
+  "read_only": true,
+  "note": "Archived payloads were moved, not rewritten. The only new files in each experiment config dir are study.json (rewritten paths + archive flag) and study.original.json (byte-identical original)."
+}

@@ -1,0 +1,81 @@
+{
+  "at": "2026-10-21T01:43:38Z",
+  "model": "deepseek-flash",
+  "request_id": "56a5b4bb-3fc6-4d3a-bdae-4cf003d215b7",
+  "finish_reason": "tool_calls",
+  "usage": {
+    "prompt_tokens": 8833,
+    "completion_tokens": 179,
+    "total_tokens": 9012,
+    "prompt_cache_hit_tokens": 5632,
+    "prompt_cache_miss_tokens": 3201,
+    "reported": true,
+    "valid": true
+  },
+  "content": "",
+  "reasoning_content": "Now read FACED (trial-level ratings, large sample), and ISM paper (subject-based transformation).",
+  "tool_calls": [
+    {
+      "id": "call_00_V4sztHlW3Xtia8Wlzx5g2519",
+      "name": "read_evidence",
+      "arguments": "{\"evidence_id\": \"ev_6619560afa7e\", \"max_chars\": 6000, \"start_char\": 0}"
+    },
+    {
+      "id": "call_01_6z6fO5oy4vQ7Fh9vbZSE4651",
+      "name": "read_evidence",
+      "arguments": "{\"evidence_id\": \"ev_74eaf4bc0082\", \"max_chars\": 6000, \"start_char\": 0}"
+    }
+  ],
+  "raw": {
+    "id": "56a5b4bb-3fc6-4d3a-bdae-4cf003d215b7",
+    "object": "chat.completion",
+    "created": 1792547018,
+    "model": "deepseek-flash",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "Now read FACED (trial-level ratings, large sample), and ISM paper (subject-based transformation).",
+          "tool_calls": [
+            {
+              "index": 0,
+              "id": "call_00_V4sztHlW3Xtia8Wlzx5g2519",
+              "type": "function",
+              "function": {
+                "name": "read_evidence",
+                "arguments": "{\"evidence_id\": \"ev_6619560afa7e\", \"max_chars\": 6000, \"start_char\": 0}"
+              }
+            },
+            {
+              "index": 1,
+              "id": "call_01_6z6fO5oy4vQ7Fh9vbZSE4651",
+              "type": "function",
+              "function": {
+                "name": "read_evidence",
+                "arguments": "{\"evidence_id\": \"ev_74eaf4bc0082\", \"max_chars\": 6000, \"start_char\": 0}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 8833,
+      "completion_tokens": 179,
+      "total_tokens": 9012,
+      "prompt_tokens_details": {
+        "cached_tokens": 5632
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 22
+      },
+      "prompt_cache_hit_tokens": 5632,
+      "prompt_cache_miss_tokens": 3201
+    },
+    "system_fingerprint": "e72d3c7f663d3e1383b00b3884cb4501"
+  }
+}

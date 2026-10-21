@@ -1,0 +1,18 @@
+{
+  "status": "ok",
+  "visible_text": "{\"decision_type\":\"stop\",\"hypotheses\":[{\"id\":\"H1\",\"claim\":\"The high window-split score is driven by trial-specific information shared by windows of the same trial, which is learnable under arbitrary trial labels but does not transfer to unseen trials.\",\"mechanism\":\"Same-trial windows in training and test share a trial signature or identity cue; the model associates that cue with trial-level labels, yielding high window BA and chance trial BA.\",\"supporting_evidence_ids\":[\"obs_1\",\"req_1\",\"req_2\"],\"limitations\":\"The specific synthetic features remain unidentified, and a trial/collection artifact cannot be fully distinguished from genuine trial-shared task information.\"},{\"id\":\"H2\",\"claim\":\"The high window score reflects a generalizable window-level class signal that should remain predictive under trial isolation.\",\"mechanism\":\"Individual windows contain label-discriminative patterns independent of trial identity, so a model trained on some trials should transfer to unseen trials.\",\"supporting_evidence_ids\":[\"obs_1\"],\"limitations\":\"Trial-split BA was near chance, and trial-random-label and per-window-randomization controls do not support transferable window-level signal.\"}],\"reason\":\"Three diagnostic controls were executed. Window BA remained high under trial-level random labels while trial BA stayed near chance; independent window labels and metadata-only fell to chance. This pattern supports same-trial shared information and does not support a generalizable window signal or metadata identity effect.\",\"final_judgment\":\"Within this synthetic feature table, the near-perfect window-split performance is non-transferable to unseen trials and is consistent with trial-specific information shared across same-trial windows. There is no measured support for a generalizable window-level class signal or for subject/session metadata explaining the result.\",\"evidence_ids\":[\"obs_1\",\"req_1\",\"req_2\",\"req_3\"],\"remaining_uncertainty\":\"The exact feature-level mechanism and whether the trial-shared information reflects a genuine synthetic trial signal versus a collection/leakage artifact cannot be determined from these controls. No real EEG conclusion is warranted.\",\"reasoning_summary\":\"Window performance persisted under trial-level label randomization but vanished with per-window randomization and metadata-only; trial-isolated scores stayed at chance. This supports same-trial window-shared information over generalizable or metadata effects, though the precise synthetic mechanism remains unidentified.\"}",
+  "model_id": "deepseek-flash",
+  "usage": {
+    "prompt_tokens": 7060,
+    "completion_tokens": 2182,
+    "total_tokens": 9242
+  },
+  "latency_ms": 12893.989000003785,
+  "raw_response": {
+    "request_id": "cf8c9caf-f874-4950-8a05-66445598e416",
+    "finish_reason": "stop",
+    "truncated": false,
+    "reasoning_chars": 8122
+  },
+  "error": null
+}

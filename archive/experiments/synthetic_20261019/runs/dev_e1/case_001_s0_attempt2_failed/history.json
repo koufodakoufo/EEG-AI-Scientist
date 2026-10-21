@@ -1,0 +1,274 @@
+[
+  {
+    "action": {
+      "decision_type": "action",
+      "hypotheses": [
+        {
+          "id": "H1",
+          "claim": "The model exploits trial-specific signatures (e.g., shared task direction) rather than subject identity.",
+          "mechanism": "Trial-level information transfer allows high window accuracy even when windows are split from the same trial, whereas random labels at the trial level should destroy this signal.",
+          "supporting_evidence_ids": [
+            "obs_1"
+          ],
+          "limitations": "Does not rule out domain-specific mappings that happen to align with trials."
+        },
+        {
+          "id": "H2",
+          "claim": "The model exploits subject identity or session-level artifacts.",
+          "mechanism": "Performance relies on unseen subjects/sessions in the test set, which should degrade significantly under a trial split where all windows of a trial are held out together (subject split is stricter).",
+          "supporting_evidence_ids": [
+            "obs_1"
+          ],
+          "limitations": "Does not rule out trial-specific signatures that co-vary with subjects."
+        }
+      ],
+      "action": {
+        "request_id": "req_1",
+        "tool_id": "trial_random_labels",
+        "parameters": {},
+        "distinguishes": [
+          "H1",
+          "H2"
+        ],
+        "prediction": {
+          "scoring_status": "numeric",
+          "metric_key": "trial_random_trial_ba_mean",
+          "primary_direction": "near_zero",
+          "threshold": 0.05,
+          "check_facts": [],
+          "conditional_predictions": [
+            {
+              "hypothesis_id": "H1",
+              "direction": "positive",
+              "rationale": "If trial-specific signatures exist, randomizing labels at the trial level should not destroy performance if the signature is structural (e.g., task direction) rather than label-dependent. However, since we are testing for signal transfer to new trials, a positive gap suggests H1."
+            },
+            {
+              "hypothesis_id": "H2",
+              "direction": "negative",
+              "rationale": "If subject identity drives performance, randomizing labels at the trial level (which preserves subjects) might still show high accuracy if subjects are preserved. But since we want to distinguish between trial-specific and subject-specific, a near-zero or negative result suggests H1 is more likely."
+            }
+          ],
+          "update_rule_if_opposite": "If `trial_random_trial_ba_mean` > 0.5 + threshold (positive), it supports H2; if < 0.5 - threshold (negative), it supports H1."
+        }
+      },
+      "stop": null,
+      "reasoning_summary": "Compare trial-randomized performance to baseline: high accuracy suggests subject/session artifacts (H2); near-chance or low accuracy suggests trial-specific signatures (H1). Use `trial_random_trial_ba_mean` as the primary metric."
+    },
+    "result": {
+      "request_id": "req_1",
+      "tool_id": "trial_random_labels",
+      "valid": true,
+      "invalid_reason": null,
+      "metrics": {
+        "trial_random_window_ba_mean": 0.99189453125,
+        "trial_random_window_ba_std": 0.0015160326851816426,
+        "trial_random_window_ba_min": 0.9892578125,
+        "trial_random_window_ba_max": 0.994140625,
+        "trial_random_trial_ba_mean": 0.5079608552991515,
+        "trial_random_trial_ba_std": 0.012052657632144298,
+        "trial_random_trial_ba_min": 0.4826490713587488,
+        "trial_random_trial_ba_max": 0.5273194271481942,
+        "trial_random_gap_mean": 0.4839336759508486,
+        "trial_random_gap_std": 0.01131378619893426,
+        "trial_random_gap_min": 0.46682119785180576,
+        "trial_random_gap_max": 0.5075853036412512
+      },
+      "randomization": {
+        "seeds": [
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110
+        ],
+        "n_valid_seeds": 10,
+        "per_seed": [
+          {
+            "seed": 101,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9921875,
+            "trial_ba": 0.5149253731343284,
+            "gap": 0.4772621268656716,
+            "invalid_reason": null
+          },
+          {
+            "seed": 102,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9931640625,
+            "trial_ba": 0.5044950738916256,
+            "gap": 0.4886689886083744,
+            "invalid_reason": null
+          },
+          {
+            "seed": 103,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.990234375,
+            "trial_ba": 0.4826490713587488,
+            "gap": 0.5075853036412512,
+            "invalid_reason": null
+          },
+          {
+            "seed": 104,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9892578125,
+            "trial_ba": 0.5107843137254902,
+            "gap": 0.47847349877450984,
+            "invalid_reason": null
+          },
+          {
+            "seed": 105,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.994140625,
+            "trial_ba": 0.5162157153446998,
+            "gap": 0.4779249096553002,
+            "invalid_reason": null
+          },
+          {
+            "seed": 106,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9912109375,
+            "trial_ba": 0.5013723843967967,
+            "gap": 0.48983855310320334,
+            "invalid_reason": null
+          },
+          {
+            "seed": 107,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9912109375,
+            "trial_ba": 0.49691697191697193,
+            "gap": 0.49429396558302807,
+            "invalid_reason": null
+          },
+          {
+            "seed": 108,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.994140625,
+            "trial_ba": 0.5273194271481942,
+            "gap": 0.46682119785180576,
+            "invalid_reason": null
+          },
+          {
+            "seed": 109,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9921875,
+            "trial_ba": 0.5055860805860806,
+            "gap": 0.48660141941391943,
+            "invalid_reason": null
+          },
+          {
+            "seed": 110,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9912109375,
+            "trial_ba": 0.5193441414885778,
+            "gap": 0.47186679601142223,
+            "invalid_reason": null
+          }
+        ],
+        "invalid_reasons": []
+      },
+      "audit": {
+        "window": {
+          "overlap": {
+            "sample": 0,
+            "trial": 512,
+            "session": 32,
+            "subject": 16
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 6,
+            "trial": 512,
+            "subject": 16
+          },
+          "invalid_reason": null
+        },
+        "trial": {
+          "overlap": {
+            "sample": 0,
+            "trial": 0,
+            "session": 32,
+            "subject": 16
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 8,
+            "trial": 384,
+            "subject": 16
+          },
+          "invalid_reason": null
+        },
+        "subject": {
+          "overlap": {
+            "sample": 0,
+            "trial": 0,
+            "session": 0,
+            "subject": 0
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 8,
+            "trial": 384,
+            "subject": 12
+          },
+          "invalid_reason": null
+        }
+      },
+      "details": {
+        "n_seeds": 10,
+        "n_valid_seeds": 10
+      },
+      "elapsed_seconds": 1.3131196000031196
+    },
+    "prediction_score": {
+      "status": "scored",
+      "hit": true,
+      "observed_direction": "near_zero",
+      "metric_key": "trial_random_trial_ba_mean",
+      "value": 0.5079608552991515,
+      "reference": 0.5,
+      "delta": 0.00796085529915147
+    }
+  }
+]

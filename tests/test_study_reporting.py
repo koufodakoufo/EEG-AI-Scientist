@@ -90,7 +90,7 @@ def _make_study(tmp_path: Path, *, pairs: int = 4, backend: str = "real_llm") ->
 
 
 def _write_private_specs(root: Path, case_ids: list[str]) -> None:
-    private = root / "data" / "private"
+    private = root / "archive" / "experiments" / "synthetic_20261019" / "data" / "private"
     private.mkdir(parents=True)
     (private / "case_specs.json").write_text(
         json.dumps(
@@ -150,7 +150,7 @@ def test_review_bundle_excludes_secrets_and_raw_private_data(tmp_path: Path, mon
         joined = "\n".join(names)
         assert ".env" not in names
         assert "data/private/raw_private.txt" not in names
-        assert "review_only/PRIVATE_CASE_SPECS.json" in names
+        assert "archive/experiments/synthetic_20261019/review_only/PRIVATE_CASE_SPECS.json" in names
         assert "SECRET_SENTINEL" not in joined
 
 
@@ -158,7 +158,7 @@ def test_pair_order_is_preregistered() -> None:
     config = StudyConfig(
         study_id="s",
         deadline="2026-10-19T09:14:21+08:00",
-        case_specs_path="data/private/case_specs.json",
+        case_specs_path="archive/experiments/synthetic_20261019/data/private/case_specs.json",
         dev_case_ids=["a"],
         holdout_case_ids=["b", "c", "d", "e"],
         provider={"kind": "ollama_native"},
@@ -206,7 +206,7 @@ def test_development_facts_are_public_only(tmp_path: Path) -> None:
     config = StudyConfig(
         study_id="s",
         deadline="2026-10-19T09:14:21+08:00",
-        case_specs_path="data/private/case_specs.json",
+        case_specs_path="archive/experiments/synthetic_20261019/data/private/case_specs.json",
         dev_case_ids=["case_001"],
         holdout_case_ids=["case_003"],
         provider={"kind": "ollama_native"},

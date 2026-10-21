@@ -1,0 +1,132 @@
+{
+  "run_id": "flash_20261020_0058_literature_v1",
+  "answer": "# EEG 表示的可预测信息：换试次 / 换会话 / 换被试之后还剩什么\n\n**一句话结论**：现有多数高分是 *同一会话内、试次随机打乱* 的分数，文献自己承认这是\"上界\"；把被试和会话真正隔开后，可迁移的信息主要是**低维频谱/节律类结构 + 受试者层面的对齐信息**，而不是\"某个认知过程\"的稳定码。同时，公开证据目前**无法**区分\"跨被试掉分是因为表示里没有信息\"还是\"读不出来\"——这正是我选择的延伸方向。\n\n> 本工作区没有真实 EEG 数据，我**没有运行任何 EEG 实验**。下文所有数字均来自已读文献；推断与文献结论分开标注。\n\n---\n\n## 1. 证据地图\n\n| # | 文献（读到的范围） | 对本题的作用 | 关键内容 |\n|---|---|---|---|\n| 1 | Chevallier et al., *The largest EEG-based BCI reproducibility study…the MOABB benchmark*, arXiv:2404.15319（读了 §1.3–1.5、§2.2 评估协议） | 定义\"试次/会话/被试\"三级单位 | 明确区分 within-session / cross-session / cross-subject；within-session 是**上界**，且是文献主流做法 [ev_f42fa7111e36] |\n| 2 | Yin et al., *Rethinking Cross-Subject Data Splitting for Brain-to-Text Decoding*, EMNLP 2025, doi:10.18653/v1/2025.emnlp-main.289（**仅摘要页**） | 反证：跨被试分数被高估 | 现有跨被试划分存在数据泄漏，验证/测试进入训练集，导致系统性高估 [ev_9da221287269] |\n| 3 | Liu et al., *EEG Foundation Models: Progresses, Benchmarking, and Open Problems*, arXiv:2601.17883v1（摘要 + §III-C/D 主表 + §III-D3 排名 + §IV-A） | 唯一同时给 LOSO 与 within-subject few-shot、linear probe 与 full fine-tune 的大规模对照 | 12 个 FM × 13 数据集；linear probing 常不足；专家模型（EEGNet，2K 参数）仍具竞争力；模型更大不一定更好 [ev_825214c78a59] |\n| 4 | Jiang et al., *LaBraM*, arXiv:2405.18765v1（摘要 + §3.2 setup + §3.4） | 预训练目标与下游协议的样例 | 掩码 + 神经频谱（codebook）预测，2500 h 预训练；TUAB/TUEV 沿用 BIOT 的按病人划分 [ev_2085e5b7ba26] |\n| 5 | Banville et al., *Uncovering the structure of clinical EEG signals with SSL*, arXiv:2007.16104（§2.6.3 划分、§3.1–3.2 结果） | 表示里到底有什么：任务结构 **与** 采集环境结构 | 睡眠分期 72.3%（5 类，chance 20%）、病理 79.4%；嵌入同时编码年龄/性别/呼吸事件，且 TUHab 的簇由**通道数与记录日期**解释 [ev_b63c716fd707] |\n| 6 | Fallahi et al., *Advancing Brainwave-Based Biometrics: A Large-Scale, Multi-Session Evaluation*, arXiv:2501.17866v3（摘要 + §I） | 身份信息能活多久、被什么污染 | 345 人 / 6007 会话 / 5 年 / 3 种头戴；EER 从 1 天后 6.7% 升至一年后 14.3%；嵌入按会话与设备聚簇 [ev_2f5e3fadf9f0] |\n| 7 | Hebart & Baker, *Deconstructing multivariate decoding…*, NeuroImage 2018, doi:10.1016/j.neuroimage.2017.08.005（§1–§2） | 解释的上限 | 预测≠解释；竞赛获胜模型的预测体素落在脑室与生理噪声区；多变量解码把 signal/noise 的定义混在一起 [ev_200bb34828cd] |\n\n（8–12 篇的目标未达到：可公开读到方法/结果正文的相关文献我只确认了这 7 篇；EEGManyPipelines 的预印本页抓取 504 超时，因此**不作为证据引用**，仅列为线索。另外两次抓取命中了无关论文，未采用。）\n\n### 1.1 几个可引用的定量锚点（同一张表内，可比）\n\n- BNCI2014001（4 类运动想象，chance 25%，**跨被试 LOSO、full fine-tune**）：传统 CSP+LDA 38.19；EEGNet 44.97±0.57；ShallowConv 44.80；LaBraM 46.93±1.43；CBraMod 53.03±0.22 [ev_825214c78a59]。\n- 同一数据集、同一批权重，**只换读出方式**：BENDR linear probe 32.18±0.41 vs 全参微调 51.11±0.25；BIOT 30.88±1.00 vs 34.27±0.93 [ev_825214c78a59]。→ 探针接近 chance，微调远高于 chance。\n- TUAB（跨被试、full fine-tune）：ShallowConv 79.81、DeFormer 81.48、LUNA-Base 81.92、LaBraM 76.23、EEGNet 77.03 [ev_825214c78a59]。→ 2K 参数的小模型打赢 5.8M 的 FM。\n- 总体排名：CBraMod 5.96 > **EEGNet 6.84（2K 参数）** > ShallowConv 7.00；BENDR 9.88、BIOT 11.00、TFM 15.24 [ev_825214c78a59]。\n\n**推论（我的，不是作者结论）**：如果\"预训练学到的通用表示\"是跨被试能力的主因，那么 2K 参数的 EEGNet 不应稳定排在多数 FM 之前。更简约的解释是：跨被试可迁移的部分主要是**低维、任务通用、但对空间滤波器敏感**的结构，而 FM 的收益被读出方式和被试对齐问题吃掉了。\n\n---\n\n## 2. 三张假设卡\n\n### 卡 1（优先）：分数里有多少是\"任务\"，有多少是\"被试/会话/采集条件的附带信息\"？\n\n**(a) 观察与来源**\n观察：文献主流协议是 within-session 打乱试次做 k-fold，作者自称这是\"上界\"，cross-session/cross-subject 被当作 transfer 问题排除在外 [ev_f42fa7111e36]。同时，跨被试脑解码被指出存在划分泄漏与系统性高估 [ev_9da221287269]。\n→ \"同一会话内高分\"是**文献事实**；\"其中相当一部分来自与标签共变的被试/会话/设备签名\"是**我的推断**，尚无我读过的文献直接分解过这一比例。\n\n**(b) 为什么回答它会改变研究决策**\n如果 60–80% 的 within-session 分数来自会话/被试签名，那么\"提升表示\"的正确投资是**去混淆与对齐**，而不是更大的预训练；反之，若扣除后仍高，则应投向目标函数与容量。这决定预算去向（对齐工程 vs 预训练）。\n\n**(c) 竞争解释与当前支持/反对**\n1. *共享任务信息*：支持——跨被试仍有 >>chance 的表现（BNCI2014001 上 45–53%，chance 25%）[ev_825214c78a59]。\n2. *附带签名（nuisance）*：支持——SSL 嵌入的簇由通道数与记录日期决定，作者自己写\"partially learned the noise introduced by data collection\" [ev_b63c716fd707]；身份可解码且随会话/设备漂移 [ev_2f5e3fadf9f0]。\n3. *标签先验/刺激锁定*：支持较弱（我读的文献未直接检验），属于需要被排除的第三解释。\n\n**(d) 主干预 + 固定项**\n主干预：**在会话内把类别顺序/出现位置随机重排（或做块内类别均衡），其余全不动**。固定：同一数据、同一模型、同一特征、同一试次数、同一折数与随机种子。\n\n**(e) 同一可观测量的不同预测**\n可观测量：Δ = BCA(within-session, trial-disjoint) − BCA(LOSO)，以及\"去掉被试/会话均值后的 BCA\"，外加\"仅用会话身份代理特征预测任务标签\"的 BCA。\n- 共享任务信息：Δ 中等（如 10–15 点），去均值后 LOSO 掉 2–5 点；身份代理特征对标签 ≈ chance。\n- 附带签名：Δ 很大（20–30 点），去均值后 LOSO 接近 chance；身份代理特征对标签 **显著 >chance**（因为标签与会话/块共变）。\n- 刺激/先验：重排类别顺序后 within-session 分数本身显著下降。\n\n**(f) 什么结果会降低我对首选（附带签名）解释的信心**\n若类别重排后 within-session 分数几乎不变、身份代理特征对标签始终 ≈chance、且去均值只造成小幅损失 —— 那么\"高分主要是签名\"就不成立，应转向\"共享信息 + 读出受限\"。\n\n**(g) 最小实验与数据需求/权限缺口**\n数据：≥20 名被试、≥2 会话、每会话类别均衡的公开集（如 BNCI2014001 的多会话版本；PEERS 类多设备/跨年数据更好）。权限缺口：PEERS 类数据需签 DUA，本工作区无法访问，只能申请或改用开放集。\n\n**(h) 实验后仍不可分辨**\n\"共享神经计算\"与\"随任务难度共变的稳定伪迹\"（眼动、肌电、用力程度）无法只靠解码区分——两者都跨被试稳定、都随标签变化。\n\n---\n\n### 卡 2：身份/环境是表示的主轴，任务信息是叠加在其上的小扰动\n\n**(a) 观察与来源**\n观察（文献）：身份可解码，1 天 EER 6.7%，一年后 14.3%；嵌入按会话与设备聚簇 [ev_2f5e3fadf9f0]；SSL 嵌入同时呈现病理/年龄/性别梯度与\"通道数×记录日期\"的簇结构 [ev_b63c716fd707]。\n\"任务信息在幅度/子空间上小于身份信息\"是**我的推断**，尚无我读过的文献做直接子空间比较。\n\n**(b) 决策意义**\n若身份是主轴，则跨被试解码的合理架构是\"先显式估计并移除身份子空间，再做任务读出\"；若两者正交，则移除身份几乎无损，直接做任务读出即可。这决定是否要引入被试对抗训练/对齐层。\n\n**(c) 竞争解释**\n1. *身份主导*：支持——生物特征 EER 远低于 chance，且跨会话仍可用 [ev_2f5e3fadf9f0]。\n2. *正交/频带分离*：支持——我检索到但**未读全文**的 2026 年文献提出\"认知状态识别与身份认证在不同频带解离\"，只能作为线索，不作证据。\n3. *会话/设备主导（身份是假象）*：支持——同一会话、同一设备的样本在嵌入空间更近 [ev_2f5e3fadf9f0]。\n\n**(d) 主干预 + 固定项**\n主干预：**同一批被试换设备（头戴）重测**。固定：预处理、模型、时间间隔、任务范式。\n\n**(e) 同一可观测量的不同预测**\n可观测量：身份 EER（跨设备/跨时间）+ 移除身份子空间后的任务 BCA。\n- 身份主导：跨设备 EER 明显变差但远低于 50%；移除身份后任务 BCA 掉 30% 以上。\n- 正交：跨设备 EER 与同设备接近；移除身份后任务 BCA 掉 <5%。\n- 会话主导：跨设备 EER 崩到接近 50%（随机），而\"身份\"效应在控制设备后消失。\n\n**(f) 降低信心的结果**\n跨设备 EER ≈ 同设备 EER，且移除身份子空间几乎不影响任务 BCA → 身份主导说不成立。\n\n**(g) 最小实验/数据/权限**\n需要多设备或跨年数据（PEERS 类），权限缺口最大；开放替代是 BNCI 多会话集，但缺设备变化，因此**该卡在我的预算内只能部分验证**。\n\n**(h) 仍不可分辨**\n\"身份\"与\"电极位置/头发长度/阻抗/放大器\"在观测上高度共线；即使跨设备失败，也无法区分是神经个体差异还是佩戴差异。\n\n---\n\n### 卡 3（延伸，选定）：跨被试掉分是\"信息缺失\"还是\"读不出来\"？\n\n**(a) 观察与来源**\n观察（文献）：同一批冻结权重上，linear probe 常常接近 chance，而全参微调明显更高（BENDR 32.18 → 51.11；BIOT 30.88 → 34.27，chance 25%）[ev_825214c78a59]，作者总结\"linear probing is frequently insufficient\" [ev_825214c78a59]。\n但**该基准没有中间条件**（无标签的逐被试对齐后仍用线性读出），所以现有证据同时兼容三种解释——这是**我的推断**，也是我选它的理由。\n\n**(b) 决策意义**\n若信息已在、只是线性读不出 → 投资\"对齐/几何校正/轻量适配\"，成本低、见效快；若信息真的缺失 → 必须改预训练目标或扩大数据。二者在工程上完全不同。\n\n**(c) 竞争解释**\n1. *信息缺失*：支持——linear probe 接近 chance [ev_825214c78a59]；反方——同一表示微调后远高于 chance，说明信息并非完全不存在。\n2. *读出受限*：支持——两种读出差距达 19 点（BENDR）[ev_825214c78a59]；反对——微调可能只是**拟合了被试签名**。\n3. *微调=监督式拟合 nuisance*：支持——身份在 EEG 中高度可解 [ev_2f5e3fadf9f0]；Banville 的嵌入直接编码采集条件 [ev_b63c716fd707]。\n\n**(d) 主干预 + 固定项**\n主干预：在**同一冻结编码器、同一 LOSO 折、同一试次数**下并列 5 种读出：\nR1 线性探针；R2 线性探针 + **无标签**逐被试几何对齐（用测试会话未标注数据估计白化/黎曼重心）；R3 LoRA；R4 全参微调；R5 全参微调但**打乱标签**（容量对照）。\n固定：编码器权重、折划分、早停预算、评价指标。\n\n**(e) 同一可观测量的不同预测**\n可观测量：5 种读出在同一 LOSO 折上的 BCA。\n- 信息缺失：R1≈R2≈R3≈低平台；R4 的提升 ≈ R5（打乱标签也提升，说明提升来自容量/过拟合而非信息）。\n- 读出受限：R1 低，**R2 就能追回 R4 的大部分**（无标签对齐不引入任何标签信息），R4 ≫ R5。\n- nuisance 拟合：R4 的提升与\"特征中身份可辨识度\"正相关；R2 追回很少；R4 ≫ R5 但仍依赖被试身份。\n\n**(f) 降低信心的结果**\n若 R2（无标签对齐）几乎不提升，且 R4 ≈ R5，则\"信息已在、只是读不出\"被削弱。\n\n**(g) 最小实验/数据/权限**\n用公开权重（CBraMod 4.0M 或 LaBraM）+ 公开数据集（BNCI2014001/2014004、TUAB），无需新采集，权限门槛低。\n\n**(h) 仍不可分辨**\n即使 R2 追回大部分差距，也无法区分\"追回的是神经任务信息\"还是\"追回的是跨被试稳定的任务相关伪迹\"；也无法排除对齐步骤本身利用了测试会话的**分布信息**（转导式泄漏）——必须用\"对齐只用未标注测试数据、且标签完全不可见\"来界定，但这仍不是无泄漏的完美设计。\n\n---\n\n## 3. 为什么选第二组（缺失 vs 读出受限）而不是第三组（预训练目标利用了何种结构）\n\n1. **可判定性**：卡 3 有一个\"杀死混淆\"的对照——打乱标签的微调（R5）。若 R4 与 R5 都提升，说明\"提升\"根本不是信息，而是容量。第三组的干预（改掩码比例、改成频谱目标、改成跨通道掩码）**同时改变**感受野、tokenization、增广与目标函数，任何一个差异都无法归因到\"利用了哪种结构\"。\n2. **成本**：卡 3 只需公开权重 + 公开数据 + 几次微调；第三组若要重训大规模 FM，成本高一个量级，且在 13 数据集基准上\"更大模型不一定更好\"[ev_825214c78a59] 已提示收益不确定。\n3. **与优先问题直接相连**：卡 3 的结果直接决定\"跨被试剩下的信息值不值得为它改表示\"，即优先级问题 1 的下一步。\n4. 第三组并非无信息：Banville 的证据显示**纯 MSE 重建（AE）表现很差**（TUHab 上从未超过 53.0%），作者归因于 MSE 偏向 1/f 低频 [ev_b63c716fd707]——这已经说明\"目标函数决定捕获哪种结构\"，但它是存在性证据，不是可归因的对照实验。因此我把第三组降为**次要观察**，不设为实验。\n\n---\n\n## 4. 优先最小实验与备用\n\n### M1（优先）：五臂读出 × 三级不相交划分的\"分数分解\"\n\n- **数据**：≥3 个公开集，且**带被试与会话标签**：BNCI2014001（9 人 × 2 会话）、Sleep-EDFx（同人两夜）、TUAB（按病人）。理想补充：多设备/跨年数据（PEERS，需 DUA）。\n- **编码器**：1 个公开 FM（CBraMod）+ 1 个专家基线（EEGNet）。\n- **划分（同一份数据跑 5 次）**：① window 级（会泄漏）② 会话内 trial 级 ③ 跨会话同被试 ④ LOSO 跨被试 ⑤ 跨被试+跨会话。\n- **读出（同一冻结权重）**：R1 线性 / R2 线性+无标签对齐 / R3 LoRA / R4 全参 / R5 全参+打乱标签。\n- **附加探针**：用同一特征训练\"被试 ID\"\"会话 ID\"分类器，并只在身份子空间上测任务标签可预测性。\n- **统计单位**：以**被试为独立单位**报均值与自助 CI（n≈9–20），窗口数只用于估计每被试的均值，不作为独立样本。\n- **判别式（falsifier）**：若 ③④⑤ 的分数在扣除被试/会话均值后仍 >chance 且 R2 已追回 R4 大部分差距、R5 无提升 → \"高分主要是被试/会话签名\"被削弱，\"共享信息 + 读出受限\"胜出；反之若 ④⑤ 塌到 chance 且 R4≫R5 → 跨被试可迁移信息确实稀薄。\n\n### M2（备用，最便宜）：纯混淆审计\n在单一大数据集上（TUAB 或 Sleep-EDFx），只用**不可能含任务信息**的特征（试次前基线段的通道对数方差、记录时段、设备/通道数等元数据）训练分类器去预测任务标签，并检查\"类别在会话/块内是否均衡\"。\n- **判别式**：若这批\"零任务信息\"特征就能显著预测标签，则任何 within-session 高分都必须先扣除该基线再解释。\n- 成本：数小时 CPU；不需要 GPU 训练。\n\n### 明确删除的实验（及理由）\n1. **\"换一种预训练目标重训大型 FM 来判定它利用了时间/频谱/跨通道结构\"** —— 干预同时改动 ≥2 个因素（感受野、tokenization、增广），**无判别力**；且成本与 M1 相差一个量级。\n2. **\"新采集多会话多设备多任务数据集\"** —— 成本/时间在本轮不可承受；已有 PEERS/BNCI 可部分替代。\n3. **\"用跨被试解码准确率论证某种神经机制\"** —— 无论结果如何都不可识别（预测≠解释）[ev_200bb34828cd]，**零判别力**，删除。\n\n---\n\n## 5. 反证、方法学批评与已读文献中的相互矛盾\n\n- **划分泄漏**：跨被试脑解码的现有划分会把验证/测试信息带进训练，导致高估 [ev_9da221287269]。这与\"跨被试仍有 45–53%\"的乐观数字直接冲突，说明**部分跨被试分数本身可疑**。\n- **协议不统一**：MOABB 明确把 within-session 定为上界、并把 cross-session/cross-subject 排除在本基准之外 [ev_f42fa7111e36] → 领域头条数字大多不是\"换会话/换被试\"后的数字。\n- **FM 的\"通用性\"叙事被自己的基准削弱**：专家模型拿下 15 个第一、47 个前三；EEGNet（2K 参数）总排名第二 [ev_825214c78a59]。\n- **表示会\"预测\"采集环境**：SSL 嵌入的簇由通道数与记录日期决定 [ev_b63c716fd707]；身份认证在一年后 EER 翻倍 [ev_2f5e3fadf9f0]。\n- **解释的上限**：预测性最强的体素可能位于脑室/生理噪声区 [ev_200bb34828cd]——高准确率不是认知过程的效应量。\n- **LaBraM 的\"可泛化\"是跨数据集，不是跨被试 LOO**：其 TUAB/TUEV 沿用按病人的训练/测试划分，并在训练病人上做监督微调 [ev_2085e5b7ba26]；因此它是\"有监督跨被试迁移\"，不能当作\"零样本跨被试\"。另外，Banville 的划分只保证\"同一 recording 的样本不跨集合\"，**未保证被试不相交** [ev_b63c716fd707]——这类细节决定了数字到底在测什么。\n\n---\n\n## 6. 仍然缺什么 / 即便做完也分不清什么\n\n**缺（本轮未解决）**\n1. 没有一篇我读过的文献直接**分解** within-session 分数为\"任务 / 被试 / 会话 / 设备\"四份——这是 M1 要填的空。\n2. EEGManyPipelines（分析灵活性）抓取超时（504），我**没有**关于\"分析选择能解释多少方差\"的可引用证据；只能作为线索。\n3. 跨**会话**的任务解码数字：MOABB 不做，LaBraM 未报会话划分 → 我关于\"会话\"的论证主要靠身份文献 + 推断。\n4. 刺激锁定/类别先验这条支线，我没有读到直接证据。\n5. 2026 年两篇（Liu et al.、Fallahi et al.）为预印本；我读到的是 v1/v3，未见同行评审版本。\n\n**即便做完 M1 也分不清**\n- \"跨被试稳定的任务信息\" vs \"跨被试稳定的任务相关伪迹\"（眼动、肌电、努力程度）；\n- 标注质量/评分者差异与被试差异的共线（临床标签尤其）；\n- 无标签对齐带来的转导式信息使用，与真正的\"表示几何更好\"；\n- 单变量\"信息量\"与多变量\"可读出性\"在概念上不可互换 [ev_200bb34828cd]。\n\n---\n\n## 7. 工程性检查（非 EEG 证据）\n\n我运行了本地 `fixture_split_check`（`fixture_only: true`, `real_eeg_experiment_executed: false`）。它只验证加载器与划分逻辑，**不能支持任何 EEG 结论**。其算术值得记录，因为它把\"嵌套泄漏\"量化得很清楚：window 级划分下，64/64 个测试试次与训练共享同一试次，且会话与被试完全不隔开（overlap trial=64, session=8, subject=4）；trial 级划分消除了试次重叠，但会话与被试仍重叠（session=8, subject=4）；只有 subject 级划分做到零重叠。这说明：**\"换了试次\"不等于\"换了会话\"，更不等于\"换了被试\"**——文献里大量\"cross-validation\"只做到第一级。\n\n---\n\n## 8. 参考文献（仅列实际读过的证据）\n\n1. Chevallier, Carrara, Aristimunha, … Moreau. *The largest EEG-based BCI reproducibility study for open science: the MOABB benchmark.* arXiv:2404.15319. https://ar5iv.labs.arxiv.org/html/2404.15319 — [ev_f42fa7111e36]\n2. Yin, Yu, Fang, Peng, Li. *Rethinking Cross-Subject Data Splitting for Brain-to-Text Decoding.* EMNLP 2025. doi:10.18653/v1/2025.emnlp-main.289 — [ev_9da221287269]\n3. Liu, Chen, Chen, Cui, Wen, An, Luo, Wu. *EEG Foundation Models: Progresses, Benchmarking, and Open Problems.* arXiv:2601.17883v1. — [ev_825214c78a59]\n4. Jiang, Zhao, Lu. *Large Brain Model for Learning Generic Representations with Tremendous EEG Data in BCI (LaBraM).* arXiv:2405.18765v1. — [ev_2085e5b7ba26]\n5. Banville, Chehab, Hyvärinen, Engemann, Gramfort. *Uncovering the structure of clinical EEG signals with self-supervised learning.* arXiv:2007.16104. — [ev_b63c716fd707]\n6. Fallahi, Arias-Cabarcos, Strufe. *Advancing Brainwave-Based Biometrics: A Large-Scale, Multi-Session Evaluation.* arXiv:2501.17866v3. — [ev_2f5e3fadf9f0]\n7. Hebart & Baker. *Deconstructing multivariate decoding for the study of brain function.* NeuroImage 180(Pt A):4–18, 2018. doi:10.1016/j.neuroimage.2017.08.005 — [ev_200bb34828cd]",
+  "evidence_ids": [
+    "ev_200bb34828cd",
+    "ev_2085e5b7ba26",
+    "ev_2f5e3fadf9f0",
+    "ev_825214c78a59",
+    "ev_9da221287269",
+    "ev_b63c716fd707",
+    "ev_f42fa7111e36"
+  ],
+  "unresolved": [
+    "没有任何已读文献把 within-session 分数直接分解为任务/被试/会话/设备四份；M1 要填的空仍然存在。",
+    "跨会话的任务解码数据缺失：MOABB 明确不做 cross-session，LaBraM 未报会话划分，因此\"换会话后还剩多少任务信息\"目前只能靠身份文献与推断。",
+    "线性探针 vs 全参微调的差距，现有基准没有\"无标签逐被试对齐\"这一中间条件，因此无法区分信息缺失与读出受限。",
+    "EEGManyPipelines 的分析灵活性证据未能取得（504 超时），分析选择能解释的方差比例未知。",
+    "刺激锁定属性/类别先验是否解释了部分跨被试准确率，本轮没有找到可读证据。",
+    "身份与电极位置/阻抗/放大器在观测上共线，跨设备实验也未必能分离。",
+    "PEERS 类多设备跨年数据需要 DUA，本工作区无法访问，卡 2 只能部分验证。"
+  ],
+  "limitations": "没有真实 EEG 数据，未运行任何 EEG 实验；本地只跑了 artificial fixture（fixture_only=true），不能作为 EEG 证据。文献覆盖为 7 篇，低于 8–12 篇目标：EEGManyPipelines 预印本抓取 504 超时，两次抓取（BIOT、King & Dehaene 时间泛化）命中无关论文，故未引用。两篇 2026 年文献（arXiv:2601.17883、arXiv:2501.17866）为预印本，未见同行评审。Yin et al. 只读到了 ACL 摘要页，未读正文数字。Banville 与 MOABB 只读了部分章节（方法与结果），未读附录；LaBraM 只读了 setup 与主表。\"身份/会话签名占 within-session 分数多大比例\"\"无标签对齐能追回多少微调收益\"在两处均为我的推断而非已发表结果。",
+  "cited_but_never_read": [],
+  "finish_tool_call_id": "call_00_LT6GR1jernMFTJBNqrpM0124",
+  "created_at": "2026-10-19T17:18:13Z",
+  "coverage": {
+    "sources": [
+      {
+        "evidence_id": "ev_200bb34828cd",
+        "title": "Deconstructing multivariate decoding for the study of brain function",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5797513/",
+        "read_chars": 5500,
+        "total_chars": 113435,
+        "fraction_read": 0.0485
+      },
+      {
+        "evidence_id": "ev_2085e5b7ba26",
+        "title": "Large Brain Model for Learning Generic Representations with Tremendous EEG Data in BCI",
+        "url": "https://arxiv-org.ezproxy.obspm.fr/html/2405.18765v1",
+        "read_chars": 16300,
+        "total_chars": 85799,
+        "fraction_read": 0.19
+      },
+      {
+        "evidence_id": "ev_2f5e3fadf9f0",
+        "title": "Advancing Brainwave-Based Biometrics: A Large-Scale, Multi-Session Evaluation",
+        "url": "https://arxiv-org.ezproxy.obspm.fr/html/2501.17866v3",
+        "read_chars": 5500,
+        "total_chars": 97933,
+        "fraction_read": 0.0562
+      },
+      {
+        "evidence_id": "ev_825214c78a59",
+        "title": "EEG Foundation Models: Progresses, Benchmarking, and Open Problems",
+        "url": "https://arxiv-org.ezproxy.obspm.fr/html/2601.17883v1",
+        "read_chars": 26700,
+        "total_chars": 148770,
+        "fraction_read": 0.1795
+      },
+      {
+        "evidence_id": "ev_8d41144afed7",
+        "title": "Mindfulness and Emotional Outcomes: Identifying Subgroups of College Students using Latent Profile Analysis",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4269250/",
+        "read_chars": 0,
+        "total_chars": 36843,
+        "fraction_read": 0.0
+      },
+      {
+        "evidence_id": "ev_9da221287269",
+        "title": "Rethinking Cross-Subject Data Splitting for Brain-to-Text Decoding",
+        "url": "https://aclanthology.org/2025.emnlp-main.289/",
+        "read_chars": 8579,
+        "total_chars": 8579,
+        "fraction_read": 1.0
+      },
+      {
+        "evidence_id": "ev_a2ba747cdafd",
+        "title": "Zeros of Dynamical Zeta Functions for Hyperbolic Quadratic Maps",
+        "url": "https://ar5iv.labs.arxiv.org/html/2205.11408",
+        "read_chars": 0,
+        "total_chars": 92049,
+        "fraction_read": 0.0
+      },
+      {
+        "evidence_id": "ev_a4cfb55eee84",
+        "title": "Optimization of Oblivious Decision Tree Ensembles Evaluation for CPU",
+        "url": "https://ar5iv.labs.arxiv.org/html/2211.00391",
+        "read_chars": 0,
+        "total_chars": 2802,
+        "fraction_read": 0.0
+      },
+      {
+        "evidence_id": "ev_b63c716fd707",
+        "title": "Uncovering the structure of clinical EEG signals with self-supervised learning",
+        "url": "https://ar5iv.labs.arxiv.org/html/2007.16104",
+        "read_chars": 21300,
+        "total_chars": 101545,
+        "fraction_read": 0.2098
+      },
+      {
+        "evidence_id": "ev_f42fa7111e36",
+        "title": "The largest EEG-based BCI reproducibility study for open science: the MOABB benchmark",
+        "url": "https://ar5iv.labs.arxiv.org/html/2404.15319",
+        "read_chars": 15500,
+        "total_chars": 120604,
+        "fraction_read": 0.1285
+      }
+    ]
+  },
+  "budget": {
+    "run_id": "flash_20261020_0058",
+    "cap_cny": 20.0,
+    "wrap_up_reserve_cny": 2.0,
+    "spent_cny": 1.650076,
+    "unknown_cny": 0.0,
+    "reserved_cny": 0.0,
+    "committed_cny": 1.650076,
+    "available_for_new_spend_cny": 16.349924,
+    "model_attempts": 30,
+    "model_attempts_limit": 120,
+    "search_attempts": 10,
+    "search_attempts_limit": 60,
+    "fetch_attempts": 18,
+    "fetch_attempts_limit": 90,
+    "input_tokens": 560786,
+    "output_tokens": 52938,
+    "input_tokens_limit": 2000000,
+    "output_tokens_limit": 500000,
+    "pending": 0,
+    "updated_at": "2026-10-19T17:18:13Z"
+  }
+}

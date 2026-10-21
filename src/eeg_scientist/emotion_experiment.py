@@ -27,9 +27,9 @@ from .research import ResearchConfig, ResearchRunner
 from .run_manifest import sha256_file, sha256_text
 from .storage import atomic_write_json, atomic_write_text, ensure_dir, utc_now
 
-STUDY_CONFIG = Path("configs/studies/flash_emotion_20261021.json")
+STUDY_CONFIG = Path("archive/experiments/emotion_20261021/configs/study.json")
 BACKENDS_CONFIG = Path("configs/models/backends_20261021.json")
-LOCK_PATH = Path("runs/flash_emotion_20261021/study_lock.json")
+LOCK_PATH = Path("archive/experiments/emotion_20261021/runs/flash_emotion_20261021/study_lock.json")
 
 
 class RunRecord(BaseModel):
@@ -236,8 +236,17 @@ def _run_config(
     )
 
 
+def _assert_active_study(study: dict[str, object]) -> None:
+    if bool(study.get("archive")) or str(study.get("paths", {}).get("run_root", "")).startswith("archive/"):
+        raise RuntimeError(
+            "this study is archived and read-only; do not run, retry, or rewrite it. "
+            "Use the new `study` entry point for new work."
+        )
+
+
 def run_study(study_path: Path = STUDY_CONFIG) -> dict[str, object]:
     study = load_study(study_path)
+    _assert_active_study(study)
     _assert_lock(study)
     registry = load_registry(BACKENDS_CONFIG)
     ledger = make_ledger(study, registry)
@@ -335,6 +344,7 @@ def retry_failed_runs(study_path: Path = STUDY_CONFIG) -> dict[str, object]:
     """One bounded retry for arms that do not yet have two accepted runs."""
 
     study = load_study(study_path)
+    _assert_active_study(study)
     _assert_lock(study)
     registry = load_registry(BACKENDS_CONFIG)
     ledger = make_ledger(study, registry)
@@ -421,6 +431,7 @@ def retry_failed_runs(study_path: Path = STUDY_CONFIG) -> dict[str, object]:
 
 def evaluate_study(study_path: Path = STUDY_CONFIG) -> dict[str, object]:
     study = load_study(study_path)
+    _assert_active_study(study)
     registry = load_registry(BACKENDS_CONFIG)
     ledger = make_ledger(study, registry)
     state = _load_state(study)

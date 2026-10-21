@@ -259,7 +259,7 @@ def run_case_diagnostics(
         "aliases": aliases,
     }
     atomic_write_json(target / "PRIVATE_MAPPING.json", mapping)
-    review_only = Path("review_only")
+    review_only = Path("archive/experiments/synthetic_20261019/review_only")
     if review_only.exists():
         atomic_write_json(review_only / "DIAGNOSTIC_MAP.json", mapping)
 
@@ -271,7 +271,7 @@ def run_case_diagnostics(
             episode_id=f"diag_{alias}",
             case_id=alias,
             case_specs_path=str(specs_path),
-            rule_path="prompts/DIAGNOSTIC_v2.md",
+            rule_path="archive/experiments/synthetic_20261019/prompts/DIAGNOSTIC_v2.md",
             provider={"kind": "deepseek_chat", "model": "deepseek-flash"},
             backend="real_llm",
             model="deepseek-flash",

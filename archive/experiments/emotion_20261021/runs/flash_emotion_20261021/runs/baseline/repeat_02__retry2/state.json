@@ -1,0 +1,22 @@
+{
+  "run_id": "flash_emotion_20261021__baseline__02__retry2",
+  "phase": "completed",
+  "accepted": true,
+  "acceptance": "accepted",
+  "turn": 2,
+  "model_calls": 7,
+  "tool_calls": 12,
+  "searches": 0,
+  "fetches": 0,
+  "turn_model_calls": 3,
+  "turn_tool_calls": 4,
+  "pending_attempt": "",
+  "prose_nudges": 0,
+  "finalizing": false,
+  "finalization_calls": 0,
+  "stop_reason": "finish_study",
+  "last_error": "",
+  "final_path": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_02__retry2\\final.json",
+  "started_at": "2026-10-21T01:41:27Z",
+  "updated_at": "2026-10-21T01:42:35Z"
+}

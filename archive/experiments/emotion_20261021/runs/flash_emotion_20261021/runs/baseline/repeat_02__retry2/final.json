@@ -1,0 +1,132 @@
+{
+  "run_id": "flash_emotion_20261021__baseline__02__retry2",
+  "answer": "# 用 EEG 预测情绪评分时，如何把「同一个人的状态变化」与「不同人的稳定差异」分开\n\n> 说明：本工作区没有真实 EEG 数据，以下是一个**尚未执行的**研究提案。文献部分只陈述我实际读到的文本；凡属我的推断，均标注「推断」。\n\n## 1. 为什么这个问题不是术语问题\n\n现有证据显示，情绪评分与 EEG 之间那条「相关」里，个体身份贡献远大于情绪本身。用 t-SNE 在 DEAP/MAHNOB-HCI/DREAMER 三个库上，同被试样本在二维嵌入中彼此靠近，作者据此判断「被试对 EEG 信号的贡献明显高于情绪的影响」[ev_74eaf4bc0082]；同一工作还指出，某些跨被试高准确率（如 DREAMER 上 0.62）可能部分来自类别不平衡（valence 61–39%、arousal 56–44%）[ev_74eaf4bc0082]。FACED（123 人、32 导、28 段视频、9 类情绪）报告的二分正/负分类，个体内 78.8 ± 1.0%、跨个体 69.3 ± 1.5%（DE + SVM）[ev_6619560afa7e]。也就是说，「跨被试掉点」是稳定的经验事实，但**掉的是「个体稳定差异」还是「会话状态差异」，单会话数据集本身无法回答**（推断；FACED 为每被试单次采集，见其数据组织方式与验证流程 [ev_6619560afa7e]）。\n\n更关键的是，个体内也并非平稳。8 天（约 2 个月、每周一次）音乐聆听实验、10 名被试、80 个日会话中，只有 2–4 名被试呈现出「源可复现 > 6/8 天」的日平稳空谱倾向 [ev_d3f89ccca87f]；同一被试的不同天会出现**方向相反**的结果（如中央中线 beta，第 2 天倾向正性效价下降、第 7 天反向，第 1 天几乎无区分）[ev_d3f89ccca87f]。跨被试共同性也有限：9 个 IC 簇的平均跨被试共同性 71.11 ± 18.33%，情绪相关空谱倾向的一致性只有 25–40%（效价中央中线 beta 40%，唤醒仅 25%）[ev_d3f89ccca87f]。而专门的重测数据集（60 人、3 次会话、含 90 分钟内短期与 1 个月长期重测、并采集睡眠/情绪/心智游移等行为问卷）说明会话间变异本身是可测量、可被行为变量部分解释的 [ev_fad98f5a28bb]。\n\n因此本提案的核心不是「再做一个更高的跨被试准确率」，而是**用重测结构把评分-EEG 协方差拆成三个分量，并给出可反证的判据**。\n\n## 2. 可操作定义\n\n对每个被试 *i*、会话 *s*、试次 *t*，记 EEG 特征（分频段功率/DE，或源级功率）为 **x**ᵢₛₜ，效价/唤醒评分为 *y*ᵢₛₜ，刺激条件为 *c*ₜ（刺激集在所有会话固定）。用交叉随机效应分解：\n\nxᵢₛₜ = μ + aᵢ (人) + bᵢₛ (人×会话) + εᵢₛₜ\n\n**状态变化（同一人内部）**：定义为同一被试内部、相对自身分布、且时间锁定于诱发事件的偏离\nSᵢₛₜ = xᵢₛₜ − x̄ᵢ（快速状态）或 x̄ᵢₛ − x̄ᵢ（慢速状态）。\n判定为「状态」需同时满足：(a) 个体内中心化后仍与个体内中心化评分共同变化；(b) 该 EEG–评分斜率的**符号跨被试一致**（即不是每人各自一套方向）；(c) 与刺激条件 *c*ₜ 有可复现的对应（同刺激在不同会话引起同向偏离）。\n\n**稳定差异（人与人之间）**：Tᵢ = 各会话均值的平均；须满足：(a) 跨会话重测信度 ICC(3,1) > 0.5（3 次会话可估）；(b) 不随刺激条件改变（条件×被试交互不显著）；(c) 允许是「截距型」（基线偏移）或「斜率型」（个体特异的 EEG–评分映射）。\n\n**注意**：现有「按被试归一化」的做法（如按被试中位数把特征二值化，把个体特质编码进跨被试模型 [ev_74eaf4bc0082]）在操作上同时抹掉了 trait 与「整个会话内恒定的状态」——这正是本提案要用重测设计补上的缺口（推断）。\n\n## 3. 竞争解释与各自需要的证据\n\n**H1｜身份/基线主导（trait-offset）**：EEG 里情绪相关的可解码信息主要是一个大幅的被试特有基线，情绪只是其上小幅偏离。需要证据：个体内中心化后解码接近机会；被试身份解码很高；被试均值特征能预测被试均值评分且跨会话稳定。支持：被试聚类结构 [ev_74eaf4bc0082]、跨被试掉点 [ev_6619560afa7e]、情绪相关源跨被试一致性仅 25–40% [ev_d3f89ccca87f]。\n\n**H2｜非平稳漂移（state/会话主导）**：个体内的映射本身逐日改变，所谓「稳定差异」只是「会话内稳定」。需要证据：会话内解码尚可但跨会话迁移失败、斜率符号翻转、少量带标签校准能恢复；会话级协变量（睡眠/心境）解释会话偏移。支持：日平稳仅 2–4/10 人、同日不同向 [ev_d3f89ccca87f]；重测设计中会话间变异真实存在且与睡眠/情绪自评相关 [ev_fad98f5a28bb]；跨被试**跨会话**被单独列为更难的验证协议 [ev_580a39dd545d]。\n\n**H3｜评分使用/标签伪迹**：预测来自评分量表使用习惯与类别不平衡，而非情绪特异性 EEG。需要证据：仅在原始评分下有效，个体内 z 化并平衡类别后消失；预测量只与被试平均评分相关、与条件内偏差无关。支持：不平衡可抬高跨被试准确率的警示 [ev_74eaf4bc0082]；FACED 中对中性类因数量不平衡而排除的处理亦说明标签分布会影响结论 [ev_6619560afa7e]。\n\n三者并不互斥，但**在「中心化方向 × 跨会话信度」这个二维平面上落点不同**，这也是实验设计的判别逻辑。\n\n## 4. 最小实验\n\n**数据**：20–24 名新被试 × 3 次会话（第 0、7、~28 天；借鉴短期/长期重测结构 [ev_fad98f5a28bb]）× 24 试次固定刺激集（8 负性高唤醒、8 正性高唤醒、8 中性，来自已验证的诱发材料；视频范式已在 123 人上验证可诱发目标情绪 [ev_6619560afa7e]，音乐范式亦有大规模「听了什么、感觉如何」配对记录 [ev_97eaa43a3d81]）。每会话：2 min 睁眼 + 2 min 闭眼静息 → 24 试次（3 s 基线 + 30 s 刺激 + 9 点 valence/arousal 自评）→ 再次静息。32 导、500 Hz。共约 1440 试次。\n\n**关键设计要点**：(1) 刺激集三次会话完全相同——使「同一刺激的跨会话一致性」成为可测的锚；(2) 每会话首尾各重放同一「锚试次」——估计会话内状态漂移；(3) 采集会话级状态变量（睡眠时长/质量、当前心境、咖啡因、时段）与一次性特质量表；(4) 条件试次数严格均衡。\n\n**对照**：\n- 身份泄漏对照：并行训练「被试身份分类器」，并在个体内中心化数据上重跑情绪解码；\n- 伪迹对照：同一流程用打乱标签（被试内置换）与不平衡标签重跑，量化不平衡抬升；\n- 评分对照：原始评分 vs 个体内 z 化评分 两条分析线并行；\n- 静息对照：会话起止静息段给出不依赖情绪的会话偏移估计，用于回归掉会话级漂移。\n\n**主要可观测量（单一主检验）**：留一被试 + 留一会话交叉验证下的一对数——**R²_state**（个体内中心化的 EEG 特征预测个体内中心化评分，跨被试模型）与 **ICC_trait**（被试均值预测量的跨 3 会话重测信度）；辅以**状态斜率符号一致率 κ**（被试×会话的斜率符号在跨会话间的一致比例）。\n\n**预测**\n| | R²_state | ICC_trait | κ | 其他 |\n|---|---|---|---|---|\n| H1 身份主导 | ≈0（≤0.02，且不超置换零分布） | 高（>0.6） | 低 | 身份解码 >80%；均值特征→均值评分 r>0.5 |\n| H2 非平稳 | 会话内中等，跨会话迁移≈0（校准后恢复） | 低到中 | 低（≈0.3–0.4，出现正负翻转） | 睡眠/心境显著预测会话偏移 |\n| H3 评分伪迹 | 原始评分下中等，z 化+平衡后≈0 | 与量表使用习惯共变 | 低 | 预测量只跟随被试平均评分，不跟随条件内偏差 |\n\n**反证条件（明确写死）**\n- 否证 H1 的「仅身份」版本：个体内中心化后 R²_state 显著大于置换零分布且能跨被试迁移，同时身份解码不高于机会+裕度。\n- 否证 H2：每名被试的 EEG–评分斜率在三次会话间相关 r>0.6，且跨会话迁移的准确率损失 ≤5 个百分点（无需重新校准）。\n- 否证 H3：个体内 z 化并平衡类别后，效应量保留 ≥50%。\n- 否证整个拆分框架：被试×会话随机效应方差 ≈ 0 且 ICC_trait ≈ 1（则「状态」与「特质」在该特征上不可分，问题变成特征选择问题而非实验问题）。\n\n## 5. 即使做完实验仍无法区分\n\n1. **稳定差异的来源**：情绪特质 vs. 与情绪无关的稳定生理/解剖个体特征（alpha 峰频、颅骨与电极阻抗、皮层折叠）vs. 评分量表使用习惯——三者都产生稳健的被试均值成分与高 ICC，本设计无法拆开；外部锚（他人评定、跨模态、刺激强度匹配）只能削弱不能消除。\n2. **会话级偏移的归因**：睡眠、心境、警觉/疲劳、咖啡因、时段、电极重装在同一次实验里高度共线；即使会话协变量显著，也无法把「慢状态」归给情绪而非唤醒/疲劳。\n3. **重复暴露**：同一刺激三次重复，重复抑制/习惯化与真实状态变化混在一起，本设计自身引入此混淆（换刺激集可解，但会牺牲「同刺激锚」）。\n4. **因果与读取方向**：EEG 是情绪的因、伴随物还是结果，解码框架内不可区分。\n5. **特征/层级依赖**：传感器级功率与源级（ICA）结论可能不同（文献中情绪相关结论建立在 ICA 源级 [ev_d3f89ccca87f]），因此任何「状态/特质」划分都只是特定特征层上的划分，不能升级为神经机制结论。\n6. **个体特异斜率**：若某被试斜率本身高 ICC，则「个体特异的情绪–EEG 映射」与「个体特异的容积传导/解剖差异」仍不可分。\n\n## 6. 提取范围与限制\n\n- 逐字只读了 HTML 文本的下列区间：ev_74eaf4bc0082 的 0–20,000 字符（约 50,373 中的摘要、引言、相关工作、第 3.2/4 节；**未读第 5 节结果**，故不引用其准确率数字）；ev_d3f89ccca87f 的 0–30,000 字符（约 68,775 中的方法、行为结果、日平稳性、跨被试共同性至 Table 1）；ev_6619560afa7e 的 0–6,000 与 16,000–22,000 字符（约 35,980 中的摘要、背景、数据组织、技术验证分类分析）；ev_fad98f5a28bb 的 0–6,000 字符（约 43,794 中的摘要与背景）；ev_580a39dd545d 与 ev_97eaa43a3d81 仅读摘要/背景片段（各约前 4,000 字符），关于它们的陈述限于摘要级（验证协议、数据规模），不作方法细节断言。\n- 表/图/公式在材料中被扁平化，部分数字（如 Table 1 的 Arousal 行）截断；样本量、统计量与阈值均按文本原样引用，未做二次核算。\n- 本提案未执行任何采集或分析；效果量阈值（0.02、0.5、r>0.6、≤5 个百分点）是我为可反证性预设的判据，不是文献值。",
+  "evidence_ids": [
+    "ev_580a39dd545d",
+    "ev_6619560afa7e",
+    "ev_74eaf4bc0082",
+    "ev_97eaa43a3d81",
+    "ev_d3f89ccca87f",
+    "ev_fad98f5a28bb"
+  ],
+  "inline_evidence_ids": [
+    "ev_580a39dd545d",
+    "ev_6619560afa7e",
+    "ev_74eaf4bc0082",
+    "ev_97eaa43a3d81",
+    "ev_d3f89ccca87f",
+    "ev_fad98f5a28bb"
+  ],
+  "unresolved": [
+    "没有真实 EEG 数据：所有预测与反证阈值都未经检验，无法给出先验效果量或统计功效。",
+    "FACED 为每被试单次采集，跨被试掉点（78.8%→69.3%）中「稳定个体差异」与「会话状态」的占比无法由该数据集本身拆解；本提案把该拆分当作待检验问题而非已知结论。",
+    "ev_580a39dd545d（M3D）与 ev_97eaa43a3d81（音乐-生理数据）只读了摘要/背景片段，其跨会话协议的具体实现与数据字段未核实，不能作为方法细节依据。",
+    "ev_74eaf4bc0082 的结果章节未读，故未引用其分类准确率或归一化增益的具体数值；该文「被试贡献＞情绪贡献」的判断来自 t-SNE 定性图与其文字陈述，非方差分解统计量。",
+    "「状态」「特质」的划分在传感器级与源级特征上是否同构，本提案未解决。"
+  ],
+  "limitations": "材料为 HTML 快照，表格/图/公式被扁平化或截断（例如 ev_d3f89ccca87f 的 Table 1 在 Arousal 行处截断），无 PDF 版式、页码与图像像素；所有引用限于已读文本区间，未核对的图表内容一律未引用。ev_74eaf4bc0082 只读了前半（含摘要、引言、相关工作、拓扑结构与变换方法），未读结果章节，因此未引用其精度数字。ev_580a39dd545d 与 ev_97eaa43a3d81 仅摘要级阅读。本工作区无 EEG 数据、无代码执行能力，故本提案是一次设计论证，不是实验结果；其中所有效果量阈值、样本量建议与判据为我为可反证性设定的约定，非文献既有数值。",
+  "cited_but_never_read": [],
+  "finish_tool_call_id": "call_00_0sykIqTJi2p1b8j7CXxK6946",
+  "accepted": true,
+  "acceptance": "accepted",
+  "created_at": "2026-10-21T01:42:35Z",
+  "coverage": {
+    "sources": [
+      {
+        "evidence_id": "ev_580a39dd545d",
+        "title": "M3D: Manifold-based Domain Adaptation with Dynamic Distribution for Non-Deep Transfer Learning in Cross-subject and Cross-session EEG-based Emotion Recognition",
+        "url": "https://ar5iv.labs.arxiv.org/html/2404.15615",
+        "read_chars": 4000,
+        "total_chars": 89189,
+        "fraction_read": 0.0448
+      },
+      {
+        "evidence_id": "ev_6619560afa7e",
+        "title": "A Large Finer-grained Affective Computing EEG Dataset - Scientific Data",
+        "url": "https://www.nature.com/articles/s41597-023-02650-w",
+        "read_chars": 12000,
+        "total_chars": 35980,
+        "fraction_read": 0.3335
+      },
+      {
+        "evidence_id": "ev_74eaf4bc0082",
+        "title": "Combining Inter-Subject Modeling with a Subject-Based Data Transformation to Improve Affect Recognition from EEG Signals",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6651152/",
+        "read_chars": 18000,
+        "total_chars": 50373,
+        "fraction_read": 0.3573
+      },
+      {
+        "evidence_id": "ev_97eaa43a3d81",
+        "title": "Neural and physiological data from participants listening to affective music - Scientific Data",
+        "url": "https://www.nature.com/articles/s41597-020-0507-6",
+        "read_chars": 4000,
+        "total_chars": 33856,
+        "fraction_read": 0.1181
+      },
+      {
+        "evidence_id": "ev_c908ef06754c",
+        "title": "Subject Identity Confounds qEEG Emotion Recognition on DEAP and DREAMER",
+        "url": "https://visualize.jove.com/42739948-subject-identity-confounds-qeeg-emotion-recognition-on-deap-and-dreamer",
+        "read_chars": 0,
+        "total_chars": 3845,
+        "fraction_read": 0.0
+      },
+      {
+        "evidence_id": "ev_d3f89ccca87f",
+        "title": "Challenge for Affective Brain-Computer Interfaces: Non-stationary Spatio-spectral EEG Oscillations of Emotional Responses",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6831623/",
+        "read_chars": 24000,
+        "total_chars": 68775,
+        "fraction_read": 0.349
+      },
+      {
+        "evidence_id": "ev_fad98f5a28bb",
+        "title": "A test-retest resting, and cognitive state EEG dataset during multiple subject-driven states",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9470564/",
+        "read_chars": 6000,
+        "total_chars": 43794,
+        "fraction_read": 0.137
+      }
+    ]
+  },
+  "budget": {
+    "run_id": "flash_emotion_20261021",
+    "cap_cny": 10.0,
+    "wrap_up_reserve_cny": 0.0,
+    "spent_cny": 1.744276,
+    "unknown_cny": 0.0,
+    "reserved_cny": 0.0,
+    "committed_cny": 1.744276,
+    "available_for_new_spend_cny": 8.255724,
+    "model_attempts": 51,
+    "model_attempts_limit": 120,
+    "search_attempts": 7,
+    "search_attempts_limit": 30,
+    "fetch_attempts": 8,
+    "fetch_attempts_limit": 40,
+    "input_tokens": 592366,
+    "output_tokens": 61193,
+    "input_tokens_limit": 1000000,
+    "output_tokens_limit": 300000,
+    "input_price_cny_per_mtok": 2.0,
+    "output_price_cny_per_mtok": 8.0,
+    "tool_price_cny_per_request": 0.005,
+    "price_source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/",
+    "price_checked_at": "2026-10-21T09:40:00+08:00",
+    "cost_by_attribution": {
+      "materials_prep": 0.07,
+      "meta": 0.030454,
+      "flash_emotion_20261021__baseline__01": 0.236454,
+      "flash_emotion_20261021__baseline__02": 0.141554,
+      "flash_emotion_20261021__meta_rule__01": 0.137382,
+      "flash_emotion_20261021__meta_rule__02": 0.200584,
+      "flash_emotion_20261021__baseline__02__retry": 0.21853,
+      "flash_emotion_20261021__meta_rule__01__retry": 0.228158,
+      "flash_emotion_20261021__meta_rule__02__retry": 0.22541,
+      "flash_emotion_20261021__baseline__02__retry2": 0.25575
+    },
+    "pending": 0,
+    "updated_at": "2026-10-21T01:42:35Z"
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "at": "2026-10-19T17:14:25Z",
+  "model": "deepseek-flash",
+  "request_id": "7363ccc9-712b-49b6-8be9-5d166e053900",
+  "finish_reason": "tool_calls",
+  "usage": {
+    "prompt_tokens": 33416,
+    "completion_tokens": 1441,
+    "total_tokens": 34857,
+    "prompt_cache_hit_tokens": 27904,
+    "prompt_cache_miss_tokens": 5512
+  },
+  "content": "",
+  "reasoning_content": "Excellent. Key numbers from EEG-FM benchmark table: cross-subject, full fine-tuning, LaBraM on BNCI2014001 46.93 vs EEGNet 44.97 vs traditional CSP+LDA 38.19; BNCI2014004 76.97 vs EEGNet 76.38; TUAB 76.23 vs ShallowConv 79.81. So specialist models competitive. Linear probing numbers: BENDR 32.18 vs fine-tuned 51.11 on BNCI2014001; BIOT 30.88 vs 34.27. So linear probe drops a lot → \"linear probing frequently insufficient\" → supports \"information present but not linearly readable\" OR \"fine-tuning adds subject-specific adaptation\". This is exactly extension choice 2.\n\nImportant caveat: the drop under linear probe is confounded because linear probe on cross-subject without adaptation could reflect either (a) representation not linearly separable, or (b) fine-tuning injects subject/condition-specific info. Actually that's the key discriminating point I should design an experiment around.\n\nNow let me read a bit more: the EEG-FM benchmark's discussion/conclusion and LOO protocol details (III-B), plus their finding #2/#3 interpretation. Read 83500-89000 continues linear probing table and maybe analysis. Also read the \"cross-subject vs within-subject few-shot\" comparison — important: does performance recover within-subject? That's central to my priority question. Let me read around 89000-94500.\n\nAlso Banville: needs the subject-level readout claim — embeddings structure follows sleep stages; also they mention age? Let me read 51700-57000 for \"subject identity\" and \"age\" analyses. Actually Banville found embeddings capture age (I recall \"the embeddings were correlated with age\"). That would be relevant: identity/demographic info in embeddings.\n\nAlso I want the ACL 2025 cross-subject splitting paper (ev_9da221287269) — I read it but the content was trimmed; do I know what it says? I read chars 1400-6400 but content trimmed from my context. Hmm — the read result was \"trimmed_in_context\" meaning I don't actually see the text. I know from the search snippet that it's about rethinking cross-subject data splitting for brain-to-text, likely showing that splitting by trial rather than subject inflates performance. I need to actually read it to cite. Let me re-read it at an offset (0-5000) — it's only 8579 chars, the abstract page.\n\nSimilarly, the MOABB read at 1500-7000 was trimmed; I saw 11000-16000 and 20000-25000. Good — I have within-session vs cross-session/cross-subject definitions and the statement that within-session is \"an upper bound\" and most literature uses it. That's a strong citable point.\n\nAlso need MOABB results numbers? Maybe: Riemannian pipelines best, deep learning less good. Optional. I can cite the protocol statement without numbers.\n\nPlan remaining reads (budget conscious):\n1. ev_9da221287269 read 0-4500 (abstract + intro) — cross-subject splitting leakage.\n2. ev_825214c78a59 read 89000-94500 (results/analysis re scale, cross-subject vs few-shot).\n3. ev_b63c716fd707 read 51700-56800 (embedding structure, age/subject).\n\nThen maybe:\n4. A paper on temporal generalization (King & Dehaene) — good for \"same observable at different time windows\". Optional; I could instead use Hebart&Baker.\n5. BIOT (Yang et al. 2023) for masked reconstruction across channels — if I want a third pretraining-objective paper. LaBraM covers masked codebook; Banville covers CPC/relative positioning/temporal shuffling. That's enough for objectives (time/spectrum/cross-channel): LaBraM does temporal+spectral (Fourier) prediction; Banville CPC = time; BIOT = cross-channel masking. Adding BIOT would need a fetch. Maybe skip and instead use the EEG-FM benchmark's taxonomy (it discusses time-domain, frequency-domain, contrastive, etc.) — I already read a chunk on frequency-domain reconstruction. Good.\n\n6. Counter-evidence: something showing high accuracy from non-neural confounds in EEG, e.g., \"muscle/eye artifacts drive decoding\", or \"EEG-based decoding of Alzheimer's driven by confounds\". Alternatively \"EEGManyPipelines\" (analytic variability across 160+ teams). That would be a strong methodological critique paper. Let me search for it and fetch if easy. Actually a better counter-evidence specific to identity/state: \"EEG microstate / vigilance\" — too much.\n\nGiven budget, I'll add one more: EEGManyPipelines (2025, Nature Human Behaviour?) or the Pavlovian \"EEGManyPipelines: ... robustness of ERP findings\". Let me search quickly.\n\nAlso useful: a paper showing cross-session stability of individual \"EEG fingerprint\" (e.g., \"individual identification from EEG is stable over months\"). The biometrics paper covers session effects (EER 6.7% at 1 day → 14.3% at 1 year) — great for identity/environment info and its drift. Good.\n\nLet me do the 3 reads + 1 search in parallel.",
+  "tool_calls": [
+    {
+      "id": "call_00_48i8mXiXEO7GP6SHNHbK4429",
+      "name": "read_evidence",
+      "arguments": "{\"evidence_id\": \"ev_9da221287269\", \"start_char\": 1300, \"max_chars\": 4800}"
+    },
+    {
+      "id": "call_01_AiHx5A30a7ZBg4Blr3ga4040",
+      "name": "read_evidence",
+      "arguments": "{\"evidence_id\": \"ev_825214c78a59\", \"start_char\": 89500, \"max_chars\": 5000}"
+    },
+    {
+      "id": "call_02_yoX6BzAFi8m2zfosh7oA1368",
+      "name": "read_evidence",
+      "arguments": "{\"evidence_id\": \"ev_b63c716fd707\", \"start_char\": 51700, \"max_chars\": 5000}"
+    },
+    {
+      "id": "call_03_KRwPEJZ88P5ns2xZfbPP0302",
+      "name": "search_sources",
+      "arguments": "{\"count\": 5, \"query\": \"EEGManyPipelines multiverse analysis analytic variability ERP results robustness\"}"
+    }
+  ],
+  "raw": {
+    "id": "7363ccc9-712b-49b6-8be9-5d166e053900",
+    "object": "chat.completion",
+    "created": 1792430058,
+    "model": "deepseek-flash",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "Excellent. Key numbers from EEG-FM benchmark table: cross-subject, full fine-tuning, LaBraM on BNCI2014001 46.93 vs EEGNet 44.97 vs traditional CSP+LDA 38.19; BNCI2014004 76.97 vs EEGNet 76.38; TUAB 76.23 vs ShallowConv 79.81. So specialist models competitive. Linear probing numbers: BENDR 32.18 vs fine-tuned 51.11 on BNCI2014001; BIOT 30.88 vs 34.27. So linear probe drops a lot → \"linear probing frequently insufficient\" → supports \"information present but not linearly readable\" OR \"fine-tuning adds subject-specific adaptation\". This is exactly extension choice 2.\n\nImportant caveat: the drop under linear probe is confounded because linear probe on cross-subject without adaptation could reflect either (a) representation not linearly separable, or (b) fine-tuning injects subject/condition-specific info. Actually that's the key discriminating point I should design an experiment around.\n\nNow let me read a bit more: the EEG-FM benchmark's discussion/conclusion and LOO protocol details (III-B), plus their finding #2/#3 interpretation. Read 83500-89000 continues linear probing table and maybe analysis. Also read the \"cross-subject vs within-subject few-shot\" comparison — important: does performance recover within-subject? That's central to my priority question. Let me read around 89000-94500.\n\nAlso Banville: needs the subject-level readout claim — embeddings structure follows sleep stages; also they mention age? Let me read 51700-57000 for \"subject identity\" and \"age\" analyses. Actually Banville found embeddings capture age (I recall \"the embeddings were correlated with age\"). That would be relevant: identity/demographic info in embeddings.\n\nAlso I want the ACL 2025 cross-subject splitting paper (ev_9da221287269) — I read it but the content was trimmed; do I know what it says? I read chars 1400-6400 but content trimmed from my context. Hmm — the read result was \"trimmed_in_context\" meaning I don't actually see the text. I know from the search snippet that it's about rethinking cross-subject data splitting for brain-to-text, likely showing that splitting by trial rather than subject inflates performance. I need to actually read it to cite. Let me re-read it at an offset (0-5000) — it's only 8579 chars, the abstract page.\n\nSimilarly, the MOABB read at 1500-7000 was trimmed; I saw 11000-16000 and 20000-25000. Good — I have within-session vs cross-session/cross-subject definitions and the statement that within-session is \"an upper bound\" and most literature uses it. That's a strong citable point.\n\nAlso need MOABB results numbers? Maybe: Riemannian pipelines best, deep learning less good. Optional. I can cite the protocol statement without numbers.\n\nPlan remaining reads (budget conscious):\n1. ev_9da221287269 read 0-4500 (abstract + intro) — cross-subject splitting leakage.\n2. ev_825214c78a59 read 89000-94500 (results/analysis re scale, cross-subject vs few-shot).\n3. ev_b63c716fd707 read 51700-56800 (embedding structure, age/subject).\n\nThen maybe:\n4. A paper on temporal generalization (King & Dehaene) — good for \"same observable at different time windows\". Optional; I could instead use Hebart&Baker.\n5. BIOT (Yang et al. 2023) for masked reconstruction across channels — if I want a third pretraining-objective paper. LaBraM covers masked codebook; Banville covers CPC/relative positioning/temporal shuffling. That's enough for objectives (time/spectrum/cross-channel): LaBraM does temporal+spectral (Fourier) prediction; Banville CPC = time; BIOT = cross-channel masking. Adding BIOT would need a fetch. Maybe skip and instead use the EEG-FM benchmark's taxonomy (it discusses time-domain, frequency-domain, contrastive, etc.) — I already read a chunk on frequency-domain reconstruction. Good.\n\n6. Counter-evidence: something showing high accuracy from non-neural confounds in EEG, e.g., \"muscle/eye artifacts drive decoding\", or \"EEG-based decoding of Alzheimer's driven by confounds\". Alternatively \"EEGManyPipelines\" (analytic variability across 160+ teams). That would be a strong methodological critique paper. Let me search for it and fetch if easy. Actually a better counter-evidence specific to identity/state: \"EEG microstate / vigilance\" — too much.\n\nGiven budget, I'll add one more: EEGManyPipelines (2025, Nature Human Behaviour?) or the Pavlovian \"EEGManyPipelines: ... robustness of ERP findings\". Let me search quickly.\n\nAlso useful: a paper showing cross-session stability of individual \"EEG fingerprint\" (e.g., \"individual identification from EEG is stable over months\"). The biometrics paper covers session effects (EER 6.7% at 1 day → 14.3% at 1 year) — great for identity/environment info and its drift. Good.\n\nLet me do the 3 reads + 1 search in parallel.",
+          "tool_calls": [
+            {
+              "index": 0,
+              "id": "call_00_48i8mXiXEO7GP6SHNHbK4429",
+              "type": "function",
+              "function": {
+                "name": "read_evidence",
+                "arguments": "{\"evidence_id\": \"ev_9da221287269\", \"start_char\": 1300, \"max_chars\": 4800}"
+              }
+            },
+            {
+              "index": 1,
+              "id": "call_01_AiHx5A30a7ZBg4Blr3ga4040",
+              "type": "function",
+              "function": {
+                "name": "read_evidence",
+                "arguments": "{\"evidence_id\": \"ev_825214c78a59\", \"start_char\": 89500, \"max_chars\": 5000}"
+              }
+            },
+            {
+              "index": 2,
+              "id": "call_02_yoX6BzAFi8m2zfosh7oA1368",
+              "type": "function",
+              "function": {
+                "name": "read_evidence",
+                "arguments": "{\"evidence_id\": \"ev_b63c716fd707\", \"start_char\": 51700, \"max_chars\": 5000}"
+              }
+            },
+            {
+              "index": 3,
+              "id": "call_03_KRwPEJZ88P5ns2xZfbPP0302",
+              "type": "function",
+              "function": {
+                "name": "search_sources",
+                "arguments": "{\"count\": 5, \"query\": \"EEGManyPipelines multiverse analysis analytic variability ERP results robustness\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 33416,
+      "completion_tokens": 1441,
+      "total_tokens": 34857,
+      "prompt_tokens_details": {
+        "cached_tokens": 27904
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1153
+      },
+      "prompt_cache_hit_tokens": 27904,
+      "prompt_cache_miss_tokens": 5512
+    },
+    "system_fingerprint": "e72d3c7f663d3e1383b00b3884cb4501"
+  }
+}

@@ -128,7 +128,7 @@ def _episode_config(tmp_path: Path, provider: object, responses: list[ProviderRe
         episode_id="test_episode",
         case_id="case_001",
         case_specs_path=str(specs_path),
-        rule_path="prompts/S0.md",
+        rule_path="archive/experiments/synthetic_20261019/prompts/S0.md",
         provider={"kind": "scripted"},
         backend="scripted",
         model="scripted",

@@ -1,0 +1,107 @@
+{
+  "at": "2026-10-19T17:12:58Z",
+  "model": "deepseek-flash",
+  "request_id": "316b2c23-eaa7-4f20-94d7-56e590a6f09c",
+  "finish_reason": "tool_calls",
+  "usage": {
+    "prompt_tokens": 25101,
+    "completion_tokens": 676,
+    "total_tokens": 25777,
+    "prompt_cache_hit_tokens": 20352,
+    "prompt_cache_miss_tokens": 4749
+  },
+  "content": "",
+  "reasoning_content": "Good. Now I need:\n1. MOABB results about cross-subject vs within-session (the key claim: most pipelines evaluated within-session; cross-subject performance much lower). Let me find the section on evaluation. Search within text by reading ranges — I'll guess around mid-document. Better: read later sections. Let me read around 30000-35000 and 60000-65000. Hmm, expensive. Alternatively, the abstract says Riemannian superior and deep learning needs lots of data. The key point I want: evaluation protocols include within-session and cross-session/cross-subject; and cross-subject results are lower. MOABB original paper (Jayaram & Barachant 2018) states most studies do within-subject.\n\nActually, a more precise and useful citation for \"what survives subject change\": the MOABB benchmark provides cross-subject results. Let me look for \"cross-subject\" in the MOABB text by reading a chunk likely in methods (section on evaluation). I'll try 12000-17500.\n\n2. LaBraM downstream evaluation protocol: were downstream tasks evaluated with subject-specific fine-tuning? LaBraM fine-tunes per dataset with train/val/test splits — often random split, not subject-held-out. That's an important critique point: LaBraM's claims of generalization come from cross-dataset pretraining, not cross-subject evaluation. Let me check the experiments section. Read around a later chunk.\n\n3. EEG foundation model benchmark with linear probe vs full fine-tune numbers (extension 2). Fetch arXiv 2601.17883 HTML.\n\n4. EEG biometrics / subject identification across sessions.\n\n5. Hebart & Baker 2018 (decoding interpretation) — for the \"what can we interpret\" framing.\n\nLet me batch: fetch 2601.17883, search EEG biometrics across sessions, search Hebart Baker deconstructing multivariate decoding, and read LaBraM experiments section (guess offset ~40000).\n\nCareful about budget. Let's do 4 parallel calls.",
+  "tool_calls": [
+    {
+      "id": "call_00_osGPwTWmHKIdy8KRg1XQ7741",
+      "name": "fetch_source",
+      "arguments": "{\"url\": \"https://arxiv-org.ezproxy.obspm.fr/html/2601.17883v1\"}"
+    },
+    {
+      "id": "call_01_A5z9y4h5nGsa2LHs5DJc3071",
+      "name": "search_sources",
+      "arguments": "{\"count\": 6, \"query\": \"EEG subject identification biometric across sessions days stable individual traits decoding\"}"
+    },
+    {
+      "id": "call_02_ki6in9WcAQIQTHJX47Cm4666",
+      "name": "search_sources",
+      "arguments": "{\"count\": 6, \"query\": \"Hebart Baker 2018 deconstructing multivariate decoding limits interpretation information readout\"}"
+    },
+    {
+      "id": "call_03_oxyLXXlx5HHJW345EUbh0790",
+      "name": "read_evidence",
+      "arguments": "{\"evidence_id\": \"ev_2085e5b7ba26\", \"start_char\": 38000, \"max_chars\": 5500}"
+    }
+  ],
+  "raw": {
+    "id": "316b2c23-eaa7-4f20-94d7-56e590a6f09c",
+    "object": "chat.completion",
+    "created": 1792429974,
+    "model": "deepseek-flash",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "Good. Now I need:\n1. MOABB results about cross-subject vs within-session (the key claim: most pipelines evaluated within-session; cross-subject performance much lower). Let me find the section on evaluation. Search within text by reading ranges — I'll guess around mid-document. Better: read later sections. Let me read around 30000-35000 and 60000-65000. Hmm, expensive. Alternatively, the abstract says Riemannian superior and deep learning needs lots of data. The key point I want: evaluation protocols include within-session and cross-session/cross-subject; and cross-subject results are lower. MOABB original paper (Jayaram & Barachant 2018) states most studies do within-subject.\n\nActually, a more precise and useful citation for \"what survives subject change\": the MOABB benchmark provides cross-subject results. Let me look for \"cross-subject\" in the MOABB text by reading a chunk likely in methods (section on evaluation). I'll try 12000-17500.\n\n2. LaBraM downstream evaluation protocol: were downstream tasks evaluated with subject-specific fine-tuning? LaBraM fine-tunes per dataset with train/val/test splits — often random split, not subject-held-out. That's an important critique point: LaBraM's claims of generalization come from cross-dataset pretraining, not cross-subject evaluation. Let me check the experiments section. Read around a later chunk.\n\n3. EEG foundation model benchmark with linear probe vs full fine-tune numbers (extension 2). Fetch arXiv 2601.17883 HTML.\n\n4. EEG biometrics / subject identification across sessions.\n\n5. Hebart & Baker 2018 (decoding interpretation) — for the \"what can we interpret\" framing.\n\nLet me batch: fetch 2601.17883, search EEG biometrics across sessions, search Hebart Baker deconstructing multivariate decoding, and read LaBraM experiments section (guess offset ~40000).\n\nCareful about budget. Let's do 4 parallel calls.",
+          "tool_calls": [
+            {
+              "index": 0,
+              "id": "call_00_osGPwTWmHKIdy8KRg1XQ7741",
+              "type": "function",
+              "function": {
+                "name": "fetch_source",
+                "arguments": "{\"url\": \"https://arxiv-org.ezproxy.obspm.fr/html/2601.17883v1\"}"
+              }
+            },
+            {
+              "index": 1,
+              "id": "call_01_A5z9y4h5nGsa2LHs5DJc3071",
+              "type": "function",
+              "function": {
+                "name": "search_sources",
+                "arguments": "{\"count\": 6, \"query\": \"EEG subject identification biometric across sessions days stable individual traits decoding\"}"
+              }
+            },
+            {
+              "index": 2,
+              "id": "call_02_ki6in9WcAQIQTHJX47Cm4666",
+              "type": "function",
+              "function": {
+                "name": "search_sources",
+                "arguments": "{\"count\": 6, \"query\": \"Hebart Baker 2018 deconstructing multivariate decoding limits interpretation information readout\"}"
+              }
+            },
+            {
+              "index": 3,
+              "id": "call_03_oxyLXXlx5HHJW345EUbh0790",
+              "type": "function",
+              "function": {
+                "name": "read_evidence",
+                "arguments": "{\"evidence_id\": \"ev_2085e5b7ba26\", \"start_char\": 38000, \"max_chars\": 5500}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 25101,
+      "completion_tokens": 676,
+      "total_tokens": 25777,
+      "prompt_tokens_details": {
+        "cached_tokens": 20352
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 425
+      },
+      "prompt_cache_hit_tokens": 20352,
+      "prompt_cache_miss_tokens": 4749
+    },
+    "system_fingerprint": "e72d3c7f663d3e1383b00b3884cb4501"
+  }
+}

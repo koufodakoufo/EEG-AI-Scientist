@@ -48,6 +48,19 @@ def _read_json(path: Path) -> dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _archived_path(path: Path | str) -> bool:
+    return "archive" in Path(path).parts
+
+
+def _archive_hint(action: str) -> int:
+    print(f"{action}: this old experiment is archived and read-only; no new run was started.")
+    print("Use the unified entry point instead:")
+    print("  .\\.venv\\Scripts\\python.exe -m eeg_scientist.cli study --help")
+    print("  .\\.venv\\Scripts\\python.exe -m eeg_scientist.cli review --help")
+    print("Read archive/README.md for the old experiment index and old commands.")
+    return 2
+
+
 def _probe_parse(text: str) -> dict[str, object]:
     start = text.find("{")
     if start < 0:
@@ -101,6 +114,8 @@ def _env_flags() -> dict[str, bool]:
 
 
 def command_preflight(args: argparse.Namespace) -> int:
+    if _archived_path(getattr(args, 'config', '')):
+        return _archive_hint('preflight')
     config = StudyConfig.model_validate(_read_json(Path(args.config)))
     provider = provider_from_config(dict(config.provider))
     deadline = _deadline(config.deadline)
@@ -188,6 +203,8 @@ def command_preflight(args: argparse.Namespace) -> int:
 
 
 def command_episode(args: argparse.Namespace) -> int:
+    if _archived_path(getattr(args, 'config', '')):
+        return _archive_hint('episode')
     config = EpisodeConfig.model_validate(_read_json(Path(args.config)))
     provider = provider_from_config(dict(config.provider))
     summary = run_episode(config, provider)
@@ -196,6 +213,8 @@ def command_episode(args: argparse.Namespace) -> int:
 
 
 def command_overnight(args: argparse.Namespace) -> int:
+    if _archived_path(getattr(args, 'config', '')):
+        return _archive_hint('overnight')
     from .study import run_study
 
     config = StudyConfig.model_validate(_read_json(Path(args.config)))
@@ -206,6 +225,8 @@ def command_overnight(args: argparse.Namespace) -> int:
 
 
 def command_resume(args: argparse.Namespace) -> int:
+    if _archived_path(getattr(args, 'config', '')):
+        return _archive_hint('resume')
     from .study import run_study
 
     config = StudyConfig.model_validate(_read_json(Path(args.config)))
@@ -216,6 +237,8 @@ def command_resume(args: argparse.Namespace) -> int:
 
 
 def command_report(args: argparse.Namespace) -> int:
+    if _archived_path(getattr(args, 'study', '')):
+        return _archive_hint('report')
     from .reporting import render_reports
 
     paths = render_reports(Path(args.study))
@@ -224,6 +247,7 @@ def command_report(args: argparse.Namespace) -> int:
 
 
 def command_calibrate(args: argparse.Namespace) -> int:
+    return _archive_hint("calibrate")
     from .experiments import SUPPORTED_METRIC_KEYS
 
     seeds = {"T": 9001, "G": 9002, "D": 9003, "N": 9004}
@@ -300,7 +324,7 @@ def command_calibrate(args: argparse.Namespace) -> int:
                 "",
             ]
         )
-    output = Path("reports/CALIBRATION.md")
+    output = Path("archive/experiments/synthetic_20261019/reports/CALIBRATION.md")
     ensure_dir(output.parent)
     output.write_text("\n".join(rows + [""] + details), encoding="utf-8")
     print(f"wrote {output}")
@@ -311,12 +335,12 @@ def command_calibrate(args: argparse.Namespace) -> int:
 # DeepSeek Flash overnight commands
 # ---------------------------------------------------------------------------
 
-FLASH_CONFIG = "configs/studies/overnight_flash_20261020.json"
+FLASH_CONFIG = "archive/experiments/flash_20261020_0058/configs/study.json"
 
 
 def _flash_paths(args: argparse.Namespace) -> tuple[dict[str, object], dict[str, object]]:
     study = _read_json(Path(args.config))
-    model = _read_json(Path("configs/models/deepseek_flash.json"))
+    model = _read_json(Path("archive/experiments/flash_20261020_0058/configs/deepseek_flash.json"))
     return study, model
 
 
@@ -356,6 +380,9 @@ def _flash_client(args: argparse.Namespace):  # type: ignore[no-untyped-def]
 
 
 def command_flash_capability(args: argparse.Namespace) -> int:
+    study = _read_json(Path(args.config))
+    if bool(study.get("archive")):
+        return _archive_hint("overnight-flash capability")
     from .capability import run_capability_check
 
     study, _model, client, ledger, report = _flash_client(args)
@@ -369,6 +396,9 @@ def command_flash_capability(args: argparse.Namespace) -> int:
 
 
 def command_flash_diagnose(args: argparse.Namespace) -> int:
+    study = _read_json(Path(args.config))
+    if bool(study.get("archive")):
+        return _archive_hint("overnight-flash diagnose")
     from .diagnostic import run_case_diagnostics, run_explanation_regression
 
     study, _model, client, ledger, report = _flash_client(args)
@@ -385,7 +415,7 @@ def command_flash_diagnose(args: argparse.Namespace) -> int:
         summary["cases"] = run_case_diagnostics(
             client,
             ledger=ledger,
-            source_specs_path=Path("data/private/case_specs.json"),
+            source_specs_path=Path("archive/experiments/synthetic_20261019/data/private/case_specs.json"),
             run_dir=root / "cases",
             deadline=str(study["deadline"]),
         )
@@ -398,6 +428,9 @@ def command_flash_diagnose(args: argparse.Namespace) -> int:
 
 
 def command_flash_research(args: argparse.Namespace) -> int:
+    study = _read_json(Path(args.config))
+    if bool(study.get("archive")):
+        return _archive_hint("overnight-flash research")
     from .research import ResearchConfig, ResearchRunner
 
     study, _model, client, ledger, report = _flash_client(args)
@@ -434,6 +467,21 @@ def command_flash_research(args: argparse.Namespace) -> int:
 
 
 def command_flash_status(args: argparse.Namespace) -> int:
+    study = _read_json(Path(args.config))
+    if bool(study.get("archive")):
+        paths = study["paths"]
+        ledger_path = Path(str(paths["budget_ledger"]))
+        payload: dict[str, object] = {
+            "run_id": study["run_id"],
+            "archived": True,
+            "started_at": study["started_at"],
+            "deadline": study["deadline"],
+            "ledger": json.loads(ledger_path.read_text(encoding="utf-8")) if ledger_path.exists() else {},
+            "paths": paths,
+            "subruns": _scan_subruns(Path(str(paths["run_root"]))),
+        }
+        print(json.dumps(payload, ensure_ascii=False, indent=2, default=str))
+        return 0
     study, _model, client, ledger, report = _flash_client(args)
     paths = study["paths"]
     payload: dict[str, object] = {
@@ -467,6 +515,11 @@ def command_flash_status(args: argparse.Namespace) -> int:
 def command_flash_report(args: argparse.Namespace) -> int:
     from .flash_report import render_flash_reports
 
+    study = _read_json(Path(args.config))
+    if bool(study.get("archive")):
+        print(f"archived read-only report directory: {study.get('paths', {}).get('reports_dir', '')}")
+        print("No report was rewritten. Use archive/README.md or the unified study report.")
+        return 0
     study, _model, _client, _ledger, _report = _flash_client(args)
     paths = render_flash_reports(
         Path(str(study["paths"]["reports_dir"])),
@@ -526,6 +579,8 @@ def command_emotion_run(args: argparse.Namespace) -> int:
     from .emotion_experiment import load_study, run_study
 
     study = load_study(Path(args.config))
+    if bool(study.get("archive")):
+        return _archive_hint("emotion-study run")
     print(json.dumps({"study_id": study["study_id"], "phase": "starting"}, ensure_ascii=False))
     result = run_study(Path(args.config))
     print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
@@ -535,6 +590,9 @@ def command_emotion_run(args: argparse.Namespace) -> int:
 def command_emotion_evaluate(args: argparse.Namespace) -> int:
     from .emotion_experiment import evaluate_study
 
+    study = _read_json(Path(args.config))
+    if bool(study.get("archive")):
+        return _archive_hint("emotion-study evaluate")
     summary = evaluate_study(Path(args.config))
     print(json.dumps(summary, ensure_ascii=False, indent=2, default=str))
     return 0
@@ -543,6 +601,9 @@ def command_emotion_evaluate(args: argparse.Namespace) -> int:
 def command_emotion_retry(args: argparse.Namespace) -> int:
     from .emotion_experiment import retry_failed_runs
 
+    study = _read_json(Path(args.config))
+    if bool(study.get("archive")):
+        return _archive_hint("emotion-study retry-failed")
     result = retry_failed_runs(Path(args.config))
     print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
     return 0
@@ -623,7 +684,7 @@ def main(argv: list[str] | None = None) -> int:
 
     emotion = subparsers.add_parser("emotion-study", help="Controlled emotion state-vs-trait study")
     emotion_sub = emotion.add_subparsers(dest="emotion_command", required=True)
-    emotion_config = "configs/studies/flash_emotion_20261021.json"
+    emotion_config = "archive/experiments/emotion_20261021/configs/study.json"
     for name, function in (
         ("run", command_emotion_run),
         ("evaluate", command_emotion_evaluate),
@@ -633,6 +694,10 @@ def main(argv: list[str] | None = None) -> int:
         sub = emotion_sub.add_parser(name)
         sub.add_argument("--config", default=emotion_config)
         sub.set_defaults(func=function)
+
+    from .study_cli import add_commands as add_study_commands
+
+    add_study_commands(subparsers)
 
     args = parser.parse_args(argv)
     return int(args.func(args))

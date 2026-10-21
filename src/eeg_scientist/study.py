@@ -173,7 +173,7 @@ def _run_dev_arm(
         config,
         episode_id=f"{config.study_id}_{case_id}_dev_s0",
         case_id=case_id,
-        rule_path=Path("prompts/S0.md"),
+        rule_path=Path("archive/experiments/synthetic_20261019/prompts/S0.md"),
         run_dir=run_dir,
         shared_facts_path=None,
         provider=provider,
@@ -342,8 +342,8 @@ def freeze_study(
 ) -> dict[str, object]:
     facts_path = study_dir / "shared_development_facts.json"
     atomic_write_json(facts_path, facts)
-    s0_path = Path("prompts/S0.md")
-    s1_path = Path("prompts/S1.md")
+    s0_path = Path("archive/experiments/synthetic_20261019/prompts/S0.md")
+    s1_path = Path("archive/experiments/synthetic_20261019/prompts/S1.md")
     case_specs_path = Path(config.case_specs_path)
     holdout_specs = {case_id: specs[case_id].model_dump(mode="json") for case_id in config.holdout_case_ids if case_id in specs}
     model_info: dict[str, object] = {"provider": provider.provider_name, "model": provider.model_name}
@@ -388,8 +388,8 @@ def freeze_study(
     manifest_path = Path(config.freeze_manifest_path)
     atomic_write_json(manifest_path, manifest)
     atomic_write_json(study_dir / "FREEZE_MANIFEST.json", manifest)
-    memory_methods = Path("memory/research_methods")
-    memory_scientific = Path("memory/scientific_knowledge")
+    memory_methods = Path("archive/experiments/synthetic_20261019/memory/research_methods")
+    memory_scientific = Path("archive/experiments/synthetic_20261019/memory/scientific_knowledge")
     ensure_dir(memory_methods)
     ensure_dir(memory_scientific)
     atomic_write_json(
@@ -426,7 +426,7 @@ def run_study(config: StudyConfig, provider: ScientistProvider) -> StudySummary:
         atomic_write_json(state_path, state.model_dump(mode="json"))
         append_event(study_dir, "study_started", {"study_id": config.study_id, "deadline": config.deadline})
     specs = load_case_specs(Path(config.case_specs_path))
-    s0_text = load_rule_text(Path("prompts/S0.md"))
+    s0_text = load_rule_text(Path("archive/experiments/synthetic_20261019/prompts/S0.md"))
     deadline = _deadline(config.deadline)
     stop_new = deadline.timestamp() - config.report_reserve_minutes * 60
     freeze_path = Path(config.freeze_manifest_path)
@@ -463,7 +463,7 @@ def run_study(config: StudyConfig, provider: ScientistProvider) -> StudySummary:
         facts = _build_development_facts(config, specs, summaries, study_dir)
         meta, meta_attempts, meta_tokens, meta_errors = _meta_update(config, provider, facts, s0_text)
         s1_text = build_s1_text(s0_text, meta)
-        Path("prompts/S1.md").write_text(s1_text, encoding="utf-8")
+        Path("archive/experiments/synthetic_20261019/prompts/S1.md").write_text(s1_text, encoding="utf-8")
         manifest = freeze_study(
             config,
             provider,
@@ -494,8 +494,8 @@ def run_study(config: StudyConfig, provider: ScientistProvider) -> StudySummary:
     manifest = json.loads(freeze_path.read_text(encoding="utf-8"))
     pair_order = manifest.get("pair_order", _pair_order(config, list(config.holdout_case_ids)))
     facts_path = study_dir / "shared_development_facts.json"
-    s0_path = Path("prompts/S0.md")
-    s1_path = Path("prompts/S1.md")
+    s0_path = Path("archive/experiments/synthetic_20261019/prompts/S0.md")
+    s1_path = Path("archive/experiments/synthetic_20261019/prompts/S1.md")
     for case_id in config.holdout_case_ids:
         pair = state.pairs.setdefault(case_id, {})
         if pair.get("paired"):

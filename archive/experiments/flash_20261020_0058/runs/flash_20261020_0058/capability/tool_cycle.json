@@ -1,0 +1,34 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "Call echo_probe with text='ping'. After you receive the tool result, state the exact text that was returned."
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "",
+      "tool_calls": [
+        {
+          "id": "call_00_ET_8Ki8wDKOy1yPjfCdK8eq5068",
+          "type": "function",
+          "function": {
+            "name": "echo_probe",
+            "arguments": "{\"text\": \"ping\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_00_ET_8Ki8wDKOy1yPjfCdK8eq5068",
+      "content": "{\"status\": \"ok\", \"text\": \"ping\", \"note\": \"engineering echo only\"}"
+    },
+    {
+      "role": "assistant",
+      "content": "The tool returned the text: **ping**\n\n(The full result was `{\"status\": \"ok\", \"text\": \"ping\", \"note\": \"engineering echo only\"}` — the `text` field itself is `ping`.)",
+      "reasoning_content": ""
+    }
+  ],
+  "note": "The assistant tool-call message includes reasoning_content; the tool message includes tool_call_id."
+}

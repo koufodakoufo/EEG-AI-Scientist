@@ -122,7 +122,7 @@ def _episode_records(study_dir: Path, specs: dict[str, object]) -> list[dict[str
             for arm_dir in sorted(path for path in case_dir.iterdir() if path.is_dir()):
                 arm = arm_dir.name.upper() if scope == "holdout" else "S0"
                 records.append(_record_from_dir(scope, case_dir.name, arm, arm_dir, specs))
-    e1_base = Path("runs/dev_e1")
+    e1_base = Path("archive/experiments/synthetic_20261019/runs/dev_e1")
     if e1_base.exists():
         for arm_dir in sorted(path for path in e1_base.iterdir() if path.is_dir()):
             state = _read_json(arm_dir / "state.json", {})
@@ -344,7 +344,7 @@ def render_reports(study_dir: Path, output_dir: Path | None = None) -> ReportPat
     if not freeze:
         freeze = _read_json(Path("FREEZE_MANIFEST.json"), {})
     facts = _read_json(study_dir / "shared_development_facts.json", {})
-    specs_raw = _read_json(Path("data/private/case_specs.json"), {"cases": []})
+    specs_raw = _read_json(Path("archive/experiments/synthetic_20261019/data/private/case_specs.json"), {"cases": []})
     specs: dict[str, object] = {}
     if isinstance(specs_raw, dict) and isinstance(specs_raw.get("cases"), list):
         for item in specs_raw["cases"]:
@@ -584,7 +584,7 @@ C:\\Users\\14090\\anaconda3\\python.exe -m eeg_scientist.cli overnight --config 
 C:\\Users\\14090\\anaconda3\\python.exe -m eeg_scientist.cli report --study runs\\study_20261019
 ```
 
-The deterministic data and splits are reproducible from `data/private/case_specs.json`. Model outputs are not bit-identical even at temperature 0; the raw requests and responses are retained.
+The deterministic data and splits are reproducible from `archive/experiments/synthetic_20261019/data/private/case_specs.json`. Model outputs are not bit-identical even at temperature 0; the raw requests and responses are retained.
 """
     (output_dir / "REPRODUCE.md").write_text(reproduce, encoding="utf-8")
     bundle_path = ensure_dir(Path("artifacts")) / "review_bundle.zip"
@@ -633,7 +633,7 @@ The deterministic data and splits are reproducible from `data/private/case_specs
         } and not path.name.startswith(("result_", "score_", "prediction_", "request_", "response_")):
             continue
         include.append(path)
-    e1_dir = Path("runs/dev_e1")
+    e1_dir = Path("archive/experiments/synthetic_20261019/runs/dev_e1")
     if e1_dir.exists():
         for path in e1_dir.rglob("*"):
             if not path.is_file() or "cache" in path.parts:
@@ -653,8 +653,8 @@ The deterministic data and splits are reproducible from `data/private/case_specs
         base = Path(directory)
         if base.exists():
             include.extend(path for path in base.rglob("*.py") if path.is_file())
-    review_only = ensure_dir(Path("review_only"))
-    private_specs = Path("data/private/case_specs.json")
+    review_only = ensure_dir(Path("archive/experiments/synthetic_20261019/review_only"))
+    private_specs = Path("archive/experiments/synthetic_20261019/data/private/case_specs.json")
     if private_specs.exists():
         (review_only / "PRIVATE_CASE_SPECS.json").write_text(private_specs.read_text(encoding="utf-8"), encoding="utf-8")
         (review_only / "README.md").write_text(

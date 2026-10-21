@@ -1,0 +1,19 @@
+{
+  "run_id": "flash_20261020_0058_literature_v1",
+  "phase": "completed",
+  "turn": 4,
+  "model_calls": 16,
+  "tool_calls": 42,
+  "searches": 8,
+  "fetches": 10,
+  "turn_model_calls": 6,
+  "turn_tool_calls": 9,
+  "pending_attempt": "",
+  "prose_nudges": 0,
+  "finalizing": false,
+  "stop_reason": "finish_study",
+  "last_error": "",
+  "final_path": "runs\\flash_20261020_0058\\research\\literature_v1\\final.json",
+  "started_at": "2026-10-19T17:11:46Z",
+  "updated_at": "2026-10-19T17:24:29Z"
+}

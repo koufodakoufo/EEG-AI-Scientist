@@ -1,0 +1,34 @@
+{
+  "run_id": "flash_20261020_0058_literature_v1",
+  "phase": "completed",
+  "model_calls": 16,
+  "tool_calls": 42,
+  "searches": 8,
+  "fetches": 10,
+  "evidence_count": 10,
+  "stop_reason": "finish_study",
+  "final_path": "runs\\flash_20261020_0058\\research\\literature_v1\\final.json",
+  "budget": {
+    "run_id": "flash_20261020_0058",
+    "cap_cny": 20.0,
+    "wrap_up_reserve_cny": 2.0,
+    "spent_cny": 1.650076,
+    "unknown_cny": 0.0,
+    "reserved_cny": 0.0,
+    "committed_cny": 1.650076,
+    "available_for_new_spend_cny": 16.349924,
+    "model_attempts": 30,
+    "model_attempts_limit": 120,
+    "search_attempts": 10,
+    "search_attempts_limit": 60,
+    "fetch_attempts": 18,
+    "fetch_attempts_limit": 90,
+    "input_tokens": 560786,
+    "output_tokens": 52938,
+    "input_tokens_limit": 2000000,
+    "output_tokens_limit": 500000,
+    "pending": 0,
+    "updated_at": "2026-10-19T17:18:13Z"
+  }
+}
+ledger: {"run_id": "flash_20261020_0058", "cap_cny": 20.0, "wrap_up_reserve_cny": 2.0, "spent_cny": 1.650076, "unknown_cny": 0.0, "reserved_cny": 0.0, "committed_cny": 1.650076, "available_for_new_spend_cny": 16.349924, "model_attempts": 30, "model_attempts_limit": 120, "search_attempts": 10, "search_attempts_limit": 60, "fetch_attempts": 18, "fetch_attempts_limit": 90, "input_tokens": 560786, "output_tokens": 52938, "input_tokens_limit": 2000000, "output_tokens_limit": 500000, "pending": 0, "updated_at": "2026-10-19T17:18:13Z"}

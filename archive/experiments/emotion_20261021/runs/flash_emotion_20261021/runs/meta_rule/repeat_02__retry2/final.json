@@ -1,0 +1,134 @@
+{
+  "run_id": "flash_emotion_20261021__meta_rule__02__retry2",
+  "answer": "# 从 EEG 预测情绪评分：如何区分「同一个人的状态变化」与「不同人的稳定差异」\n\n## 0. 一句话提案\n\n现有 EEG-情绪文献几乎都报告「跨被试精度低于被试内精度」，但**两种精度都没有把「人」和「时刻」分开**：被试内模型可能只是在拟合个体的稳定基线，跨被试模型可能只是在识别身份。因此需要的不是更好的对齐算法，而是一次**方差分解式的最小实验**：同一个人、多会话、刺激重复、逐试次评分，看 EEG 能否预测**个体内去均值后的评分残差**，并且这种预测能否**跨会话迁移**。\n\n本工作区内没有真实 EEG 数据；以下全部是**研究提案**，不是已完成的 EEG 实验。\n\n## 1. 可操作定义\n\n设试次 t、会话 j、被试 i：评分 $y_{ijt}$（valence / arousal），特征 $x_{ijt}$（DE/PSD 频带功率等）。\n\n- **同一个人的状态变化（state）**：$y_{ijt}-\\bar{y}_{i\\cdot}$，即在个体内去均值（或会话内去均值）后的试次偏离。判定为\"状态可预测\"必须同时满足：(i) 该偏离能被 $x$ 的对应偏离在**留出试次**上预测；(ii) 预测能**跨会话迁移**（会话1训练→会话2测试）。只有 (i) 不构成证据，因为会话内的慢漂移会被误当成状态。\n- **不同人的稳定差异（trait）**：$T_i=\\bar{y}_{i\\cdot}$，但只有具备**重测可靠性**才叫\"稳定\"：$T_i$ 在相隔≥1周的两个会话间 ICC 显著 > 0，且对应的人均值特征 $g_i$ 同样重测可靠。人均值不可靠时不能称 trait，只能称\"本次测量的个体差异\"。\n- 由此得到**三分方差**：人（between-person）、会话嵌套于人（day-level：可能是真实情绪状态，也可能是测量非平稳）、会话内试次（momentary state + 噪声）。这三个成分对应三种完全不同的解释。\n\n## 2. 竞争解释与各自需要的证据\n\n**E1 状态编码**：EEG 波动追踪瞬时情绪。\n需要的证据：个体内去均值特征在**跨会话留出试次**上预测个体内去均值评分（$\\Delta R^2_{\\text{state}}>0$，置信区间不含 0）；且该效应不能被会话均值解释。\n材料现状：FACED 的\"被试内\"精度是在**每个被试内部、跨 28 个视频**做十折，得到二分类 78.8±1.0%（跨被试 69.3±1.5%）、九分类 51.1±0.9%（跨被试 35.2±1.0%）[ev_6619560afa7e]。这是\"同一个人内不同刺激之间\"的预测，**同时混杂了刺激类别效应、状态效应与个体基线**，并未分离三者；FACED 每位被试仅一个会话，因此也无法给出重测可靠性 [ev_6619560afa7e]。\n\n**E2 特质／身份编码**：所谓\"EEG 预测情绪\"主要由稳定的个体偏移驱动，分类器学到的是身份。\n需要的证据：去掉人均值后试次级预测塌陷为 0；而人均值 EEG 可靠地预测人均值评分。\n材料现状（支持这一解释）：ISM 研究用 t-SNE 在三套公开库（DEAP/MAHNOB/DREAMER）上显示**同一被试样本聚在一起，被试成分明显强于情绪效应**，并明确指出跨被试模型因此失效、先前一些 0.54–0.66 的跨被试精度可能部分来自数据不平衡 [ev_74eaf4bc0082]。他们用被试内中位数做二值化变换后，跨被试模型可达到与被试内模型**相当**的水平，但残差中**仍能看到同一被试的小簇**——即个体成分只是被削弱、没有被消除 [ev_74eaf4bc0082]。这既支持 E2，也说明\"部分去除\"会留下模糊地带（见第 5 节）。\n\n**E3 会话级非平稳／测量伪迹**：日间的警觉度、电极阻抗、帽位、昼夜节律同时推动 EEG 和评分，造成\"状态预测\"的假象。\n需要的证据：预测只存在于会话均值层面，会话内试次偏离层面消失；会话内标准化或加入会话随机效应后效应消失；效应随干扰代理变量（alpha 基线、阻抗、时段、嗜睡量表）缩放。\n材料现状（支持这一解释）：8 天音乐聆听研究（10 人、80 个会话）用 ICA 发现感兴趣脑源的数量、位置及其频谱调制都随天变化，**只有不到一半被试（2–4 人）**表现出源可重复 >6 天的日间稳定倾向 [ev_d3f89ccca87f]。而且该研究的评分明确要求\"按**当天**的感受\"打分，并说明受试者\"不一定给出与之前相同的分数\" [ev_d3f89ccca87f]——这正好提供了\"刺激固定、评分随日变化\"的天然杠杆。\n\n**E4 刺激共同响应**：跨被试解码部分是\"同一刺激引起相同 EEG 模式\"，而非\"同一情绪状态\"。\n需要的证据：同一刺激在不同人之间评分有差异，而 EEG 预测不了这部分**刺激内**的跨人差异；留一刺激交叉验证后精度大幅下降。材料中 FACED 的评分是按视频片段采集的 12 个题目 [ev_6619560afa7e]，与 E4 相容但无法区分。\n\n**补充：算法文献把人和会话一起当作\"待对齐的分布偏移\"**：M3D 用流形变换 + 动态分布对齐，在跨被试单会话与跨被试跨会话两种协议上评测，平均比传统非深度方法提升 4.47% [ev_580a39dd545d]。这在工程上有效，但**在原理上恰好把\"人\"和\"会话\"两个不同来源混在同一个对齐操作里**，因此无法回答本问题。\n\n## 3. 最小实验（一次即可裁决方向）\n\n**数据**：N=40 名被试（预注册），每人 2 个主会话（间隔 7–14 天），另在会话 1 当天加一次约 90 分钟的**短间隔重测**（仅子样本 N=15），用于把\"测量噪声\"和\"稳定特质\"分开——这一设计直接借自已有 test–retest 数据集的结构（60 人、3 次记录：一次当天 90 分钟内重测 + 一次相隔一个月，含静息与三种自主认知状态）[ev_fad98f5a28bb]。\n\n**设计**：每会话 24 个 60 s 情绪诱发试次（音乐片段，沿用 8 天研究的逐试次 5 点 valence/arousal 自评流程 [ev_d3f89ccca87f]）。**关键：两个会话使用完全相同、顺序随机化的刺激集**，这样\"刺激\"与\"场合\"正交。会话首尾各插入 3 个固定\"锚试次\"（同一中性片段），用于估计会话级漂移。会话前后各做 2 分钟睁眼/闭眼静息 + 记录阻抗、时段、嗜睡与情绪量表（PANAS 等）[ev_fad98f5a28bb]。\n\n**对照（缺一不可）**：\n1. 个体内去均值（ISM 式被试内变换的反向操作）作为显式操纵 [ev_74eaf4bc0082]；\n2. 会话内标准化（去除日间偏移）与\"仅会话均值\"模型，检验 E3；\n3. 留一刺激交叉验证，检验 E4；\n4. 身份解码对照：用同一特征训练\"预测被试 ID\"的分类器，检验 E2 的必要条件；\n5. 标签置换/循环移位、EOG/EMG 残差、alpha 基线、阻抗等伪迹协变量；\n6. 评分风格对照：个体内秩变换后的评分作为另一因变量。\n\n**主要可观测量**：跨会话迁移的**样本外预测增益** $\\Delta R^2$，来自嵌套模型（M0：刺激+会话+人随机效应 → M1：+人均值特征 → M2：+会话内去均值特征），以人（被试）为聚类单位的自助法置信区间；同时报告身份解码精度与人均值评分的重测 ICC。\n\n**预测**：\n- E1 成立：$\\Delta R^2_{\\text{state}}$ 跨会话显著（预注册最小效应 $\\Delta R^2\\ge0.02$，95% CI 下界 >0），且 M1（特质路径）在控制 M2 后增量很小。\n- E2 成立：$\\Delta R^2_{\\text{state}}$ 的 CI 含 0；人均值 EEG 预测人均值评分且跨会话可靠；身份解码精度高；跨被试精度在扣掉人均值后跌到机会水平。\n- E3 成立：效应只出现在会话均值层面，会话内标准化后消失，且与干扰代理变量相关。\n- E4 成立：留一刺激后精度显著下降，\"刺激内跨人评分差\"不可预测。\n\n**反证条件（明确的可杀死条件）**：\n- 若跨会话个体内去均值预测的 CI 含 0，而身份解码仍很高 → E1 在本特征集上被否证。\n- 若 $\\Delta R^2_{\\text{state}}\\ge0.05$ 且跨会话成立，但人均值特征跨会话 ICC<0.2 或不预测人均值评分 → E2 被否证（稳定差异不是来源）。\n- 若个体内试次级预测在完整会话标准化后仍存在、且与所有干扰代理无关、且短间隔（90 分钟）重测中状态偏离仍相关 → E3 被否证。\n- 若 $\\Delta R^2_{\\text{state}}$ 与留一刺激精度同时保留 → E4 被否证。\n\n## 4. 现有材料能说什么、不能说什么\n\n能说：EEG 中的个体成分强于情绪成分、跨被试模型需显式处理个体成分 [ev_74eaf4bc0082]；EEG 情绪相关源在日间显著非平稳、多数被试不可复现 [ev_d3f89ccca87f]；在 123 人规模数据上被试内 > 跨被试，且不同被试差异很大 [ev_6619560afa7e]；已有 test–retest 结构能把短间隔噪声与长间隔稳定成分分开 [ev_fad98f5a28bb]；已有数据集提供\"固定刺激、逐试次自评\"与\"连续情感报告\"的资源 [ev_d3f89ccca87f][ev_97eaa43a3d81]。不能说：任何一份材料都没有给出\"评分方差中可由 EEG 预测的个体内成分 vs 人际成分\"的分解；也没有给出本提案所需的跨会话迁移数字。\n\n## 5. 即使做完这个实验仍无法区分的解释\n\n1. **日级真实情绪状态 vs 日级测量非平稳**：ICA 源的数量/位置/频谱随天变化 [ev_d3f89ccca87f] 与\"当天心情不同\"和\"当天电极条件不同\"完全相容；两者都预测\"会话均值层面 EEG 与评分协变\"。没有外部地面真值（生态瞬时评估、或独立生理锚点），单靠头皮 EEG 不可辨识。\n2. **特质即设定点 vs 特质即状态分布的均值**：有限会话下，人均值只是其状态分布的一个样本；\"稳定设定点\"与\"个体特有的状态分布\"在行为上等价，需每人多次会话（≥6–8）才能做分布层面的区分，且仍只是分布性而非机制性。\n3. **共同生成机制 vs 解剖/容积传导/参考电极混杂**：人均值 EEG 频带功率与人均值评分稳定相关，可能反映共同的 trait 唤醒水平，也可能因为颅骨厚度、电极阻抗、参考方式同时影响功率估计与报告风格。头皮 EEG 无法分离，需要源成像或独立行为/生理锚点。\n4. **\"对齐成功\"归因**：即使跨被试模型在新个体上表现良好，也说不清是因为特征真的对齐到状态，还是因为**残余的个体均值泄漏**——ISM 已明确其变换只是削弱而非消除个体成分 [ev_74eaf4bc0082]，所以\"部分去除\"必然留下无法归因的灰区。\n5. **维度 vs 类别**：九分类显著高于机会 [ev_6619560afa7e] 与 valence/arousal 回归是两种参数化，二者都不能单独裁决 state/trait 问题。\n\n## 6. 本运行的限制\n\n- 未运行任何 EEG 采集或分析；所有数字均为设计参数或文献已报告值，未做功效模拟（$N=40\\times2\\times24$ 的可行性属我的推断，需预注册前模拟）。\n- 证据仅为 HTML 快照，表格/图/公式被扁平化；因此我**没有**引用任何 ICC、方差分解或逐被试数值，阈值（ICC>0.5、$\\Delta R^2\\ge0.02$）是我提出的设计判据，不是文献值。\n- M3D 只读了摘要与引言（4.47% 提升、两类评测协议来自该处）[ev_580a39dd545d]；音乐数据集只读了摘要与方法开头（约 150 小时、114 名参与者、EEG+外周生理+情感自评）[ev_97eaa43a3d81]；test–retest 数据集读了摘要、背景、流程与文末，**未读到其技术验证/可靠性结果**，故不能引用其可靠性量级 [ev_fad98f5a28bb]。\n- ev_d3f89ccca87f 的源级结论来自 10 人、80 会话的小样本，外推到 40 人设计时需谨慎。",
+  "evidence_ids": [
+    "ev_580a39dd545d",
+    "ev_6619560afa7e",
+    "ev_74eaf4bc0082",
+    "ev_97eaa43a3d81",
+    "ev_d3f89ccca87f",
+    "ev_fad98f5a28bb"
+  ],
+  "inline_evidence_ids": [
+    "ev_580a39dd545d",
+    "ev_6619560afa7e",
+    "ev_74eaf4bc0082",
+    "ev_97eaa43a3d81",
+    "ev_d3f89ccca87f",
+    "ev_fad98f5a28bb"
+  ],
+  "unresolved": [
+    "No source in the package reports a variance partition of trial-level affect ratings into between-person vs within-person components predictable from EEG — the core quantity the proposal would measure remains unestimated.",
+    "Day-level genuine affective state vs day-level measurement non-stationarity (impedance, vigilance, cap placement) cannot be separated with scalp EEG alone; no external ground truth (EMA or independent physiological anchor) exists in the package.",
+    "Whether stable person-level EEG-rating associations reflect a shared trait generator or anatomy/volume-conduction/reference confounds is not identifiable from sensor-level data in any included source.",
+    "Trustworthy test-retest reliability figures for affective (not resting/cognitive) EEG features are absent from the read material, so the trait criterion cannot be grounded in literature values here.",
+    "Cross-subject performance numbers come from different datasets, feature sets and protocols (FACED DE+SVM/CLISA; ISM PSD+t-SNE on DEAP/MAHNOB/DREAMER; M3D manifold adaptation), so no quantitative meta-comparison of state vs trait contributions is possible from this package."
+  ],
+  "limitations": "Closed-material run with an exhausted evidence budget: no EEG data exists or was analysed here, so all predictions are proposal-level. Evidence came from HTML snapshots with flattened tables/figures/equations, so no table-level statistics (ICC values, per-subject accuracies, variance components) could be extracted. Two sources were only partially read (M3D: abstract+introduction; music dataset: abstract+start of methods), and the test-retest dataset's technical-validation/reliability results were not read, so no reliability magnitudes are cited from it. The 8-day non-stationarity study rests on 10 subjects/80 sessions, limiting generalization. All thresholds (ICC>0.5, ΔR²≥0.02) and the N=40 power rationale are my design choices, not literature values, and were not verified by simulation.",
+  "cited_but_never_read": [],
+  "finish_tool_call_id": "call_00_imM6HGOeIGZuZZL3Hlwy8157",
+  "accepted": true,
+  "acceptance": "accepted",
+  "created_at": "2026-10-21T01:44:37Z",
+  "coverage": {
+    "sources": [
+      {
+        "evidence_id": "ev_580a39dd545d",
+        "title": "M3D: Manifold-based Domain Adaptation with Dynamic Distribution for Non-Deep Transfer Learning in Cross-subject and Cross-session EEG-based Emotion Recognition",
+        "url": "https://ar5iv.labs.arxiv.org/html/2404.15615",
+        "read_chars": 6000,
+        "total_chars": 89189,
+        "fraction_read": 0.0673
+      },
+      {
+        "evidence_id": "ev_6619560afa7e",
+        "title": "A Large Finer-grained Affective Computing EEG Dataset - Scientific Data",
+        "url": "https://www.nature.com/articles/s41597-023-02650-w",
+        "read_chars": 17000,
+        "total_chars": 35980,
+        "fraction_read": 0.4725
+      },
+      {
+        "evidence_id": "ev_74eaf4bc0082",
+        "title": "Combining Inter-Subject Modeling with a Subject-Based Data Transformation to Improve Affect Recognition from EEG Signals",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6651152/",
+        "read_chars": 24000,
+        "total_chars": 50373,
+        "fraction_read": 0.4764
+      },
+      {
+        "evidence_id": "ev_97eaa43a3d81",
+        "title": "Neural and physiological data from participants listening to affective music - Scientific Data",
+        "url": "https://www.nature.com/articles/s41597-020-0507-6",
+        "read_chars": 5000,
+        "total_chars": 33856,
+        "fraction_read": 0.1477
+      },
+      {
+        "evidence_id": "ev_c908ef06754c",
+        "title": "Subject Identity Confounds qEEG Emotion Recognition on DEAP and DREAMER",
+        "url": "https://visualize.jove.com/42739948-subject-identity-confounds-qeeg-emotion-recognition-on-deap-and-dreamer",
+        "read_chars": 0,
+        "total_chars": 3845,
+        "fraction_read": 0.0
+      },
+      {
+        "evidence_id": "ev_d3f89ccca87f",
+        "title": "Challenge for Affective Brain-Computer Interfaces: Non-stationary Spatio-spectral EEG Oscillations of Emotional Responses",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6831623/",
+        "read_chars": 12000,
+        "total_chars": 68775,
+        "fraction_read": 0.1745
+      },
+      {
+        "evidence_id": "ev_fad98f5a28bb",
+        "title": "A test-retest resting, and cognitive state EEG dataset during multiple subject-driven states",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9470564/",
+        "read_chars": 18000,
+        "total_chars": 43794,
+        "fraction_read": 0.411
+      }
+    ]
+  },
+  "budget": {
+    "run_id": "flash_emotion_20261021",
+    "cap_cny": 10.0,
+    "wrap_up_reserve_cny": 0.0,
+    "spent_cny": 2.253552,
+    "unknown_cny": 0.0,
+    "reserved_cny": 0.0,
+    "committed_cny": 2.253552,
+    "available_for_new_spend_cny": 7.746448,
+    "model_attempts": 65,
+    "model_attempts_limit": 120,
+    "search_attempts": 7,
+    "search_attempts_limit": 30,
+    "fetch_attempts": 8,
+    "fetch_attempts_limit": 40,
+    "input_tokens": 771852,
+    "output_tokens": 79981,
+    "input_tokens_limit": 1000000,
+    "output_tokens_limit": 300000,
+    "input_price_cny_per_mtok": 2.0,
+    "output_price_cny_per_mtok": 8.0,
+    "tool_price_cny_per_request": 0.005,
+    "price_source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/",
+    "price_checked_at": "2026-10-21T09:40:00+08:00",
+    "cost_by_attribution": {
+      "materials_prep": 0.07,
+      "meta": 0.030454,
+      "flash_emotion_20261021__baseline__01": 0.236454,
+      "flash_emotion_20261021__baseline__02": 0.141554,
+      "flash_emotion_20261021__meta_rule__01": 0.137382,
+      "flash_emotion_20261021__meta_rule__02": 0.200584,
+      "flash_emotion_20261021__baseline__02__retry": 0.21853,
+      "flash_emotion_20261021__meta_rule__01__retry": 0.228158,
+      "flash_emotion_20261021__meta_rule__02__retry": 0.22541,
+      "flash_emotion_20261021__baseline__02__retry2": 0.25575,
+      "flash_emotion_20261021__meta_rule__01__retry2": 0.198848,
+      "flash_emotion_20261021__meta_rule__02__retry2": 0.310428
+    },
+    "pending": 0,
+    "updated_at": "2026-10-21T01:44:37Z"
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "at": "2026-10-21T01:43:59Z",
+  "model": "deepseek-flash",
+  "request_id": "58907859-1c9c-403d-b446-90821c6f1bad",
+  "finish_reason": "tool_calls",
+  "usage": {
+    "prompt_tokens": 23874,
+    "completion_tokens": 247,
+    "total_tokens": 24121,
+    "prompt_cache_hit_tokens": 20736,
+    "prompt_cache_miss_tokens": 3138,
+    "reported": true,
+    "valid": true
+  },
+  "content": "",
+  "reasoning_content": "I need the test-retest dataset's technical validation with reliability (ICC) numbers. Let me search near end (~35000-43794). Also ISM results numbers (~20000-26000) and M3D results.\n\nLet me do two calls: ev_fad98f5a28bb at 32000 (5000), ev_74eaf4bc0082 at 26000 (6000).",
+  "tool_calls": [
+    {
+      "id": "call_00_VXvuEX6l1QiUJCFpdxit5662",
+      "name": "read_evidence",
+      "arguments": "{\"evidence_id\": \"ev_fad98f5a28bb\", \"max_chars\": 6000, \"start_char\": 34000}"
+    },
+    {
+      "id": "call_01_46AztKG1Xfph0EdZX9nd6694",
+      "name": "read_evidence",
+      "arguments": "{\"evidence_id\": \"ev_74eaf4bc0082\", \"max_chars\": 6000, \"start_char\": 26000}"
+    }
+  ],
+  "raw": {
+    "id": "58907859-1c9c-403d-b446-90821c6f1bad",
+    "object": "chat.completion",
+    "created": 1792547039,
+    "model": "deepseek-flash",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "I need the test-retest dataset's technical validation with reliability (ICC) numbers. Let me search near end (~35000-43794). Also ISM results numbers (~20000-26000) and M3D results.\n\nLet me do two calls: ev_fad98f5a28bb at 32000 (5000), ev_74eaf4bc0082 at 26000 (6000).",
+          "tool_calls": [
+            {
+              "index": 0,
+              "id": "call_00_VXvuEX6l1QiUJCFpdxit5662",
+              "type": "function",
+              "function": {
+                "name": "read_evidence",
+                "arguments": "{\"evidence_id\": \"ev_fad98f5a28bb\", \"max_chars\": 6000, \"start_char\": 34000}"
+              }
+            },
+            {
+              "index": 1,
+              "id": "call_01_46AztKG1Xfph0EdZX9nd6694",
+              "type": "function",
+              "function": {
+                "name": "read_evidence",
+                "arguments": "{\"evidence_id\": \"ev_74eaf4bc0082\", \"max_chars\": 6000, \"start_char\": 26000}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 23874,
+      "completion_tokens": 247,
+      "total_tokens": 24121,
+      "prompt_tokens_details": {
+        "cached_tokens": 20736
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 87
+      },
+      "prompt_cache_hit_tokens": 20736,
+      "prompt_cache_miss_tokens": 3138
+    },
+    "system_fingerprint": "e72d3c7f663d3e1383b00b3884cb4501"
+  }
+}

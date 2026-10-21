@@ -1,0 +1,18 @@
+{
+  "status": "ok",
+  "visible_text": "{\"decision_type\":\"action\",\"hypotheses\":[{\"id\":\"H1\",\"claim\":\"Window-split performance is driven by trial-specific feature signatures shared by all windows of a trial, allowing arbitrary trial-level labels to be learned in-window but not transferred to unseen trials.\",\"mechanism\":\"Same-trial windows in train and test share a trial signature; the model associates that signature with the randomized trial label, yielding high window BA and chance trial BA.\",\"supporting_evidence_ids\":[\"obs_1\",\"req_1\"],\"limitations\":\"Does not identify which features encode the trial signature; synthetic data only.\"},{\"id\":\"H2\",\"claim\":\"The high window BA under trial-level randomization reflects a window-level pipeline artifact or leakage rather than a genuine trial-shared feature signature.\",\"mechanism\":\"If duplicate/near-duplicate windows or hidden label leakage let the model memorize individual window labels, window BA can stay high even when labels are randomized.\",\"supporting_evidence_ids\":[\"req_1\"],\"limitations\":\"The audit reports no sample overlap, so this explanation requires a subtler artifact or near-duplicate structure not captured by the audit.\"}],\"request_id\":\"req_2\",\"tool_id\":\"window_random_labels\",\"parameters\":{},\"distinguishes\":[\"H1\",\"H2\"],\"prediction\":{\"scoring_status\":\"numeric\",\"metric_key\":\"window_random_ba_mean\",\"primary_direction\":\"near_zero\",\"threshold\":0.05,\"check_facts\":[],\"conditional_predictions\":[{\"hypothesis_id\":\"H1\",\"direction\":\"near_zero\",\"rationale\":\"Independent per-window labels destroy trial-level label consistency, so a trial-signature model should fall to chance.\"},{\"hypothesis_id\":\"H2\",\"direction\":\"positive\",\"rationale\":\"A leakage/artifact mechanism that memorizes individual windows could remain above chance even with independent labels.\"}],\"update_rule_if_opposite\":\"If window_random_ba_mean is above chance by more than 0.05, the trial-signature explanation is insufficient and a window-level artifact/leakage explanation gains support.\"},\"reasoning_summary\":\"Trial-level randomization left window BA near perfect but trial BA at chance, supporting a trial-shared signature. Independent per-window labels should remove that consistency; a remaining above-chance score would indicate a window-level artifact.\"}",
+  "model_id": "deepseek-flash",
+  "usage": {
+    "prompt_tokens": 4989,
+    "completion_tokens": 5017,
+    "total_tokens": 10006
+  },
+  "latency_ms": 26497.061799978837,
+  "raw_response": {
+    "request_id": "445648a5-4d15-4baf-a6f0-53aed7f97552",
+    "finish_reason": "stop",
+    "truncated": false,
+    "reasoning_chars": 22572
+  },
+  "error": null
+}

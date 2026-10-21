@@ -1,0 +1,19 @@
+{
+  "accepted": true,
+  "decision": "rules",
+  "reason": "one transferable rule accepted by structural checks",
+  "rule_text": "Trigger: When citing a specific number or detail from a source in a literature-based proposal,\nAction: attach it to its evidence ID and verify the text falls inside the excerpt actually read; if it is only in an abstract, search summary, or outside the recorded read range, read it directly or label it unverified and keep it out of load-bearing claims.\nBoundary: Covers factual/citation claims, not explicitly labeled hypotheses; absence from the read trace means unsupported here, not false.\nEvidence: review:EVIDENCE_AUDIT\n",
+  "rule": {
+    "trigger": "When citing a specific number or detail from a source in a literature-based proposal,",
+    "action": "attach it to its evidence ID and verify the text falls inside the excerpt actually read; if it is only in an abstract, search summary, or outside the recorded read range, read it directly or label it unverified and keep it out of load-bearing claims.",
+    "boundary": "Covers factual/citation claims, not explicitly labeled hypotheses; absence from the read trace means unsupported here, not false.",
+    "evidence_event_ids": [
+      "review:EVIDENCE_AUDIT"
+    ],
+    "author": "developer_assisted_dsh"
+  },
+  "source_ids": [
+    "review:EVIDENCE_AUDIT"
+  ],
+  "created_at": "2026-10-21T01:32:17Z"
+}

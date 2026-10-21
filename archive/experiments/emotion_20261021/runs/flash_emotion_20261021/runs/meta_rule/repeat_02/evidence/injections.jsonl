@@ -1,0 +1,14 @@
+{"at":"2026-10-21T01:34:11Z","evidence_id":"ev_74eaf4bc0082","start_char":0,"end_char":6000,"slice_sha256":"d959701655b8782fc9bcce87d3133a1bb9a6c8db180a6eee4c543b8130e813df","purpose":"read_evidence"}
+{"at":"2026-10-21T01:34:11Z","evidence_id":"ev_d3f89ccca87f","start_char":0,"end_char":6000,"slice_sha256":"5c35e965373d4c84cc963513d660d21b207f45281c8a63cc6c95744e4a72cace","purpose":"read_evidence"}
+{"at":"2026-10-21T01:34:15Z","evidence_id":"ev_74eaf4bc0082","start_char":6000,"end_char":12000,"slice_sha256":"b25b6fe49179e6fb81237a5a7cbf437b480443eec8ff0a99dd5443144dff8a6d","purpose":"read_evidence"}
+{"at":"2026-10-21T01:34:15Z","evidence_id":"ev_d3f89ccca87f","start_char":6000,"end_char":12000,"slice_sha256":"202424553ddb7136f150d069c6f1b3b75d58ec4d1b9355d48f027408936dc9a2","purpose":"read_evidence"}
+{"at":"2026-10-21T01:34:18Z","evidence_id":"ev_74eaf4bc0082","start_char":12000,"end_char":18000,"slice_sha256":"ef567ddde3a5c76053da8a514efd2d89ff92d0671dc1320dc260d6e588eb8ab7","purpose":"read_evidence"}
+{"at":"2026-10-21T01:34:18Z","evidence_id":"ev_d3f89ccca87f","start_char":12000,"end_char":18000,"slice_sha256":"b21b1a6722bd41c2ea09dd98180b35cab23ed5e039b10b4cce6c517e22137617","purpose":"read_evidence"}
+{"at":"2026-10-21T01:34:20Z","evidence_id":"ev_d3f89ccca87f","start_char":18000,"end_char":24000,"slice_sha256":"79b27f801194aaf79aa03f7d861c58d5e1babbdfe7a115d2992e6351a2d6e267","purpose":"read_evidence"}
+{"at":"2026-10-21T01:34:20Z","evidence_id":"ev_74eaf4bc0082","start_char":18000,"end_char":24000,"slice_sha256":"5a39ea1f92b7620fdea28a7d8bfdd794f54d6d7c96af99f63e7c044353341528","purpose":"read_evidence"}
+{"at":"2026-10-21T01:34:24Z","evidence_id":"ev_fad98f5a28bb","start_char":0,"end_char":5000,"slice_sha256":"83495926a777246c8a1aa699e0ac6e33af3f8d38314c9b7e357688845b84706b","purpose":"read_evidence"}
+{"at":"2026-10-21T01:34:24Z","evidence_id":"ev_6619560afa7e","start_char":0,"end_char":5000,"slice_sha256":"93e9b680a9a96b5cce517530ddc6fdfcc88b61a58828dea3c879709250455336","purpose":"read_evidence"}
+{"at":"2026-10-21T01:34:24Z","evidence_id":"ev_580a39dd545d","start_char":0,"end_char":5000,"slice_sha256":"2fe67a9f9a314df377748a07a8945898502a485ed7d3cdfe904b5d062e2192d0","purpose":"read_evidence"}
+{"at":"2026-10-21T01:34:27Z","evidence_id":"ev_6619560afa7e","start_char":5000,"end_char":11000,"slice_sha256":"5bbee2294df9100e7c96a9e756d35f4cd2ab1c380ff34f410383fae9c2778886","purpose":"read_evidence"}
+{"at":"2026-10-21T01:34:27Z","evidence_id":"ev_fad98f5a28bb","start_char":5000,"end_char":11000,"slice_sha256":"3f71af934e7684deb35a869986cc2610a1fce03f7abe69066046c02c6a1d9fde","purpose":"read_evidence"}
+{"at":"2026-10-21T01:34:31Z","evidence_id":"ev_6619560afa7e","start_char":21000,"end_char":27000,"slice_sha256":"e123f2a6f288d6712dedf01f81d53d7c18921709ea79e21e2359ecbc618c9fef","purpose":"read_evidence"}

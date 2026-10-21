@@ -1,0 +1,131 @@
+{
+  "search_id": "search_008",
+  "query": "EEGManyPipelines multiverse analysis analytic variability ERP results robustness",
+  "at": "2026-10-19T17:14:26Z",
+  "results": [
+    {
+      "result_id": "sr_01",
+      "title": "Chair: Yu- Fang Yang, Division of Experimental Psychology and Neuropsychology, Department of Education and Psychology, Freie Uni...",
+      "url": "https://zenodo.org/records/14281571/files/CuttingGardens%20-%20Content%20Booklet.pdf?download=1#31#3",
+      "snippet": "1 New Bulgarian University, Department of Cognitive Science and Psychology, Neuroscience Laboratory, Bulgaria ... 17 channels, which was soon replaced by a 32- channel system from the Austrian company g- Tec. Most of the research projects between 2ooo and 2010 were focused on nonlinear dynamics of EEG oscillations during cognitive tasks, as well as evoked activity during processes of translation from one language to another (Eye- to- IT EU project). In 2021, the lab was modernised with a contemporary 64- channel system from the Iranian startup company ScienceBeam, supported by the NBU and a personal grant of Ivo ... perception, emotion processing, language and executive function control. ... and the development of computer- supported decision- making systems in medicine. ... as well as non- contact systems for measuring biometric signals such as radar systems ... In teaching and research, emphasis is placed on defining and solving real challenges, always in cooperation with medical staff, psychologists, special educators, etc. that also validate developed methods and instruments. The multimodal approach, i.e. synchronous measurement of various biometric signals in experimental conditions with the extraction of features and the application of machine learning methods for the classification of subjects' states is one of the main directions of further laboratory research. ... trends in introduction of ... Measurement methods in magnetoencephalography. ... acquisition in thermography. Detection of ionizing radiation in medicine. ... Impact of interference, noise and biological artifacts in biomedical measurements. ... Introduction to metrological aspects of medical devices.",
+      "summary": "Chair: Yu-\n...\nof\n...\nand Neuro\n...\nEducation and\n...\nFreie\n...\nBerlin, Berlin,\n...\n,\n...\nand\n...\n## Abstract\n...\nThe multimodal approach, i.e. synchronous measurement of various biometric signals in experimental conditions with the extraction of features and the application of machine learning methods for the classification of subjects' states is one of the main directions of further laboratory\n...\n.",
+      "site_name": null,
+      "date": null,
+      "authority": 4,
+      "rerank_score": 2.0096490383148193,
+      "content": ""
+    },
+    {
+      "result_id": "sr_02",
+      "title": "What is the",
+      "url": "https://zenodo.org/records/7133457/files/SPR2022_YuFang%20&%20Nastassja%20-%20What%20is%20the%20EEGManyPipeline%20Project%20-2.pdf?download=1#1#1",
+      "snippet": "EEGManyPipelines project ... neuroimaging dataset by many teams ... Here we assess the effect of this flexibility on the res functional magnetic resonance imaging by asking 70 independent teams the same dataset, testing the same 9 ex- ante hypotheses'. ... EEGManyPipelines ... evaluate the flexibility of EEG analysis pipelines \"in the wild\" ... probe the ensuing variability of results",
+      "summary": "EEGManyPipelines\n...\nYu-Fang Yang & Nastassja L. Fischer\n@ufangyang @nastalfischer \n\n \n\n@EegManyPipes \n\nhttps://www.eegmanypipelines.org/#ref-steering-committee\n...\n# Variability in the analysis of a single neuroimaging dataset by many teams  \n\nhttps://doi.org/10.1038/s41586- 020- 2314- 9  \n\nReceived: 14 November 2019  \n\nAccepted: 7 April 2020  \n\nPublished online: 20 May 2020\n...\nA list of authors and affiliations appears in the online version of the paper.  \n\nData analysis workflows in many scientific domains have become increasir complex and flexible. Here we assess the effect of this flexibility on the res functional magnetic resonance imaging by asking 70 independent teams the same dataset, testing the same 9 ex- ante hypotheses'. The flexibility of approaches is exemplified by the fact that no two teams chose identical w analyse the data. This flexibility resulted in sizeable variation in the results hypothesis tests, even for teams whose statistical maps were highly corr intermediate stages of the analysis pipeline. Variation in reported results t several aspects of analysis methodology. Notably, a meta- analytical app aggregated information across teams yielded a significant consensus in a regions. Furthermore, prediction markets of researchers in the field revea overestimation of the likelihood of significant findings, even by researcher direct knowledge of the dataset'3. Our findings show that analytical flexi have substantial effects on scientific conclusions, and identify factors that related to variability in the analysis of functional magnetic resonance ima results emphasize the importance of validating and sharing complex anal workflows, and demonstrate the need for performing and reporting multi of the same data. Potential approaches that could be used to mitigate iss analytical variability are discussed.\n\n  \n\n# How about EEG?  \n\nM/EEG researchers:  \n\nIf we asked 70 labs to analyse a simple dataset (e.g., does the P300 change under this- or- that conditions), would we get more or less consistent results across teams than the fMRI community did here go.nature.com/2zkWege?\n...\nNearly 2/3 of M/EEG researchers think we've got our house in order.\n...\n#EEGManyPipelines\n\n## Main goals  \n\n1  \n\nevaluate the flexibility of EEG analysis pipelines \"in the wild\"  \n\n2  \n\nprobe the ensuing variability of results  \n\n3  \n\nidentify specific determinants of this variability within the analysis pipelines\n...\n## Overview - I  \n\n## Dataset sent to analysts\n...\n2021 \n\nOur sample of analysts \n\n \n\n2022 \n\n## Expected Main outcomes  \n\nIdentifying variability in EEG data analysis pipelines and reported outcomes to derive practical recommendations  \n\nGenerating a rich, open- access data repository  \n\nShaping the future of (neuro-)science\n...\n@ufangyang yu-fang.yang@fu-berlin.de \n\n \n\n@nastalfischer nastassja.lf@ntu.edu.sg",
+      "site_name": null,
+      "date": null,
+      "authority": 4,
+      "rerank_score": 1.8122471570968628,
+      "content": ""
+    },
+    {
+      "result_id": "sr_03",
+      "title": "Many Pipelines, One Dataset: Analytic Flexibility and Its Impact in EEG Research",
+      "url": "https://europepmc.org/article/PPR/PPR1186524",
+      "snippet": "The EEGManyPipelines initiative included 396 scientists (168 teams) who independently analyzed the same dataset to test the same hypotheses, mapping the full landscape of analytical decisions. ... ERP variability across teams was equivalent to variability across participants, suggesting that who analyses the data is as important as who provides it.",
+      "summary": "## Abstract\n\nThe EEGManyPipelines initiative included 396 scientists (168 teams) who independently analyzed the same dataset to test the same hypotheses, mapping the full landscape of analytical decisions. This captured an underexamined source of variability in research results: data processing choices needed to arrive at an analyzable dataset. Considering full analysis pipelines, ERP variability across teams was equivalent to variability across participants, suggesting that who analyses the data is as important as who provides it. In contrast to prior many-analyst projects, typically explaining less than 10% of variance in estimates, our granular codings of researcher choices explained 53%, 75%, and 51% of the variance in difference waves across three hypotheses, with unusual results partly attributable to deviations from the prototypical pipeline. Despite the heterogeneity in approaches and estimates, teams reached a substantial consensus on effect presence. By being transparent across all analysis stages, researchers can identify uncertainty and still draw meaningful inferences.\n...\nRead article at publisher's site: https://doi.org/10.31222/osf.io/wvx48_v1",
+      "site_name": "Europe PMC",
+      "date": "2026-05-05T16:00:00+00:00",
+      "authority": 4,
+      "rerank_score": 1.7966705560684204,
+      "content": ""
+    },
+    {
+      "result_id": "sr_04",
+      "title": "Replication Research Symposium",
+      "url": "https://indico.uni-muenster.de/event/3176/contributions/5325/contribution.pdf#1#1",
+      "snippet": "The EEGManyPipelines (EMP) project addressed this question through a large- scale collaborative effort to test the robustness of EEG findings across different analysis strategies. In this unprecedented study ... and the approach to multiple comparisons—were differentially associated with whether significant effects emerged between conditions concerning early and late ERP components.",
+      "summary": "# EEGManyPipelines: Assessing the impact of analytical choices on EEG results  \n\nWhen analyzing electroencephalographic (EEG) data, researchers face a maze of potential methods and analytical approaches. But how much do these choices actually influence the results? The EEGManyPipelines (EMP) project addressed this question through a large- scale collaborative effort to test the robustness of EEG findings across different analysis strategies. In this unprecedented study, a single EEG dataset and a set of research questions were provided to 168 expert teams worldwide. Each team applied their own methods to analyze this dataset, later submitting preprocessed data, analysis scripts, and hypothesis testing results. Our findings show that while EEG processing pipelines vary widely, three steps—the baseline window length, averaging across the time window, and the approach to multiple comparisons—were differentially associated with whether significant effects emerged between conditions concerning early and late ERP components. Further analysis of the preprocessed data revealed that choices such as reference type, high- pass filter cutoff value, and the use of plugins for artifact correction significantly impacted the magnitude of these effects. In this poster, I will present results from three ERP hypotheses.  \n\nPrimary author: CESNAITE, Elena  \n\nCo- author: BUSCH, Niko  \n\nPresenter:\n...\nSession Classification: Replication Showcase",
+      "site_name": null,
+      "date": null,
+      "authority": 3,
+      "rerank_score": 1.7343639135360718,
+      "content": ""
+    },
+    {
+      "result_id": "sr_05",
+      "title": "Single case research designs are widely used in special education and related fields to evaluate interventions",
+      "url": "https://indico.uni-muenster.de/event/3176/book-of-abstracts.pdf#2#2",
+      "snippet": "EEGManyPipelines: Assessing the impact of analytical choices on EEG results ... The EEGManyPipelines (EMP) project addressed this question through a large- scale collaborative effort to test the robustness of EEG findings across different analysis strategies. In this unprecedented study ... concerning early and late ERP components.",
+      "summary": "## EEGManyPipelines: Assessing the impact of analytical choices on EEG results  \n\nContributor(s): Elena Cesnaite, Niko Busch  Affiliation: University of Münster  Title:\n...\nWhen analyzing electroencephalographic (EEG) data, researchers face a maze of potential methods and analytical approaches. But how much do these choices actually influence the results? The EEGManyPipelines (EMP) project addressed this question through a large- scale collaborative effort to test the robustness of EEG findings across different analysis strategies. In this unprecedented study, a single EEG dataset and a set of research questions were provided to 168 expert teams worldwide. Each team applied their own methods to analyze this dataset, later submitting preprocessed data, analysis scripts, and hypothesis testing results. Our findings show that while EEG processing pipelines vary widely, three steps—the baseline window length, averaging across the time window, and the approach to multiple comparisons—were differentially associated with whether significant effects emerged between conditions concerning early and late ERP components. Further analysis of the preprocessed data revealed that choices such as reference type, high- pass filter cutoff value, and the use of plugins for artifact correction significantly impacted the magnitude of these effects. In this poster, I will present results from three ERP hypotheses.",
+      "site_name": null,
+      "date": null,
+      "authority": 3,
+      "rerank_score": 1.5874958038330078,
+      "content": ""
+    }
+  ],
+  "raw": {
+    "results": [
+      {
+        "title": "Chair: Yu- Fang Yang, Division of Experimental Psychology and Neuropsychology, Department of Education and Psychology, Freie Uni...",
+        "site_name": null,
+        "site_icon": "https://cdn.deepseek.com/site-icons/zenodo.org",
+        "authority": 4,
+        "rerank_score": 2.0096490383148193,
+        "date": null,
+        "url": "https://zenodo.org/records/14281571/files/CuttingGardens%20-%20Content%20Booklet.pdf?download=1#31#3",
+        "summary": "Chair: Yu-\n...\nof\n...\nand Neuro\n...\nEducation and\n...\nFreie\n...\nBerlin, Berlin,\n...\n,\n...\nand\n...\n## Abstract\n...\nThe multimodal approach, i.e. synchronous measurement of various biometric signals in experimental conditions with the extraction of features and the application of machine learning methods for the classification of subjects' states is one of the main directions of further laboratory\n...\n.",
+        "snippet": "1 New Bulgarian University, Department of Cognitive Science and Psychology, Neuroscience Laboratory, Bulgaria ... 17 channels, which was soon replaced by a 32- channel system from the Austrian company g- Tec. Most of the research projects between 2ooo and 2010 were focused on nonlinear dynamics of EEG oscillations during cognitive tasks, as well as evoked activity during processes of translation from one language to another (Eye- to- IT EU project). In 2021, the lab was modernised with a contemporary 64- channel system from the Iranian startup company ScienceBeam, supported by the NBU and a personal grant of Ivo ... perception, emotion processing, language and executive function control. ... and the development of computer- supported decision- making systems in medicine. ... as well as non- contact systems for measuring biometric signals such as radar systems ... In teaching and research, emphasis is placed on defining and solving real challenges, always in cooperation with medical staff, psychologists, special educators, etc. that also validate developed methods and instruments. The multimodal approach, i.e. synchronous measurement of various biometric signals in experimental conditions with the extraction of features and the application of machine learning methods for the classification of subjects' states is one of the main directions of further laboratory research. ... trends in introduction of ... Measurement methods in magnetoencephalography. ... acquisition in thermography. Detection of ionizing radiation in medicine. ... Impact of interference, noise and biological artifacts in biomedical measurements. ... Introduction to metrological aspects of medical devices.",
+        "content": ""
+      },
+      {
+        "title": "What is the",
+        "site_name": null,
+        "site_icon": "https://cdn.deepseek.com/site-icons/zenodo.org",
+        "authority": 4,
+        "rerank_score": 1.8122471570968628,
+        "date": null,
+        "url": "https://zenodo.org/records/7133457/files/SPR2022_YuFang%20&%20Nastassja%20-%20What%20is%20the%20EEGManyPipeline%20Project%20-2.pdf?download=1#1#1",
+        "summary": "EEGManyPipelines\n...\nYu-Fang Yang & Nastassja L. Fischer\n@ufangyang @nastalfischer \n\n \n\n@EegManyPipes \n\nhttps://www.eegmanypipelines.org/#ref-steering-committee\n...\n# Variability in the analysis of a single neuroimaging dataset by many teams  \n\nhttps://doi.org/10.1038/s41586- 020- 2314- 9  \n\nReceived: 14 November 2019  \n\nAccepted: 7 April 2020  \n\nPublished online: 20 May 2020\n...\nA list of authors and affiliations appears in the online version of the paper.  \n\nData analysis workflows in many scientific domains have become increasir complex and flexible. Here we assess the effect of this flexibility on the res functional magnetic resonance imaging by asking 70 independent teams the same dataset, testing the same 9 ex- ante hypotheses'. The flexibility of approaches is exemplified by the fact that no two teams chose identical w analyse the data. This flexibility resulted in sizeable variation in the results hypothesis tests, even for teams whose statistical maps were highly corr intermediate stages of the analysis pipeline. Variation in reported results t several aspects of analysis methodology. Notably, a meta- analytical app aggregated information across teams yielded a significant consensus in a regions. Furthermore, prediction markets of researchers in the field revea overestimation of the likelihood of significant findings, even by researcher direct knowledge of the dataset'3. Our findings show that analytical flexi have substantial effects on scientific conclusions, and identify factors that related to variability in the analysis of functional magnetic resonance ima results emphasize the importance of validating and sharing complex anal workflows, and demonstrate the need for performing and reporting multi of the same data. Potential approaches that could be used to mitigate iss analytical variability are discussed.\n\n  \n\n# How about EEG?  \n\nM/EEG researchers:  \n\nIf we asked 70 labs to analyse a simple dataset (e.g., does the P300 change under this- or- that conditions), would we get more or less consistent results across teams than the fMRI community did here go.nature.com/2zkWege?\n...\nNearly 2/3 of M/EEG researchers think we've got our house in order.\n...\n#EEGManyPipelines\n\n## Main goals  \n\n1  \n\nevaluate the flexibility of EEG analysis pipelines \"in the wild\"  \n\n2  \n\nprobe the ensuing variability of results  \n\n3  \n\nidentify specific determinants of this variability within the analysis pipelines\n...\n## Overview - I  \n\n## Dataset sent to analysts\n...\n2021 \n\nOur sample of analysts \n\n \n\n2022 \n\n## Expected Main outcomes  \n\nIdentifying variability in EEG data analysis pipelines and reported outcomes to derive practical recommendations  \n\nGenerating a rich, open- access data repository  \n\nShaping the future of (neuro-)science\n...\n@ufangyang yu-fang.yang@fu-berlin.de \n\n \n\n@nastalfischer nastassja.lf@ntu.edu.sg",
+        "snippet": "EEGManyPipelines project ... neuroimaging dataset by many teams ... Here we assess the effect of this flexibility on the res functional magnetic resonance imaging by asking 70 independent teams the same dataset, testing the same 9 ex- ante hypotheses'. ... EEGManyPipelines ... evaluate the flexibility of EEG analysis pipelines \"in the wild\" ... probe the ensuing variability of results",
+        "content": ""
+      },
+      {
+        "title": "Many Pipelines, One Dataset: Analytic Flexibility and Its Impact in EEG Research",
+        "site_name": "Europe PMC",
+        "site_icon": "https://cdn.deepseek.com/site-icons/europepmc.org",
+        "authority": 4,
+        "rerank_score": 1.7966705560684204,
+        "date": "2026-05-05T16:00:00+00:00",
+        "url": "https://europepmc.org/article/PPR/PPR1186524",
+        "summary": "## Abstract\n\nThe EEGManyPipelines initiative included 396 scientists (168 teams) who independently analyzed the same dataset to test the same hypotheses, mapping the full landscape of analytical decisions. This captured an underexamined source of variability in research results: data processing choices needed to arrive at an analyzable dataset. Considering full analysis pipelines, ERP variability across teams was equivalent to variability across participants, suggesting that who analyses the data is as important as who provides it. In contrast to prior many-analyst projects, typically explaining less than 10% of variance in estimates, our granular codings of researcher choices explained 53%, 75%, and 51% of the variance in difference waves across three hypotheses, with unusual results partly attributable to deviations from the prototypical pipeline. Despite the heterogeneity in approaches and estimates, teams reached a substantial consensus on effect presence. By being transparent across all analysis stages, researchers can identify uncertainty and still draw meaningful inferences.\n...\nRead article at publisher's site: https://doi.org/10.31222/osf.io/wvx48_v1",
+        "snippet": "The EEGManyPipelines initiative included 396 scientists (168 teams) who independently analyzed the same dataset to test the same hypotheses, mapping the full landscape of analytical decisions. ... ERP variability across teams was equivalent to variability across participants, suggesting that who analyses the data is as important as who provides it.",
+        "content": ""
+      },
+      {
+        "title": "Replication Research Symposium",
+        "site_name": null,
+        "site_icon": "https://cdn.deepseek.com/site-icons/uni-muenster.de",
+        "authority": 3,
+        "rerank_score": 1.7343639135360718,
+        "date": null,
+        "url": "https://indico.uni-muenster.de/event/3176/contributions/5325/contribution.pdf#1#1",
+        "summary": "# EEGManyPipelines: Assessing the impact of analytical choices on EEG results  \n\nWhen analyzing electroencephalographic (EEG) data, researchers face a maze of potential methods and analytical approaches. But how much do these choices actually influence the results? The EEGManyPipelines (EMP) project addressed this question through a large- scale collaborative effort to test the robustness of EEG findings across different analysis strategies. In this unprecedented study, a single EEG dataset and a set of research questions were provided to 168 expert teams worldwide. Each team applied their own methods to analyze this dataset, later submitting preprocessed data, analysis scripts, and hypothesis testing results. Our findings show that while EEG processing pipelines vary widely, three steps—the baseline window length, averaging across the time window, and the approach to multiple comparisons—were differentially associated with whether significant effects emerged between conditions concerning early and late ERP components. Further analysis of the preprocessed data revealed that choices such as reference type, high- pass filter cutoff value, and the use of plugins for artifact correction significantly impacted the magnitude of these effects. In this poster, I will present results from three ERP hypotheses.  \n\nPrimary author: CESNAITE, Elena  \n\nCo- author: BUSCH, Niko  \n\nPresenter:\n...\nSession Classification: Replication Showcase",
+        "snippet": "The EEGManyPipelines (EMP) project addressed this question through a large- scale collaborative effort to test the robustness of EEG findings across different analysis strategies. In this unprecedented study ... and the approach to multiple comparisons—were differentially associated with whether significant effects emerged between conditions concerning early and late ERP components.",
+        "content": ""
+      },
+      {
+        "title": "Single case research designs are widely used in special education and related fields to evaluate interventions",
+        "site_name": null,
+        "site_icon": "https://cdn.deepseek.com/site-icons/uni-muenster.de",
+        "authority": 3,
+        "rerank_score": 1.5874958038330078,
+        "date": null,
+        "url": "https://indico.uni-muenster.de/event/3176/book-of-abstracts.pdf#2#2",
+        "summary": "## EEGManyPipelines: Assessing the impact of analytical choices on EEG results  \n\nContributor(s): Elena Cesnaite, Niko Busch  Affiliation: University of Münster  Title:\n...\nWhen analyzing electroencephalographic (EEG) data, researchers face a maze of potential methods and analytical approaches. But how much do these choices actually influence the results? The EEGManyPipelines (EMP) project addressed this question through a large- scale collaborative effort to test the robustness of EEG findings across different analysis strategies. In this unprecedented study, a single EEG dataset and a set of research questions were provided to 168 expert teams worldwide. Each team applied their own methods to analyze this dataset, later submitting preprocessed data, analysis scripts, and hypothesis testing results. Our findings show that while EEG processing pipelines vary widely, three steps—the baseline window length, averaging across the time window, and the approach to multiple comparisons—were differentially associated with whether significant effects emerged between conditions concerning early and late ERP components. Further analysis of the preprocessed data revealed that choices such as reference type, high- pass filter cutoff value, and the use of plugins for artifact correction significantly impacted the magnitude of these effects. In this poster, I will present results from three ERP hypotheses.",
+        "snippet": "EEGManyPipelines: Assessing the impact of analytical choices on EEG results ... The EEGManyPipelines (EMP) project addressed this question through a large- scale collaborative effort to test the robustness of EEG findings across different analysis strategies. In this unprecedented study ... concerning early and late ERP components.",
+        "content": ""
+      }
+    ]
+  }
+}

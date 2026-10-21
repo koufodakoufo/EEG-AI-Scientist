@@ -1,0 +1,12 @@
+{"at":"2026-10-21T01:41:29Z","evidence_id":"ev_74eaf4bc0082","start_char":0,"end_char":6000,"slice_sha256":"d959701655b8782fc9bcce87d3133a1bb9a6c8db180a6eee4c543b8130e813df","purpose":"read_evidence"}
+{"at":"2026-10-21T01:41:29Z","evidence_id":"ev_d3f89ccca87f","start_char":0,"end_char":6000,"slice_sha256":"5c35e965373d4c84cc963513d660d21b207f45281c8a63cc6c95744e4a72cace","purpose":"read_evidence"}
+{"at":"2026-10-21T01:41:32Z","evidence_id":"ev_74eaf4bc0082","start_char":6000,"end_char":12000,"slice_sha256":"b25b6fe49179e6fb81237a5a7cbf437b480443eec8ff0a99dd5443144dff8a6d","purpose":"read_evidence"}
+{"at":"2026-10-21T01:41:32Z","evidence_id":"ev_d3f89ccca87f","start_char":6000,"end_char":12000,"slice_sha256":"202424553ddb7136f150d069c6f1b3b75d58ec4d1b9355d48f027408936dc9a2","purpose":"read_evidence"}
+{"at":"2026-10-21T01:41:34Z","evidence_id":"ev_74eaf4bc0082","start_char":14000,"end_char":20000,"slice_sha256":"7a99141b645ff41a072f5effc61aaec18279e6fbc448d3a82dcfc920b73367b2","purpose":"read_evidence"}
+{"at":"2026-10-21T01:41:34Z","evidence_id":"ev_d3f89ccca87f","start_char":18000,"end_char":24000,"slice_sha256":"79b27f801194aaf79aa03f7d861c58d5e1babbdfe7a115d2992e6351a2d6e267","purpose":"read_evidence"}
+{"at":"2026-10-21T01:41:37Z","evidence_id":"ev_d3f89ccca87f","start_char":24000,"end_char":30000,"slice_sha256":"c7c03479cd31dedcfd371e16d5da24f7211521fdde7d7bd1425087b97959df9e","purpose":"read_evidence"}
+{"at":"2026-10-21T01:41:37Z","evidence_id":"ev_6619560afa7e","start_char":0,"end_char":6000,"slice_sha256":"6b07129841c38e03a565cd3d85ab4b4a5d88e63145d83f4a6c7329c2c998adb1","purpose":"read_evidence"}
+{"at":"2026-10-21T01:41:40Z","evidence_id":"ev_6619560afa7e","start_char":16000,"end_char":22000,"slice_sha256":"35af7af0b3176c6787064539afdf3c757cb5f307ca954ee8a4f66deffa518464","purpose":"read_evidence"}
+{"at":"2026-10-21T01:41:40Z","evidence_id":"ev_fad98f5a28bb","start_char":0,"end_char":6000,"slice_sha256":"5c584fc0bcb236dd2951346fc9e5a5553cf7dbff5c27d9853792718ce1a805f1","purpose":"read_evidence"}
+{"at":"2026-10-21T01:42:01Z","evidence_id":"ev_580a39dd545d","start_char":0,"end_char":4000,"slice_sha256":"46338e41399a1c75529ca518316114f7d7ce99d1b9264f65978088d2cc5031f7","purpose":"read_evidence"}
+{"at":"2026-10-21T01:42:01Z","evidence_id":"ev_97eaa43a3d81","start_char":0,"end_char":4000,"slice_sha256":"5c16f7d647a6c7d2c14a35d5dab28c72196319176ce07e7365e07652bbf67fee","purpose":"read_evidence"}

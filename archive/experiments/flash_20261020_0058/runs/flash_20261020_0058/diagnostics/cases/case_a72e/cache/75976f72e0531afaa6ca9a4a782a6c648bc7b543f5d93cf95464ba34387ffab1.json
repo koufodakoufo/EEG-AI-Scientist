@@ -1,0 +1,18 @@
+{
+  "status": "ok",
+  "visible_text": "{\"decision_type\":\"action\",\"hypotheses\":[{\"id\":\"H1\",\"claim\":\"The high seen-subject window/trial performance reflects a genuine feature-label mapping that is subject-specific or context-specific and does not transfer to unseen subjects.\",\"mechanism\":\"Within seen subjects, features carry learnable task information across trials and windows; permuting labels within subjects destroys this mapping, while subject metadata alone should not predict labels.\",\"supporting_evidence_ids\":[\"obs_1\",\"req_1\"],\"limitations\":\"Subject-split near chance is also compatible with other unseen-subject failures; the mapping's exact subject-specific form is not identified.\"},{\"id\":\"H2\",\"claim\":\"Subject/session identity or collection effects explain the within-seen-subject performance rather than a genuine transferable feature-label mapping.\",\"mechanism\":\"Identity-correlated signatures or label priors shared across a subject's trials allow above-chance prediction when subjects are seen, but not when subjects are unseen.\",\"supporting_evidence_ids\":[\"obs_1\",\"req_1\"],\"limitations\":\"Within-subject label permutation nearly abolished performance in req_1, which weakens this explanation; direct metadata-only evidence is still missing.\"}],\"request_id\":\"req_2\",\"tool_id\":\"metadata_only\",\"parameters\":{},\"distinguishes\":[\"H1\",\"H2\"],\"prediction\":{\"scoring_status\":\"numeric\",\"metric_key\":\"metadata_only_ba_minus_chance\",\"primary_direction\":\"near_zero\",\"threshold\":0.05,\"check_facts\":[],\"conditional_predictions\":[{\"hypothesis_id\":\"H1\",\"direction\":\"near_zero\",\"rationale\":\"If the signal is a genuine feature-label mapping, subject/session one-hot metadata alone should not recover labels under trial isolation.\"},{\"hypothesis_id\":\"H2\",\"direction\":\"positive\",\"rationale\":\"If identity/collection effects drive performance, subject/session metadata alone should remain above chance despite trial isolation.\"}],\"update_rule_if_opposite\":\"If metadata_only_ba_minus_chance exceeds +0.05, favor H2 identity/collection effects; if it is near zero, favor H1 and treat metadata confounding as unsupported.\"},\"reasoning_summary\":\"After within-subject label permutation, performance fell to chance, weakening identity/collection explanations. I now directly test whether subject/session metadata alone can predict labels under trial isolation.\"}",
+  "model_id": "deepseek-flash",
+  "usage": {
+    "prompt_tokens": 5014,
+    "completion_tokens": 1791,
+    "total_tokens": 6805
+  },
+  "latency_ms": 10595.059399987804,
+  "raw_response": {
+    "request_id": "ed084720-0260-440f-a0db-376381223511",
+    "finish_reason": "stop",
+    "truncated": false,
+    "reasoning_chars": 6083
+  },
+  "error": null
+}

@@ -1,0 +1,116 @@
+{
+  "path": "runs\\flash_20261020_0058\\research\\literature_v1\\experiments\\artificial_fixture.csv",
+  "case_id": "artificial_fixture",
+  "n_rows": 256,
+  "n_subjects": 4,
+  "n_sessions": 8,
+  "n_trials": 64,
+  "n_features": 6,
+  "labels": {
+    "-1": 128,
+    "1": 128
+  },
+  "split_seed": 20261020,
+  "splits": {
+    "window": {
+      "n_train": 192,
+      "n_test": 64,
+      "n_train_trials": 64,
+      "n_test_trials": 64,
+      "n_train_subjects": 4,
+      "n_test_subjects": 4
+    },
+    "trial": {
+      "n_train": 192,
+      "n_test": 64,
+      "n_train_trials": 48,
+      "n_test_trials": 16,
+      "n_train_subjects": 4,
+      "n_test_subjects": 4
+    },
+    "subject": {
+      "n_train": 192,
+      "n_test": 64,
+      "n_train_trials": 48,
+      "n_test_trials": 16,
+      "n_train_subjects": 3,
+      "n_test_subjects": 1
+    }
+  },
+  "audits": {
+    "window": {
+      "overlap": {
+        "sample": 0,
+        "trial": 64,
+        "session": 8,
+        "subject": 4
+      },
+      "label_counts": {
+        "train": {
+          "negative": 96,
+          "positive": 96
+        },
+        "test": {
+          "negative": 32,
+          "positive": 32
+        }
+      },
+      "n_groups": {
+        "window": 3,
+        "trial": 64,
+        "subject": 4
+      },
+      "invalid_reason": null
+    },
+    "trial": {
+      "overlap": {
+        "sample": 0,
+        "trial": 0,
+        "session": 8,
+        "subject": 4
+      },
+      "label_counts": {
+        "train": {
+          "negative": 96,
+          "positive": 96
+        },
+        "test": {
+          "negative": 32,
+          "positive": 32
+        }
+      },
+      "n_groups": {
+        "window": 4,
+        "trial": 48,
+        "subject": 4
+      },
+      "invalid_reason": null
+    },
+    "subject": {
+      "overlap": {
+        "sample": 0,
+        "trial": 0,
+        "session": 0,
+        "subject": 0
+      },
+      "label_counts": {
+        "train": {
+          "negative": 96,
+          "positive": 96
+        },
+        "test": {
+          "negative": 32,
+          "positive": 32
+        }
+      },
+      "n_groups": {
+        "window": 4,
+        "trial": 48,
+        "subject": 3
+      },
+      "invalid_reason": null
+    }
+  },
+  "real_eeg_experiment_executed": false,
+  "fixture_only": true
+}

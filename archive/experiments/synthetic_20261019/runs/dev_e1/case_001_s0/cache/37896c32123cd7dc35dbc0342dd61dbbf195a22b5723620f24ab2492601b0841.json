@@ -1,0 +1,28 @@
+{
+  "status": "ok",
+  "visible_text": "{ \"action\": { \"decision_type\": \"stop\", \"hypotheses\": [ { \"id\": \"H1\", \"claim\": \"The model exploits trial-specific signatures (e.g., task direction) that transfer to new trials within the same subject/session.\", \"mechanism\": \"Task-level information shared across windows of a single trial allows generalization from training windows to test windows on unseen trials, driving high window split performance but low trial split performance.\", \"supporting_evidence_ids\": [ \"obs_1\", \"req_2\" ], \"limitations\": \"Does not account for subject-specific identity effects or domain shifts.\" }, { \"id\": \"H3\", \"claim\": \"The model exploits session identities (session-level collection effects) rather than trial content.\", \"mechanism\": \"Labels are correlated with unseen metadata features of the test sessions, causing high performance when those entities overlap between train and test sets but failing on truly disjoint ones. This explains why window split is high (sessions overlap) while subject split drops significantly (fewer subjects in test).\", \"supporting_evidence_ids\": [ \"obs_1\", \"req_2\" ], \"limitations\": \"Cannot distinguish from trial-specific effects without permutation tests.\" } ], \"reason\": \"Permutation of labels at the trial level reduced performance to chance (~0.5), ruling out session identity (H3) and confirming that task-level content drives generalization within trials, supporting H1.\", \"final_judgment\": \"The model relies on trial-specific signatures rather than subject or session identities; hypothesis H1 is supported while H3 is rejected.\", \"evidence_ids\": [ \"obs_1\", \"req_2\" ], \"remaining_uncertainty\": null, \"reasoning_summary\": \"Trial-level label randomization dropped performance to chance (~0.5), refuting session identity (H3) and confirming trial-specific content drives generalization within trials, supporting H1.\" } }",
+  "model_id": "qwen3.5:9b",
+  "usage": {
+    "prompt_tokens": 4098,
+    "completion_tokens": 399,
+    "total_tokens": 4497
+  },
+  "latency_ms": 17808.86190000456,
+  "raw_response": {
+    "model": "qwen3.5:9b",
+    "created_at": "2026-10-18T17:44:59.6327968Z",
+    "message": {
+      "role": "assistant",
+      "content": "{ \"action\": { \"decision_type\": \"stop\", \"hypotheses\": [ { \"id\": \"H1\", \"claim\": \"The model exploits trial-specific signatures (e.g., task direction) that transfer to new trials within the same subject/session.\", \"mechanism\": \"Task-level information shared across windows of a single trial allows generalization from training windows to test windows on unseen trials, driving high window split performance but low trial split performance.\", \"supporting_evidence_ids\": [ \"obs_1\", \"req_2\" ], \"limitations\": \"Does not account for subject-specific identity effects or domain shifts.\" }, { \"id\": \"H3\", \"claim\": \"The model exploits session identities (session-level collection effects) rather than trial content.\", \"mechanism\": \"Labels are correlated with unseen metadata features of the test sessions, causing high performance when those entities overlap between train and test sets but failing on truly disjoint ones. This explains why window split is high (sessions overlap) while subject split drops significantly (fewer subjects in test).\", \"supporting_evidence_ids\": [ \"obs_1\", \"req_2\" ], \"limitations\": \"Cannot distinguish from trial-specific effects without permutation tests.\" } ], \"reason\": \"Permutation of labels at the trial level reduced performance to chance (~0.5), ruling out session identity (H3) and confirming that task-level content drives generalization within trials, supporting H1.\", \"final_judgment\": \"The model relies on trial-specific signatures rather than subject or session identities; hypothesis H1 is supported while H3 is rejected.\", \"evidence_ids\": [ \"obs_1\", \"req_2\" ], \"remaining_uncertainty\": null, \"reasoning_summary\": \"Trial-level label randomization dropped performance to chance (~0.5), refuting session identity (H3) and confirming trial-specific content drives generalization within trials, supporting H1.\" } }"
+    },
+    "done": true,
+    "done_reason": "stop",
+    "total_duration": 16984844000,
+    "load_duration": 1073837100,
+    "prompt_eval_count": 4098,
+    "prompt_eval_duration": 3106223000,
+    "eval_count": 399,
+    "eval_duration": 12504812000
+  },
+  "error": null
+}

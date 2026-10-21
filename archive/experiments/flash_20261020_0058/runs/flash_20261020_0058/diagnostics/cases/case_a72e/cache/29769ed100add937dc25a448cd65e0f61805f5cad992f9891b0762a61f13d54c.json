@@ -1,0 +1,18 @@
+{
+  "status": "ok",
+  "visible_text": "{\"decision_type\":\"stop\",\"hypotheses\":[{\"id\":\"H1\",\"claim\":\"The high seen-subject window/trial performance reflects a genuine feature-label mapping that is at least partly specific to subjects or contexts.\",\"mechanism\":\"Features carry task information learned for seen subjects; permuting labels within each subject destroys this mapping, while subject/session metadata alone cannot predict labels.\",\"supporting_evidence_ids\":[\"obs_1\",\"req_1\",\"req_2\"],\"limitations\":\"The subject split is not exactly chance at trial aggregation (0.64), suggesting a possible weak shared component; subject versus session/domain specificity is not isolated.\"},{\"id\":\"H2\",\"claim\":\"The seen-subject performance is mainly an identity/collection artifact rather than a genuine feature-label mapping.\",\"mechanism\":\"Subject/session identity or collection effects allow above-chance prediction when subjects are seen but not when subjects are unseen.\",\"supporting_evidence_ids\":[\"obs_1\",\"req_1\",\"req_2\"],\"limitations\":\"Within-subject label permutation fell to chance and metadata-only balanced accuracy was exactly chance, so direct support for this explanation is absent.\"}],\"reason\":\"Seen-subject window and trial scores are near ceiling, but within-subject label permutation and metadata-only both collapsed to chance. This pattern favors a genuine subject/context-specific feature-label mapping and weakens identity/collection and label-permutation artifact explanations.\",\"final_judgment\":\"The evidence most strongly supports a genuine feature-label mapping that is specific to seen subjects or their contexts, rather than a pure identity/collection confound. Unseen-subject transfer is weak, so the mapping should not be described as globally shared.\",\"evidence_ids\":[\"obs_1\",\"req_1\",\"req_2\"],\"remaining_uncertainty\":\"The data cannot separate subject-specific from session/domain-specific mappings, nor quantify any weak shared component; no session-holdout or detailed per-group audit was run.\",\"reasoning_summary\":\"Negative controls fell to chance while seen-subject window/trial scores stayed near ceiling, favoring a subject/context-specific mapping over identity/collection effects. Exact subject-versus-session form remains unresolved.\"}",
+  "model_id": "deepseek-flash",
+  "usage": {
+    "prompt_tokens": 5912,
+    "completion_tokens": 4828,
+    "total_tokens": 10740
+  },
+  "latency_ms": 27348.740599991288,
+  "raw_response": {
+    "request_id": "c35848e1-4db3-429e-a2e9-c8bb48de9bd6",
+    "finish_reason": "stop",
+    "truncated": false,
+    "reasoning_chars": 22307
+  },
+  "error": null
+}

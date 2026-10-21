@@ -1,0 +1,15 @@
+{
+  "url": "https://ar5iv.labs.arxiv.org/html/2312.10987",
+  "title": "Cross-Subject Data Splitting for Brain-to-Text Decoding",
+  "chars": 48687,
+  "evidence_id": "ev_056fb3068eea",
+  "preview": "\\# Cross\\-Subject Data Splitting for Brain\\-to\\-Text Decoding\n\nCongchi Yin Affiliation\\: Nanjing University of Aeronautics and Astronautics\\, China Affiliation\\: MIIT Key Laboratory of Pattern Analysis and Machine Intelligence\\, Nanjing\\, China Qian Yu Affiliation\\: JD\\.com\\, Beijing\\, China\\{congchiyin\\,pjli\\}\\@nuaa\\.edu\\.cn Zhiwei Fang Affiliation\\: JD\\.com\\, Beijing\\, China\\{congchiyin\\,pjli\\}\\@nuaa\\.edu\\.cn Jie He Affiliation\\: JD\\.com\\, Beijing\\, China\\{congchiyin\\,pjli\\}\\@nuaa\\.edu\\.cn Changping Peng\\, Zhangang Lin\\, Jingping Shao\\, Piji Li Affiliation\\: Nanjing University of Aeronautics and Astronautics\\, China Affiliation\\: MIIT Key Laboratory of Pattern Analysis and Machine Intelligence\\, Nanjing\\, China Affiliation\\: JD\\.com\\, Beijing\\, China\\{congchiyin\\,pjli\\}\\@nuaa\\.edu\\.cn Affiliation\\: JD\\.com\\, Beijing\\, China\\{congchiyin\\,pjli\\}\\@nuaa\\.edu\\.cn Affiliation\\: JD\\.com\\, Beijing\\, China\\{congchiyin\\,pjli\\}\\@nuaa\\.edu\\.cn\n\n\\#\\#\\#\\#\\#\\# Abstract\n\nRecent major milestones have",
+  "attempts": [
+    {
+      "url": "https://ar5iv.labs.arxiv.org/html/2312.10987",
+      "ok": true,
+      "chars": 48687,
+      "evidence_id": "ev_056fb3068eea"
+    }
+  ]
+}

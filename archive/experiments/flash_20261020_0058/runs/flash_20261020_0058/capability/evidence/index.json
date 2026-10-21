@@ -1,0 +1,13 @@
+[
+  {
+    "evidence_id": "ev_056fb3068eea",
+    "url": "https://ar5iv.labs.arxiv.org/html/2312.10987",
+    "title": "Cross-Subject Data Splitting for Brain-to-Text Decoding",
+    "fetched_at": "2026-10-19T17:08:18Z",
+    "sha256": "056fb3068eea7faf649389e5630b02a035897a2766f61580c4efae7dd7cf33e6",
+    "char_count": 48687,
+    "source_kind": "web_html",
+    "extractor": "deepseek_fetch",
+    "page_count": 0
+  }
+]

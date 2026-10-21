@@ -1,0 +1,106 @@
+{
+  "study_id": "emotion_state_trait_20261021",
+  "run_id": "flash_emotion_20261021",
+  "created_at": "2026-10-21T09:40:00+08:00",
+  "deadline": "2026-10-21T23:59:00+08:00",
+  "stop_new_at": "2026-10-21T22:30:00+08:00",
+  "timezone": "Asia/Shanghai",
+  "question": "EEG 对情绪评分的预测，如何区分同一个人的状态变化与不同人的稳定差异？什么最小实验能区分竞争解释？",
+  "model_backend": "deepseek_flash",
+  "tool_backend": "deepseek_search_fetch",
+  "budget": {
+    "project_api_cost_cny_cap": 10.0,
+    "wrap_up_reserve_cny": 0.0,
+    "model_attempts_cap": 120,
+    "search_attempts_cap": 30,
+    "fetch_attempts_cap": 40,
+    "input_tokens_cap": 1000000,
+    "output_tokens_cap": 300000
+  },
+  "paths": {
+    "run_root": "archive/experiments/emotion_20261021/runs/flash_emotion_20261021",
+    "budget_ledger": "archive/experiments/emotion_20261021/runs/flash_emotion_20261021/budget.json",
+    "materials_dir": "archive/experiments/emotion_20261021/runs/flash_emotion_20261021/materials",
+    "meta_dir": "archive/experiments/emotion_20261021/runs/flash_emotion_20261021/meta",
+    "runs_dir": "archive/experiments/emotion_20261021/runs/flash_emotion_20261021/runs",
+    "reviews_dir": "archive/experiments/emotion_20261021/runs/flash_emotion_20261021/reviews",
+    "reports_dir": "archive/experiments/emotion_20261021/reports/flash_emotion_20261021"
+  },
+  "materials": {
+    "version": "emotion_state_trait_v1",
+    "manifest_path": "configs/materials/emotion_state_trait_v1.json",
+    "evidence_dir": "archive/experiments/emotion_20261021/runs/flash_emotion_20261021/materials/evidence",
+    "freeze_sha256": "0158adaeff9ea88d82602de43a8f316dd133a5aecef9bb5baaabd2c1696c9bcc",
+    "preparer": "dsh_developer",
+    "target_papers": 6
+  },
+  "rules": {
+    "baseline": {
+      "version": "emotion_baseline_v1",
+      "path": "configs/rules/emotion_baseline_v1.md"
+    },
+    "meta": {
+      "max_rules": 1,
+      "max_chars": 600,
+      "source_run": "archive/experiments/emotion_20261021/runs/flash_20261020_0058/research/literature_v1",
+      "allowed_review_files": [
+        "archive/experiments/emotion_20261021/reports/flash_20261020_0058/EVIDENCE_AUDIT.md",
+        "archive/experiments/emotion_20261021/reports/flash_20261020_0058/REASONING_REVIEW.md"
+      ]
+    },
+    "isolate_snapshots_by_run": true
+  },
+  "prompt": {
+    "system_prompt_path": "configs/prompts/emotion_research_system.md"
+  },
+  "deliverables": [
+    "一份主要研究提案，不是机械凑三张卡或长篇综述。",
+    "明确区分同一个人的状态变化与不同人的稳定差异，并给出可操作定义。",
+    "至少两个竞争解释，说明各自需要的证据。",
+    "一个最小实验：数据、设计、对照、主要可观测量、预期结果和反证条件。",
+    "明确指出即使做完实验仍无法区分的解释。",
+    "引用材料包中实际读过的 evidence_id；不得把文献提案写成真实 EEG 实验结果。"
+  ],
+  "run_limits": {
+    "max_model_calls": 12,
+    "max_tool_calls": 14,
+    "max_turns": 3,
+    "max_model_calls_per_turn": 8,
+    "max_tool_calls_per_turn": 8,
+    "max_output_tokens": 12000,
+    "max_output_tokens_retry": 24000,
+    "context_char_target": 120000
+  },
+  "repeats": {
+    "baseline": 2,
+    "rule": 2
+  },
+  "selection": {
+    "primary": "first_accepted_per_arm_repeat",
+    "later_accepted_retries": "secondary_not_used",
+    "no_replacement_after_accept": true
+  },
+  "retry": {
+    "max_extra_attempts_per_cell": 1,
+    "stop_after_accepted": true,
+    "preserve_failed_runs": true
+  },
+  "meta": {
+    "model_backend": "deepseek_flash",
+    "max_output_tokens": 4000,
+    "max_rules": 1,
+    "max_rule_chars": 600,
+    "temperature_note": "thinking mode; no temperature claim"
+  },
+  "evaluation": {
+    "rubric_path": "configs/eval/emotion_rubric_v1.json",
+    "blinded": true
+  },
+  "notes": [
+    "No Claude/Gemini credential is available; those backend entries are unverified and must not be called.",
+    "No real EEG dataset is read; this is a literature-method proposal study.",
+    "The 10 CNY cap covers Search, Fetch, Meta, Scientist runs, and retries through one new ledger."
+  ],
+  "archive": true,
+  "archive_note": "Read-only archived emotion study; do not run or retry."
+}

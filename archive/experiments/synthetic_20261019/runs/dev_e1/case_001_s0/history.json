@@ -1,0 +1,769 @@
+[
+  {
+    "action": {
+      "decision_type": "action",
+      "hypotheses": [
+        {
+          "id": "H1",
+          "claim": "The model exploits trial-specific signatures (e.g., task direction) that transfer to new trials within the same subject/session.",
+          "mechanism": "Task-level information shared across windows of a single trial allows generalization from training windows to test windows on unseen trials, driving high window split performance but low trial split performance.",
+          "supporting_evidence_ids": [
+            "obs_1"
+          ],
+          "limitations": "Does not account for subject-specific identity effects or domain shifts."
+        },
+        {
+          "id": "H2",
+          "claim": "The model exploits subject/session identities (identity/collection effects) rather than trial content.",
+          "mechanism": "Labels are correlated with unseen metadata features of the test subjects/sessions, causing high performance when those entities overlap between train and test sets but failing on truly disjoint ones.",
+          "supporting_evidence_ids": [
+            "obs_1"
+          ],
+          "limitations": "Cannot distinguish from trial-specific effects without permutation tests."
+        }
+      ],
+      "action": {
+        "request_id": "req_1",
+        "tool_id": "split_audit",
+        "parameters": {},
+        "distinguishes": [
+          "H1",
+          "H2"
+        ],
+        "prediction": {
+          "scoring_status": "not_applicable",
+          "metric_key": null,
+          "primary_direction": null,
+          "threshold": 0.05,
+          "check_facts": [
+            "Inspect overlap counts for sample/trial/session/subject across splits.",
+            "Verify label proportions in train vs test sets per group."
+          ],
+          "conditional_predictions": [],
+          "update_rule_if_opposite": ""
+        }
+      },
+      "stop": null,
+      "reasoning_summary": "Audit split definitions to confirm whether high window BA stems from trial content transfer (H1) or identity leakage (H2). Check overlap and label balance facts first."
+    },
+    "result": {
+      "request_id": "req_1",
+      "tool_id": "split_audit",
+      "valid": true,
+      "invalid_reason": null,
+      "metrics": {
+        "window_balanced_accuracy": 0.9931640625,
+        "window_accuracy": 0.9931640625,
+        "window_n_train": 3072.0,
+        "window_n_test": 1024.0,
+        "window_n_train_trials": 512.0,
+        "window_n_test_trials": 512.0,
+        "window_n_train_subjects": 16.0,
+        "window_n_test_subjects": 16.0,
+        "window_trial_aggregated_balanced_accuracy": 0.990234375,
+        "window_trial_aggregated_n_trials": 512.0,
+        "trial_balanced_accuracy": 0.49609375,
+        "trial_accuracy": 0.49609375,
+        "trial_n_train": 3072.0,
+        "trial_n_test": 1024.0,
+        "trial_n_train_trials": 384.0,
+        "trial_n_test_trials": 128.0,
+        "trial_n_train_subjects": 16.0,
+        "trial_n_test_subjects": 16.0,
+        "trial_trial_aggregated_balanced_accuracy": 0.515625,
+        "trial_trial_aggregated_n_trials": 128.0,
+        "subject_balanced_accuracy": 0.517578125,
+        "subject_accuracy": 0.517578125,
+        "subject_n_train": 3072.0,
+        "subject_n_test": 1024.0,
+        "subject_n_train_trials": 384.0,
+        "subject_n_test_trials": 128.0,
+        "subject_n_train_subjects": 12.0,
+        "subject_n_test_subjects": 4.0,
+        "subject_trial_aggregated_balanced_accuracy": 0.5546875,
+        "subject_trial_aggregated_n_trials": 128.0,
+        "gap_window_minus_trial": 0.4970703125,
+        "gap_window_minus_subject": 0.4755859375,
+        "gap_trial_minus_subject": -0.021484375
+      },
+      "randomization": {},
+      "audit": {
+        "window": {
+          "overlap": {
+            "sample": 0,
+            "trial": 512,
+            "session": 32,
+            "subject": 16
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 6,
+            "trial": 512,
+            "subject": 16
+          },
+          "invalid_reason": null
+        },
+        "trial": {
+          "overlap": {
+            "sample": 0,
+            "trial": 0,
+            "session": 32,
+            "subject": 16
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 8,
+            "trial": 384,
+            "subject": 16
+          },
+          "invalid_reason": null
+        },
+        "subject": {
+          "overlap": {
+            "sample": 0,
+            "trial": 0,
+            "session": 0,
+            "subject": 0
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 8,
+            "trial": 384,
+            "subject": 12
+          },
+          "invalid_reason": null
+        }
+      },
+      "details": {
+        "per_subject_balanced_accuracy": {
+          "window": {
+            "sub-00": 1.0,
+            "sub-01": 0.984375,
+            "sub-02": 1.0,
+            "sub-03": 1.0,
+            "sub-04": 0.96875,
+            "sub-05": 0.984375,
+            "sub-06": 1.0,
+            "sub-07": 1.0,
+            "sub-08": 1.0,
+            "sub-09": 0.984375,
+            "sub-10": 1.0,
+            "sub-11": 1.0,
+            "sub-12": 1.0,
+            "sub-13": 1.0,
+            "sub-14": 0.984375,
+            "sub-15": 0.984375
+          },
+          "trial": {
+            "sub-00": 0.515625,
+            "sub-01": 0.4375,
+            "sub-02": 0.484375,
+            "sub-03": 0.375,
+            "sub-04": 0.5,
+            "sub-05": 0.421875,
+            "sub-06": 0.4375,
+            "sub-07": 0.640625,
+            "sub-08": 0.53125,
+            "sub-09": 0.53125,
+            "sub-10": 0.359375,
+            "sub-11": 0.546875,
+            "sub-12": 0.46875,
+            "sub-13": 0.734375,
+            "sub-14": 0.53125,
+            "sub-15": 0.421875
+          },
+          "subject": {
+            "sub-01": 0.515625,
+            "sub-03": 0.48828125,
+            "sub-05": 0.50390625,
+            "sub-11": 0.5625
+          }
+        },
+        "estimand_note": "window split shares trials; its trial aggregation is diagnostic only"
+      },
+      "elapsed_seconds": 0.2410466000001179
+    },
+    "prediction_score": {
+      "status": "not_applicable",
+      "hit": null,
+      "observed_direction": null,
+      "metric_key": null,
+      "value": null
+    }
+  },
+  {
+    "action": {
+      "decision_type": "action",
+      "hypotheses": [
+        {
+          "id": "H1",
+          "claim": "The model exploits trial-specific signatures (e.g., task direction) that transfer to new trials within the same subject/session.",
+          "mechanism": "Task-level information shared across windows of a single trial allows generalization from training windows to test windows on unseen trials, driving high window split performance but low trial split performance.",
+          "supporting_evidence_ids": [
+            "obs_1",
+            "req_1"
+          ],
+          "limitations": "Does not account for subject-specific identity effects or domain shifts."
+        },
+        {
+          "id": "H2",
+          "claim": "The model exploits subject/session identities (identity/collection effects) rather than trial content.",
+          "mechanism": "Labels are correlated with unseen metadata features of the test subjects/sessions, causing high performance when those entities overlap between train and test sets but failing on truly disjoint ones.",
+          "supporting_evidence_ids": [
+            "obs_1",
+            "req_1"
+          ],
+          "limitations": "Cannot distinguish from trial-specific effects without permutation tests."
+        }
+      ],
+      "action": {
+        "request_id": "req_2",
+        "tool_id": "trial_shuffle_within_subject",
+        "parameters": {},
+        "distinguishes": [
+          "H1",
+          "H2"
+        ],
+        "prediction": {
+          "scoring_status": "numeric",
+          "metric_key": "trial_shuffle_trial_ba_mean",
+          "primary_direction": "near_zero",
+          "threshold": 0.05,
+          "check_facts": [],
+          "conditional_predictions": [
+            {
+              "hypothesis_id": "H1",
+              "direction": "positive",
+              "rationale": "If trial content drives performance, shuffling labels within a subject should break the task mapping for each new label assignment, reducing BA to chance."
+            },
+            {
+              "hypothesis_id": "H2",
+              "direction": "negative",
+              "rationale": "If identity effects drive performance, permuting labels within subjects while preserving counts might still allow some leakage if metadata correlates with class; however, the primary expectation for H1 is a drop in BA."
+            }
+          ],
+          "update_rule_if_opposite": "If trial_shuffle_trial_ba_mean remains high (>0.5), this suggests identity effects (H2) or that shuffling does not break the underlying signal sufficiently to distinguish from content-based transfer."
+        }
+      },
+      "stop": null,
+      "reasoning_summary": "Shuffle labels within subjects to test if performance relies on subject-specific identities (H2) vs trial-level task mapping (H1). Expect BA drop near chance for H1, stable high BA for H2."
+    },
+    "result": {
+      "request_id": "req_2",
+      "tool_id": "trial_shuffle_within_subject",
+      "valid": true,
+      "invalid_reason": null,
+      "metrics": {
+        "trial_shuffle_window_ba_mean": 0.99267578125,
+        "trial_shuffle_window_ba_std": 0.0010918300671385692,
+        "trial_shuffle_window_ba_min": 0.990234375,
+        "trial_shuffle_window_ba_max": 0.994140625,
+        "trial_shuffle_trial_ba_mean": 0.4953856313208771,
+        "trial_shuffle_trial_ba_std": 0.01588968644948103,
+        "trial_shuffle_trial_ba_min": 0.47433035714285715,
+        "trial_shuffle_trial_ba_max": 0.5229232933692195,
+        "trial_shuffle_gap_mean": 0.4972901499291229,
+        "trial_shuffle_gap_std": 0.01618661000619954,
+        "trial_shuffle_gap_min": 0.4712173316307805,
+        "trial_shuffle_gap_max": 0.5198102678571428
+      },
+      "randomization": {
+        "seeds": [
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110
+        ],
+        "n_valid_seeds": 10,
+        "per_seed": [
+          {
+            "seed": 101,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9931640625,
+            "trial_ba": 0.4968497675556643,
+            "gap": 0.4963142949443357,
+            "invalid_reason": null
+          },
+          {
+            "seed": 102,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.990234375,
+            "trial_ba": 0.5134267188646929,
+            "gap": 0.47680765613530707,
+            "invalid_reason": null
+          },
+          {
+            "seed": 103,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9921875,
+            "trial_ba": 0.5037313432835822,
+            "gap": 0.48845615671641784,
+            "invalid_reason": null
+          },
+          {
+            "seed": 104,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9921875,
+            "trial_ba": 0.5108455882352941,
+            "gap": 0.48134191176470587,
+            "invalid_reason": null
+          },
+          {
+            "seed": 105,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9931640625,
+            "trial_ba": 0.479936383655493,
+            "gap": 0.5132276788445069,
+            "invalid_reason": null
+          },
+          {
+            "seed": 106,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.994140625,
+            "trial_ba": 0.5229232933692195,
+            "gap": 0.4712173316307805,
+            "invalid_reason": null
+          },
+          {
+            "seed": 107,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9931640625,
+            "trial_ba": 0.4898277126099707,
+            "gap": 0.5033363498900293,
+            "invalid_reason": null
+          },
+          {
+            "seed": 108,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.994140625,
+            "trial_ba": 0.47433035714285715,
+            "gap": 0.5198102678571428,
+            "invalid_reason": null
+          },
+          {
+            "seed": 109,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9921875,
+            "trial_ba": 0.47976816735992167,
+            "gap": 0.5124193326400783,
+            "invalid_reason": null
+          },
+          {
+            "seed": 110,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9921875,
+            "trial_ba": 0.48221698113207545,
+            "gap": 0.5099705188679245,
+            "invalid_reason": null
+          }
+        ],
+        "invalid_reasons": []
+      },
+      "audit": {
+        "window": {
+          "overlap": {
+            "sample": 0,
+            "trial": 512,
+            "session": 32,
+            "subject": 16
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 6,
+            "trial": 512,
+            "subject": 16
+          },
+          "invalid_reason": null
+        },
+        "trial": {
+          "overlap": {
+            "sample": 0,
+            "trial": 0,
+            "session": 32,
+            "subject": 16
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 8,
+            "trial": 384,
+            "subject": 16
+          },
+          "invalid_reason": null
+        },
+        "subject": {
+          "overlap": {
+            "sample": 0,
+            "trial": 0,
+            "session": 0,
+            "subject": 0
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 8,
+            "trial": 384,
+            "subject": 12
+          },
+          "invalid_reason": null
+        }
+      },
+      "details": {
+        "n_seeds": 10,
+        "n_valid_seeds": 10
+      },
+      "elapsed_seconds": 1.411635500000557
+    },
+    "prediction_score": {
+      "status": "scored",
+      "hit": true,
+      "observed_direction": "near_zero",
+      "metric_key": "trial_shuffle_trial_ba_mean",
+      "value": 0.4953856313208771,
+      "reference": 0.5,
+      "delta": -0.004614368679122904
+    }
+  },
+  {
+    "action": {
+      "decision_type": "action",
+      "hypotheses": [
+        {
+          "id": "H1",
+          "claim": "The model exploits trial-specific signatures (e.g., task direction) that transfer to new trials within the same subject/session.",
+          "mechanism": "Task-level information shared across windows of a single trial allows generalization from training windows to test windows on unseen trials, driving high window split performance but low trial split performance.",
+          "supporting_evidence_ids": [
+            "obs_1",
+            "req_2"
+          ],
+          "limitations": "Does not account for subject-specific identity effects or domain shifts."
+        },
+        {
+          "id": "H3",
+          "claim": "The model exploits session identities (session-level collection effects) rather than trial content.",
+          "mechanism": "Labels are correlated with unseen metadata features of the test sessions, causing high performance when those entities overlap between train and test sets but failing on truly disjoint ones. This explains why window split is high (sessions overlap) while subject split drops significantly (fewer subjects in test).",
+          "supporting_evidence_ids": [
+            "obs_1",
+            "req_2"
+          ],
+          "limitations": "Cannot distinguish from trial-specific effects without permutation tests."
+        }
+      ],
+      "action": {
+        "request_id": "req_3",
+        "tool_id": "trial_random_labels",
+        "parameters": {},
+        "distinguishes": [
+          "H1",
+          "H3"
+        ],
+        "prediction": {
+          "scoring_status": "numeric",
+          "metric_key": "trial_random_trial_ba_mean",
+          "primary_direction": "near_zero",
+          "threshold": 0.05,
+          "check_facts": [],
+          "conditional_predictions": [
+            {
+              "hypothesis_id": "H1",
+              "direction": "positive",
+              "rationale": "If trial content drives performance, randomizing labels at the trial level should break any task mapping for each new label assignment, reducing BA to chance."
+            },
+            {
+              "hypothesis_id": "H3",
+              "direction": "negative",
+              "rationale": "If session identity effects drive performance, permuting labels within trials while preserving counts might still allow some leakage if metadata correlates with class; however, the primary expectation for H1 is a drop in BA."
+            }
+          ],
+          "update_rule_if_opposite": "If trial_random_trial_ba_mean remains high (>0.5), this suggests session identity effects (H3) or that randomization does not break the underlying signal sufficiently to distinguish from content-based transfer."
+        }
+      },
+      "stop": null,
+      "reasoning_summary": "Randomize labels at trial level to test if performance relies on subject/session identities vs trial-level task mapping. Expect BA drop near chance for H1, stable high BA for session effects (H3)."
+    },
+    "result": {
+      "request_id": "req_3",
+      "tool_id": "trial_random_labels",
+      "valid": true,
+      "invalid_reason": null,
+      "metrics": {
+        "trial_random_window_ba_mean": 0.99189453125,
+        "trial_random_window_ba_std": 0.0015160326851816426,
+        "trial_random_window_ba_min": 0.9892578125,
+        "trial_random_window_ba_max": 0.994140625,
+        "trial_random_trial_ba_mean": 0.5079608552991515,
+        "trial_random_trial_ba_std": 0.012052657632144298,
+        "trial_random_trial_ba_min": 0.4826490713587488,
+        "trial_random_trial_ba_max": 0.5273194271481942,
+        "trial_random_gap_mean": 0.4839336759508486,
+        "trial_random_gap_std": 0.01131378619893426,
+        "trial_random_gap_min": 0.46682119785180576,
+        "trial_random_gap_max": 0.5075853036412512
+      },
+      "randomization": {
+        "seeds": [
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110
+        ],
+        "n_valid_seeds": 10,
+        "per_seed": [
+          {
+            "seed": 101,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9921875,
+            "trial_ba": 0.5149253731343284,
+            "gap": 0.4772621268656716,
+            "invalid_reason": null
+          },
+          {
+            "seed": 102,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9931640625,
+            "trial_ba": 0.5044950738916256,
+            "gap": 0.4886689886083744,
+            "invalid_reason": null
+          },
+          {
+            "seed": 103,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.990234375,
+            "trial_ba": 0.4826490713587488,
+            "gap": 0.5075853036412512,
+            "invalid_reason": null
+          },
+          {
+            "seed": 104,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9892578125,
+            "trial_ba": 0.5107843137254902,
+            "gap": 0.47847349877450984,
+            "invalid_reason": null
+          },
+          {
+            "seed": 105,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.994140625,
+            "trial_ba": 0.5162157153446998,
+            "gap": 0.4779249096553002,
+            "invalid_reason": null
+          },
+          {
+            "seed": 106,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9912109375,
+            "trial_ba": 0.5013723843967967,
+            "gap": 0.48983855310320334,
+            "invalid_reason": null
+          },
+          {
+            "seed": 107,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9912109375,
+            "trial_ba": 0.49691697191697193,
+            "gap": 0.49429396558302807,
+            "invalid_reason": null
+          },
+          {
+            "seed": 108,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.994140625,
+            "trial_ba": 0.5273194271481942,
+            "gap": 0.46682119785180576,
+            "invalid_reason": null
+          },
+          {
+            "seed": 109,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9921875,
+            "trial_ba": 0.5055860805860806,
+            "gap": 0.48660141941391943,
+            "invalid_reason": null
+          },
+          {
+            "seed": 110,
+            "valid": true,
+            "mapping_changed": true,
+            "window_ba": 0.9912109375,
+            "trial_ba": 0.5193441414885778,
+            "gap": 0.47186679601142223,
+            "invalid_reason": null
+          }
+        ],
+        "invalid_reasons": []
+      },
+      "audit": {
+        "window": {
+          "overlap": {
+            "sample": 0,
+            "trial": 512,
+            "session": 32,
+            "subject": 16
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 6,
+            "trial": 512,
+            "subject": 16
+          },
+          "invalid_reason": null
+        },
+        "trial": {
+          "overlap": {
+            "sample": 0,
+            "trial": 0,
+            "session": 32,
+            "subject": 16
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 8,
+            "trial": 384,
+            "subject": 16
+          },
+          "invalid_reason": null
+        },
+        "subject": {
+          "overlap": {
+            "sample": 0,
+            "trial": 0,
+            "session": 0,
+            "subject": 0
+          },
+          "label_counts": {
+            "train": {
+              "negative": 1536,
+              "positive": 1536
+            },
+            "test": {
+              "negative": 512,
+              "positive": 512
+            }
+          },
+          "n_groups": {
+            "window": 8,
+            "trial": 384,
+            "subject": 12
+          },
+          "invalid_reason": null
+        }
+      },
+      "details": {
+        "n_seeds": 10,
+        "n_valid_seeds": 10
+      },
+      "elapsed_seconds": 1.4689633999951184
+    },
+    "prediction_score": {
+      "status": "scored",
+      "hit": true,
+      "observed_direction": "near_zero",
+      "metric_key": "trial_random_trial_ba_mean",
+      "value": 0.5079608552991515,
+      "reference": 0.5,
+      "delta": 0.00796085529915147
+    }
+  }
+]

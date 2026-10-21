@@ -1,0 +1,81 @@
+{
+  "at": "2026-10-21T01:32:19Z",
+  "model": "deepseek-flash",
+  "request_id": "97c5b8de-4ff2-46b4-97b7-3ae60a56ed58",
+  "finish_reason": "tool_calls",
+  "usage": {
+    "prompt_tokens": 1961,
+    "completion_tokens": 193,
+    "total_tokens": 2154,
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 1961,
+    "reported": true,
+    "valid": true
+  },
+  "content": "I'll start by reading the registered sources, beginning with the cross-subject modeling and non-stationarity papers, which bear most directly on the state-vs-trait question.",
+  "reasoning_content": "",
+  "tool_calls": [
+    {
+      "id": "call_00_ET_bH73FmCprab5mLXrq8jh3688",
+      "name": "read_evidence",
+      "arguments": "{\"evidence_id\": \"ev_74eaf4bc0082\", \"start_char\": 0, \"max_chars\": 6000}"
+    },
+    {
+      "id": "call_01_ET_8HO7pcWMl77HMavBVbpu1350",
+      "name": "read_evidence",
+      "arguments": "{\"evidence_id\": \"ev_d3f89ccca87f\", \"start_char\": 0, \"max_chars\": 6000}"
+    }
+  ],
+  "raw": {
+    "id": "97c5b8de-4ff2-46b4-97b7-3ae60a56ed58",
+    "object": "chat.completion",
+    "created": 1792546339,
+    "model": "deepseek-flash",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "I'll start by reading the registered sources, beginning with the cross-subject modeling and non-stationarity papers, which bear most directly on the state-vs-trait question.",
+          "reasoning_content": "",
+          "tool_calls": [
+            {
+              "index": 0,
+              "id": "call_00_ET_bH73FmCprab5mLXrq8jh3688",
+              "type": "function",
+              "function": {
+                "name": "read_evidence",
+                "arguments": "{\"evidence_id\": \"ev_74eaf4bc0082\", \"start_char\": 0, \"max_chars\": 6000}"
+              }
+            },
+            {
+              "index": 1,
+              "id": "call_01_ET_8HO7pcWMl77HMavBVbpu1350",
+              "type": "function",
+              "function": {
+                "name": "read_evidence",
+                "arguments": "{\"evidence_id\": \"ev_d3f89ccca87f\", \"start_char\": 0, \"max_chars\": 6000}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1961,
+      "completion_tokens": 193,
+      "total_tokens": 2154,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "prompt_cache_hit_tokens": 0,
+      "prompt_cache_miss_tokens": 1961
+    },
+    "system_fingerprint": "e72d3c7f663d3e1383b00b3884cb4501"
+  }
+}

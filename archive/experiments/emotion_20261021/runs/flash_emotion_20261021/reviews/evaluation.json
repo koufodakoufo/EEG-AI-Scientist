@@ -1,0 +1,456 @@
+{
+  "study_id": "emotion_state_trait_20261021",
+  "meta_decision": {
+    "accepted": true,
+    "decision": "rules",
+    "reason": "one transferable rule accepted by structural checks",
+    "rule_text": "Trigger: When citing a specific number or detail from a source in a literature-based proposal,\nAction: attach it to its evidence ID and verify the text falls inside the excerpt actually read; if it is only in an abstract, search summary, or outside the recorded read range, read it directly or label it unverified and keep it out of load-bearing claims.\nBoundary: Covers factual/citation claims, not explicitly labeled hypotheses; absence from the read trace means unsupported here, not false.\nEvidence: review:EVIDENCE_AUDIT\n",
+    "rule": {
+      "trigger": "When citing a specific number or detail from a source in a literature-based proposal,",
+      "action": "attach it to its evidence ID and verify the text falls inside the excerpt actually read; if it is only in an abstract, search summary, or outside the recorded read range, read it directly or label it unverified and keep it out of load-bearing claims.",
+      "boundary": "Covers factual/citation claims, not explicitly labeled hypotheses; absence from the read trace means unsupported here, not false.",
+      "evidence_event_ids": [
+        "review:EVIDENCE_AUDIT"
+      ],
+      "author": "developer_assisted_dsh"
+    },
+    "source_ids": [
+      "review:EVIDENCE_AUDIT"
+    ],
+    "created_at": "2026-10-21T01:32:17Z"
+  },
+  "runs": [
+    {
+      "run_id": "flash_emotion_20261021__baseline__01",
+      "arm": "baseline",
+      "repeat": 1,
+      "run_dir": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_01",
+      "phase": "completed",
+      "accepted": true,
+      "acceptance": "accepted",
+      "stop_reason": "finish_study",
+      "model_calls": 6,
+      "tool_calls": 11,
+      "final_path": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_01\\final.json",
+      "cost_cny": 0.236454,
+      "retry_of": ""
+    },
+    {
+      "run_id": "flash_emotion_20261021__baseline__02",
+      "arm": "baseline",
+      "repeat": 2,
+      "run_dir": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_02",
+      "phase": "failed",
+      "accepted": false,
+      "acceptance": "pending",
+      "stop_reason": "ResearchError: tool call budget reached without finish_study",
+      "model_calls": 6,
+      "tool_calls": 14,
+      "final_path": "",
+      "cost_cny": 0.141554,
+      "retry_of": ""
+    },
+    {
+      "run_id": "flash_emotion_20261021__meta_rule__01",
+      "arm": "meta_rule",
+      "repeat": 1,
+      "run_dir": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_01",
+      "phase": "failed",
+      "accepted": false,
+      "acceptance": "pending",
+      "stop_reason": "ResearchError: tool call budget reached without finish_study",
+      "model_calls": 5,
+      "tool_calls": 14,
+      "final_path": "",
+      "cost_cny": 0.137382,
+      "retry_of": ""
+    },
+    {
+      "run_id": "flash_emotion_20261021__meta_rule__02",
+      "arm": "meta_rule",
+      "repeat": 2,
+      "run_dir": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_02",
+      "phase": "failed",
+      "accepted": false,
+      "acceptance": "pending",
+      "stop_reason": "ResearchError: tool call budget reached without finish_study",
+      "model_calls": 7,
+      "tool_calls": 14,
+      "final_path": "",
+      "cost_cny": 0.200584,
+      "retry_of": ""
+    },
+    {
+      "run_id": "flash_emotion_20261021__baseline__02__retry",
+      "arm": "baseline",
+      "repeat": 2,
+      "run_dir": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_02__retry",
+      "phase": "completed",
+      "accepted": true,
+      "acceptance": "accepted",
+      "stop_reason": "finish_study",
+      "model_calls": 6,
+      "tool_calls": 10,
+      "final_path": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_02__retry\\final.json",
+      "cost_cny": 0.21853,
+      "retry_of": "flash_emotion_20261021__baseline__02"
+    },
+    {
+      "run_id": "flash_emotion_20261021__meta_rule__01__retry",
+      "arm": "meta_rule",
+      "repeat": 1,
+      "run_dir": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_01__retry",
+      "phase": "failed",
+      "accepted": false,
+      "acceptance": "pending",
+      "stop_reason": "ResearchError: finalization did not produce finish_study",
+      "model_calls": 7,
+      "tool_calls": 14,
+      "final_path": "",
+      "cost_cny": 0.228158,
+      "retry_of": "flash_emotion_20261021__meta_rule__01"
+    },
+    {
+      "run_id": "flash_emotion_20261021__meta_rule__02__retry",
+      "arm": "meta_rule",
+      "repeat": 2,
+      "run_dir": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_02__retry",
+      "phase": "completed",
+      "accepted": true,
+      "acceptance": "accepted",
+      "stop_reason": "finish_study",
+      "model_calls": 6,
+      "tool_calls": 11,
+      "final_path": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_02__retry\\final.json",
+      "cost_cny": 0.22541,
+      "retry_of": "flash_emotion_20261021__meta_rule__02"
+    },
+    {
+      "run_id": "flash_emotion_20261021__baseline__02__retry2",
+      "arm": "baseline",
+      "repeat": 2,
+      "run_dir": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_02__retry2",
+      "phase": "completed",
+      "accepted": true,
+      "acceptance": "accepted",
+      "stop_reason": "finish_study",
+      "model_calls": 7,
+      "tool_calls": 12,
+      "final_path": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_02__retry2\\final.json",
+      "cost_cny": 0.25575,
+      "retry_of": "flash_emotion_20261021__baseline__02"
+    },
+    {
+      "run_id": "flash_emotion_20261021__meta_rule__01__retry2",
+      "arm": "meta_rule",
+      "repeat": 1,
+      "run_dir": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_01__retry2",
+      "phase": "completed",
+      "accepted": true,
+      "acceptance": "accepted",
+      "stop_reason": "finish_study",
+      "model_calls": 6,
+      "tool_calls": 10,
+      "final_path": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_01__retry2\\final.json",
+      "cost_cny": 0.198848,
+      "retry_of": "flash_emotion_20261021__meta_rule__01__retry"
+    },
+    {
+      "run_id": "flash_emotion_20261021__meta_rule__02__retry2",
+      "arm": "meta_rule",
+      "repeat": 2,
+      "run_dir": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_02__retry2",
+      "phase": "completed",
+      "accepted": true,
+      "acceptance": "accepted",
+      "stop_reason": "finish_study",
+      "model_calls": 8,
+      "tool_calls": 14,
+      "final_path": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_02__retry2\\final.json",
+      "cost_cny": 0.310428,
+      "retry_of": "flash_emotion_20261021__meta_rule__02"
+    }
+  ],
+  "primary_runs": [
+    {
+      "run_id": "flash_emotion_20261021__baseline__01",
+      "arm": "baseline",
+      "repeat": 1,
+      "run_dir": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_01",
+      "phase": "completed",
+      "accepted": true,
+      "acceptance": "accepted",
+      "stop_reason": "finish_study",
+      "model_calls": 6,
+      "tool_calls": 11,
+      "final_path": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_01\\final.json",
+      "cost_cny": 0.236454,
+      "retry_of": ""
+    },
+    {
+      "run_id": "flash_emotion_20261021__baseline__02__retry",
+      "arm": "baseline",
+      "repeat": 2,
+      "run_dir": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_02__retry",
+      "phase": "completed",
+      "accepted": true,
+      "acceptance": "accepted",
+      "stop_reason": "finish_study",
+      "model_calls": 6,
+      "tool_calls": 10,
+      "final_path": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_02__retry\\final.json",
+      "cost_cny": 0.21853,
+      "retry_of": "flash_emotion_20261021__baseline__02"
+    },
+    {
+      "run_id": "flash_emotion_20261021__meta_rule__01__retry2",
+      "arm": "meta_rule",
+      "repeat": 1,
+      "run_dir": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_01__retry2",
+      "phase": "completed",
+      "accepted": true,
+      "acceptance": "accepted",
+      "stop_reason": "finish_study",
+      "model_calls": 6,
+      "tool_calls": 10,
+      "final_path": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_01__retry2\\final.json",
+      "cost_cny": 0.198848,
+      "retry_of": "flash_emotion_20261021__meta_rule__01__retry"
+    },
+    {
+      "run_id": "flash_emotion_20261021__meta_rule__02__retry",
+      "arm": "meta_rule",
+      "repeat": 2,
+      "run_dir": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_02__retry",
+      "phase": "completed",
+      "accepted": true,
+      "acceptance": "accepted",
+      "stop_reason": "finish_study",
+      "model_calls": 6,
+      "tool_calls": 11,
+      "final_path": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_02__retry\\final.json",
+      "cost_cny": 0.22541,
+      "retry_of": "flash_emotion_20261021__meta_rule__02"
+    }
+  ],
+  "proposals": [
+    {
+      "run_id": "flash_emotion_20261021__baseline__01",
+      "arm": "baseline",
+      "repeat": 1,
+      "accepted": true,
+      "cost_cny": 0.236454,
+      "cited_ids": [
+        "ev_580a39dd545d",
+        "ev_6619560afa7e",
+        "ev_74eaf4bc0082",
+        "ev_97eaa43a3d81",
+        "ev_d3f89ccca87f",
+        "ev_fad98f5a28bb"
+      ],
+      "material_ids": [
+        "ev_580a39dd545d",
+        "ev_6619560afa7e",
+        "ev_74eaf4bc0082",
+        "ev_97eaa43a3d81",
+        "ev_d3f89ccca87f",
+        "ev_fad98f5a28bb"
+      ],
+      "checks": {
+        "accepted": true,
+        "citation_integrity": true,
+        "two_competing_explanations": true,
+        "within_between": true,
+        "discriminating_experiment": true,
+        "executability": true,
+        "limits": true
+      },
+      "answer_chars": 7095,
+      "answer_path": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_01\\final_answer.md",
+      "run_dir": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_01"
+    },
+    {
+      "run_id": "flash_emotion_20261021__baseline__02__retry",
+      "arm": "baseline",
+      "repeat": 2,
+      "accepted": true,
+      "cost_cny": 0.21853,
+      "cited_ids": [
+        "ev_580a39dd545d",
+        "ev_6619560afa7e",
+        "ev_74eaf4bc0082",
+        "ev_97eaa43a3d81",
+        "ev_d3f89ccca87f",
+        "ev_fad98f5a28bb"
+      ],
+      "material_ids": [
+        "ev_580a39dd545d",
+        "ev_6619560afa7e",
+        "ev_74eaf4bc0082",
+        "ev_97eaa43a3d81",
+        "ev_d3f89ccca87f",
+        "ev_fad98f5a28bb"
+      ],
+      "checks": {
+        "accepted": true,
+        "citation_integrity": true,
+        "two_competing_explanations": false,
+        "within_between": true,
+        "discriminating_experiment": true,
+        "executability": true,
+        "limits": true
+      },
+      "answer_chars": 5125,
+      "answer_path": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_02__retry\\final_answer.md",
+      "run_dir": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_02__retry"
+    },
+    {
+      "run_id": "flash_emotion_20261021__meta_rule__01__retry2",
+      "arm": "meta_rule",
+      "repeat": 1,
+      "accepted": true,
+      "cost_cny": 0.198848,
+      "cited_ids": [
+        "ev_6619560afa7e",
+        "ev_74eaf4bc0082",
+        "ev_d3f89ccca87f",
+        "ev_fad98f5a28bb"
+      ],
+      "material_ids": [
+        "ev_580a39dd545d",
+        "ev_6619560afa7e",
+        "ev_74eaf4bc0082",
+        "ev_97eaa43a3d81",
+        "ev_d3f89ccca87f",
+        "ev_fad98f5a28bb"
+      ],
+      "checks": {
+        "accepted": true,
+        "citation_integrity": true,
+        "two_competing_explanations": false,
+        "within_between": true,
+        "discriminating_experiment": true,
+        "executability": true,
+        "limits": true
+      },
+      "answer_chars": 4276,
+      "answer_path": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_01__retry2\\final_answer.md",
+      "run_dir": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_01__retry2"
+    },
+    {
+      "run_id": "flash_emotion_20261021__meta_rule__02__retry",
+      "arm": "meta_rule",
+      "repeat": 2,
+      "accepted": true,
+      "cost_cny": 0.22541,
+      "cited_ids": [
+        "ev_6619560afa7e",
+        "ev_74eaf4bc0082",
+        "ev_d3f89ccca87f",
+        "ev_fad98f5a28bb"
+      ],
+      "material_ids": [
+        "ev_580a39dd545d",
+        "ev_6619560afa7e",
+        "ev_74eaf4bc0082",
+        "ev_97eaa43a3d81",
+        "ev_d3f89ccca87f",
+        "ev_fad98f5a28bb"
+      ],
+      "checks": {
+        "accepted": true,
+        "citation_integrity": true,
+        "two_competing_explanations": false,
+        "within_between": true,
+        "discriminating_experiment": true,
+        "executability": true,
+        "limits": true
+      },
+      "answer_chars": 6134,
+      "answer_path": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_02__retry\\final_answer.md",
+      "run_dir": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_02__retry"
+    }
+  ],
+  "attempts": 10,
+  "accepted_runs": 6,
+  "arm_total_cost_cny": {
+    "baseline": 0.852288,
+    "meta_rule": 1.30081
+  },
+  "blinded_key": {
+    "proposal_01": {
+      "run_id": "flash_emotion_20261021__baseline__02__retry",
+      "arm": "baseline",
+      "repeat": 2,
+      "accepted": true,
+      "cost_cny": 0.21853,
+      "source_answer": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_02__retry\\final_answer.md"
+    },
+    "proposal_02": {
+      "run_id": "flash_emotion_20261021__baseline__01",
+      "arm": "baseline",
+      "repeat": 1,
+      "accepted": true,
+      "cost_cny": 0.236454,
+      "source_answer": "runs\\flash_emotion_20261021\\runs\\baseline\\repeat_01\\final_answer.md"
+    },
+    "proposal_03": {
+      "run_id": "flash_emotion_20261021__meta_rule__02__retry",
+      "arm": "meta_rule",
+      "repeat": 2,
+      "accepted": true,
+      "cost_cny": 0.22541,
+      "source_answer": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_02__retry\\final_answer.md"
+    },
+    "proposal_04": {
+      "run_id": "flash_emotion_20261021__meta_rule__01__retry2",
+      "arm": "meta_rule",
+      "repeat": 1,
+      "accepted": true,
+      "cost_cny": 0.198848,
+      "source_answer": "runs\\flash_emotion_20261021\\runs\\meta_rule\\repeat_01__retry2\\final_answer.md"
+    }
+  },
+  "ledger": {
+    "run_id": "flash_emotion_20261021",
+    "cap_cny": 10.0,
+    "wrap_up_reserve_cny": 0.0,
+    "spent_cny": 2.253552,
+    "unknown_cny": 0.0,
+    "reserved_cny": 0.0,
+    "committed_cny": 2.253552,
+    "available_for_new_spend_cny": 7.746448,
+    "model_attempts": 65,
+    "model_attempts_limit": 120,
+    "search_attempts": 7,
+    "search_attempts_limit": 30,
+    "fetch_attempts": 8,
+    "fetch_attempts_limit": 40,
+    "input_tokens": 771852,
+    "output_tokens": 79981,
+    "input_tokens_limit": 1000000,
+    "output_tokens_limit": 300000,
+    "input_price_cny_per_mtok": 2.0,
+    "output_price_cny_per_mtok": 8.0,
+    "tool_price_cny_per_request": 0.005,
+    "price_source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/",
+    "price_checked_at": "2026-10-21T09:40:00+08:00",
+    "cost_by_attribution": {
+      "materials_prep": 0.07,
+      "meta": 0.030454,
+      "flash_emotion_20261021__baseline__01": 0.236454,
+      "flash_emotion_20261021__baseline__02": 0.141554,
+      "flash_emotion_20261021__meta_rule__01": 0.137382,
+      "flash_emotion_20261021__meta_rule__02": 0.200584,
+      "flash_emotion_20261021__baseline__02__retry": 0.21853,
+      "flash_emotion_20261021__meta_rule__01__retry": 0.228158,
+      "flash_emotion_20261021__meta_rule__02__retry": 0.22541,
+      "flash_emotion_20261021__baseline__02__retry2": 0.25575,
+      "flash_emotion_20261021__meta_rule__01__retry2": 0.198848,
+      "flash_emotion_20261021__meta_rule__02__retry2": 0.310428
+    },
+    "pending": 0,
+    "updated_at": "2026-10-21T01:44:37Z"
+  },
+  "note": "dsh initial review; n=2 per arm at most; no statistical significance claim."
+}

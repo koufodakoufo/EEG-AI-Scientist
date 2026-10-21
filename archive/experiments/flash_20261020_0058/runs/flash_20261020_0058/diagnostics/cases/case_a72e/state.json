@@ -1,0 +1,17 @@
+{
+  "episode_id": "diag_case_a72e",
+  "case_id": "case_a72e",
+  "rule_version": "DIAGNOSTIC_v2",
+  "phase": "completed",
+  "actions_used": 2,
+  "calls_used": 3,
+  "attempts_used": 3,
+  "tokens_used": 25763,
+  "last_event_sequence": 14,
+  "stop_reason": "Seen-subject window and trial scores are near ceiling, but within-subject label permutation and metadata-only both collapsed to chance. This pattern favors a genuine subject/context-specific feature-label mapping and weakens identity/collection and label-permutation artifact explanations.",
+  "backend": "real_llm",
+  "provider": "deepseek_flash",
+  "model": "deepseek-flash",
+  "started_at": "2026-10-19T17:10:16Z",
+  "updated_at": "2026-10-19T17:11:22Z"
+}

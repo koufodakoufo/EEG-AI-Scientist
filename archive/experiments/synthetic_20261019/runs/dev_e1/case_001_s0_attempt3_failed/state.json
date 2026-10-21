@@ -1,0 +1,17 @@
+{
+  "episode_id": "dev_e1_case_001_s0",
+  "case_id": "case_001",
+  "rule_version": "S0",
+  "phase": "failed",
+  "actions_used": 0,
+  "calls_used": 1,
+  "attempts_used": 2,
+  "tokens_used": 6811,
+  "last_event_sequence": 2,
+  "stop_reason": "invalid_decision_after_repair",
+  "backend": "real_llm",
+  "provider": "ollama_local",
+  "model": "qwen3.5:9b",
+  "started_at": "2026-10-18T17:42:26Z",
+  "updated_at": "2026-10-18T17:42:45Z"
+}

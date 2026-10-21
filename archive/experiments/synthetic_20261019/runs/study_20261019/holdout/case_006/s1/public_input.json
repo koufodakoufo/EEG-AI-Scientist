@@ -1,0 +1,163 @@
+{
+  "case_id": "case_006",
+  "data_source_type": "synthetic_features",
+  "structure_summary": {
+    "n_rows": 4096,
+    "n_subjects": 16,
+    "n_sessions": 32,
+    "n_trials": 512,
+    "n_features": 32,
+    "windows_per_trial": 8,
+    "n_positive_rows": 2048,
+    "n_negative_rows": 2048,
+    "n_positive_trials": 256,
+    "n_negative_trials": 256
+  },
+  "baseline": {
+    "window_balanced_accuracy": 0.4853515625,
+    "window_accuracy": 0.4853515625,
+    "window_n_train": 3072.0,
+    "window_n_test": 1024.0,
+    "window_n_train_trials": 512.0,
+    "window_n_test_trials": 512.0,
+    "window_n_train_subjects": 16.0,
+    "window_n_test_subjects": 16.0,
+    "window_trial_aggregated_balanced_accuracy": 0.4921875,
+    "window_trial_aggregated_n_trials": 512.0,
+    "trial_balanced_accuracy": 0.49609375,
+    "trial_accuracy": 0.49609375,
+    "trial_n_train": 3072.0,
+    "trial_n_test": 1024.0,
+    "trial_n_train_trials": 384.0,
+    "trial_n_test_trials": 128.0,
+    "trial_n_train_subjects": 16.0,
+    "trial_n_test_subjects": 16.0,
+    "trial_trial_aggregated_balanced_accuracy": 0.4765625,
+    "trial_trial_aggregated_n_trials": 128.0,
+    "subject_balanced_accuracy": 0.5078125,
+    "subject_accuracy": 0.5078125,
+    "subject_n_train": 3072.0,
+    "subject_n_test": 1024.0,
+    "subject_n_train_trials": 384.0,
+    "subject_n_test_trials": 128.0,
+    "subject_n_train_subjects": 12.0,
+    "subject_n_test_subjects": 4.0,
+    "subject_trial_aggregated_balanced_accuracy": 0.5625,
+    "subject_trial_aggregated_n_trials": 128.0,
+    "gap_window_minus_trial": -0.0107421875,
+    "gap_window_minus_subject": -0.0224609375,
+    "gap_trial_minus_subject": -0.01171875
+  },
+  "audit_summary": {
+    "window": {
+      "counts": {
+        "train_rows": 3072,
+        "test_rows": 1024,
+        "train_trials": 512,
+        "test_trials": 512,
+        "train_sessions": 32,
+        "test_sessions": 32,
+        "train_subjects": 16,
+        "test_subjects": 16
+      },
+      "overlap": {
+        "sample": 0,
+        "trial": 512,
+        "session": 32,
+        "subject": 16
+      },
+      "label_counts": {
+        "train": {
+          "negative": 1536,
+          "positive": 1536
+        },
+        "test": {
+          "negative": 512,
+          "positive": 512
+        }
+      },
+      "n_groups": {
+        "window": 6,
+        "trial": 512,
+        "subject": 16
+      },
+      "invalid_reason": null
+    },
+    "trial": {
+      "counts": {
+        "train_rows": 3072,
+        "test_rows": 1024,
+        "train_trials": 384,
+        "test_trials": 128,
+        "train_sessions": 32,
+        "test_sessions": 32,
+        "train_subjects": 16,
+        "test_subjects": 16
+      },
+      "overlap": {
+        "sample": 0,
+        "trial": 0,
+        "session": 32,
+        "subject": 16
+      },
+      "label_counts": {
+        "train": {
+          "negative": 1536,
+          "positive": 1536
+        },
+        "test": {
+          "negative": 512,
+          "positive": 512
+        }
+      },
+      "n_groups": {
+        "window": 8,
+        "trial": 384,
+        "subject": 16
+      },
+      "invalid_reason": null
+    },
+    "subject": {
+      "counts": {
+        "train_rows": 3072,
+        "test_rows": 1024,
+        "train_trials": 384,
+        "test_trials": 128,
+        "train_sessions": 24,
+        "test_sessions": 8,
+        "train_subjects": 12,
+        "test_subjects": 4
+      },
+      "overlap": {
+        "sample": 0,
+        "trial": 0,
+        "session": 0,
+        "subject": 0
+      },
+      "label_counts": {
+        "train": {
+          "negative": 1536,
+          "positive": 1536
+        },
+        "test": {
+          "negative": 512,
+          "positive": 512
+        }
+      },
+      "n_groups": {
+        "window": 8,
+        "trial": 384,
+        "subject": 12
+      },
+      "invalid_reason": null
+    }
+  },
+  "allowed_tools": [
+    "split_audit",
+    "trial_random_labels",
+    "trial_shuffle_within_subject",
+    "window_random_labels",
+    "metadata_only"
+  ],
+  "data_hash": "7a0e5d6193559e15f3fd2409fb9fc5185b2a8d74daeda9dc6f2e05ecc7963a57"
+}

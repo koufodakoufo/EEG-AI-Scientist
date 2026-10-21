@@ -12,7 +12,7 @@
   },
   "code_recovery": {
     "git_metadata": "supplementary only; dirty=true is not sufficient",
-    "per_run_snapshot": "runs/<study>/runs/<arm>/<repeat>/code_snapshot/ with MANIFEST.json aggregate_sha256",
+    "per_run_snapshot": "studies/<study_id>/runs/<arm>/<repeat>/code_snapshot/ with MANIFEST.json aggregate_sha256",
     "required": true
   },
   "retry_policy": {

@@ -1,0 +1,36 @@
+{
+  "request": {
+    "request_id": "req_3",
+    "tool_id": "trial_random_labels",
+    "parameters": {},
+    "distinguishes": [
+      "H1",
+      "H3"
+    ],
+    "prediction": {
+      "scoring_status": "numeric",
+      "metric_key": "trial_random_trial_ba_mean",
+      "primary_direction": "near_zero",
+      "threshold": 0.05,
+      "check_facts": [],
+      "conditional_predictions": [
+        {
+          "hypothesis_id": "H1",
+          "direction": "positive",
+          "rationale": "If trial-specific signatures exist and are preserved by randomization (which they shouldn't be if labels change), performance should drop. Wait, this tool reassigns labels at the trial level. If H1 is true (trial content matters), changing labels destroys signal -> near_zero."
+        },
+        {
+          "hypothesis_id": "H3",
+          "direction": "near_zero",
+          "rationale": "If session identity drives performance, and we reassign labels at the trial level within sessions? No, 'trial_random_labels' reassigned at trial level. If H3 is true (session ID), changing label assignment per trial should break it if trials are distinct units of signal but not session. Actually, if H3 relies on Session ID predicting Label, and we shuffle Labels *within* Trials (or across?), the tool description says 'labels reassigned at the trial level'. This breaks any specific mapping between Trial content and Label. If performance remains high (>0.5), it implies labels are predictable from something else preserved by this shuffling? Or maybe H3 is about Session ID, but if we shuffle labels per trial, does that break session prediction? Yes, because label count changes or assignment becomes random relative to features."
+        }
+      ],
+      "update_rule_if_opposite": ""
+    }
+  },
+  "canonical_json": "{\"distinguishes\":[\"H1\",\"H3\"],\"parameters\":{},\"prediction\":{\"check_facts\":[],\"conditional_predictions\":[{\"direction\":\"positive\",\"hypothesis_id\":\"H1\",\"rationale\":\"If trial-specific signatures exist and are preserved by randomization (which they shouldn't be if labels change), performance should drop. Wait, this tool reassigns labels at the trial level. If H1 is true (trial content matters), changing labels destroys signal -> near_zero.\"},{\"direction\":\"near_zero\",\"hypothesis_id\":\"H3\",\"rationale\":\"If session identity drives performance, and we reassign labels at the trial level within sessions? No, 'trial_random_labels' reassigned at trial level. If H3 is true (session ID), changing label assignment per trial should break it if trials are distinct units of signal but not session. Actually, if H3 relies on Session ID predicting Label, and we shuffle Labels *within* Trials (or across?), the tool description says 'labels reassigned at the trial level'. This breaks any specific mapping between Trial content and Label. If performance remains high (>0.5), it implies labels are predictable from something else preserved by this shuffling? Or maybe H3 is about Session ID, but if we shuffle labels per trial, does that break session prediction? Yes, because label count changes or assignment becomes random relative to features.\"}],\"metric_key\":\"trial_random_trial_ba_mean\",\"primary_direction\":\"near_zero\",\"scoring_status\":\"numeric\",\"threshold\":0.05,\"update_rule_if_opposite\":\"\"},\"request_id\":\"req_3\",\"tool_id\":\"trial_random_labels\"}",
+  "sha256": "6e78fd058cd8143d23b4d788828877ba61f9963a90aa5d6d9ea8bb8126747999",
+  "sealed_at": "2026-10-18T17:48:20Z",
+  "event_sequence": 14,
+  "run_dir": "X:\\projects\\EEG-AI-Scientist\\runs\\study_20261019\\development\\case_002\\s0"
+}

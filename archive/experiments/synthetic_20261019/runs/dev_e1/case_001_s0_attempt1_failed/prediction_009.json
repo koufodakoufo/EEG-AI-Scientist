@@ -1,0 +1,36 @@
+{
+  "request": {
+    "request_id": "req_2",
+    "tool_id": "trial_shuffle_within_subject",
+    "parameters": {},
+    "distinguishes": [
+      "H1",
+      "H2"
+    ],
+    "prediction": {
+      "scoring_status": "numeric",
+      "metric_key": "trial_shuffle_trial_ba_mean",
+      "primary_direction": "near_zero",
+      "threshold": 0.05,
+      "check_facts": [],
+      "conditional_predictions": [
+        {
+          "hypothesis_id": "H1",
+          "direction": "positive",
+          "rationale": "If trial-specific signatures exist and are preserved under within-subject shuffling (since trials remain intact), performance should degrade similarly to random labels."
+        },
+        {
+          "hypothesis_id": "H2",
+          "direction": "negative",
+          "rationale": "Shuffling labels within subjects while preserving class counts breaks subject identity mappings; if H2 were true, this would cause a large drop in performance on test trials."
+        }
+      ],
+      "update_rule_if_opposite": "If `trial_shuffle_trial_ba_mean` is positive (>0.05), it suggests that trial structure alone (not just label assignment) drives the signal; if negative (<-0.05), subject identity may be a stronger factor."
+    }
+  },
+  "canonical_json": "{\"distinguishes\":[\"H1\",\"H2\"],\"parameters\":{},\"prediction\":{\"check_facts\":[],\"conditional_predictions\":[{\"direction\":\"positive\",\"hypothesis_id\":\"H1\",\"rationale\":\"If trial-specific signatures exist and are preserved under within-subject shuffling (since trials remain intact), performance should degrade similarly to random labels.\"},{\"direction\":\"negative\",\"hypothesis_id\":\"H2\",\"rationale\":\"Shuffling labels within subjects while preserving class counts breaks subject identity mappings; if H2 were true, this would cause a large drop in performance on test trials.\"}],\"metric_key\":\"trial_shuffle_trial_ba_mean\",\"primary_direction\":\"near_zero\",\"scoring_status\":\"numeric\",\"threshold\":0.05,\"update_rule_if_opposite\":\"If `trial_shuffle_trial_ba_mean` is positive (>0.05), it suggests that trial structure alone (not just label assignment) drives the signal; if negative (<-0.05), subject identity may be a stronger factor.\"},\"request_id\":\"req_2\",\"tool_id\":\"trial_shuffle_within_subject\"}",
+  "sha256": "c242abadf5658b9d7da5050d70f665dd6e7070285c7a72fab9eb9c3804065af9",
+  "sealed_at": "2026-10-18T17:38:37Z",
+  "event_sequence": 9,
+  "run_dir": "X:\\projects\\EEG-AI-Scientist\\runs\\dev_e1\\case_001_s0"
+}

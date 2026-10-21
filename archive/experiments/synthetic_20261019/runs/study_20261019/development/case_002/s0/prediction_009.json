@@ -1,0 +1,36 @@
+{
+  "request": {
+    "request_id": "req_2",
+    "tool_id": "trial_shuffle_within_subject",
+    "parameters": {},
+    "distinguishes": [
+      "H1",
+      "H2"
+    ],
+    "prediction": {
+      "scoring_status": "numeric",
+      "metric_key": "trial_shuffle_trial_ba_mean",
+      "primary_direction": "near_zero",
+      "threshold": 0.05,
+      "check_facts": [],
+      "conditional_predictions": [
+        {
+          "hypothesis_id": "H1",
+          "direction": "positive",
+          "rationale": "If trial-specific signatures exist and are preserved within subjects but shuffled across trials, performance should drop significantly if the shuffle breaks the trial-task relation."
+        },
+        {
+          "hypothesis_id": "H2",
+          "direction": "near_zero",
+          "rationale": "Identity effects persist regardless of label permutation within a subject; shuffling labels per window while keeping class counts constant might not destroy identity-based prediction, but this tool permutes at the trial level? Wait: 'permute labels within each subject'. If H2 is true (identity), performance should remain high even if we shuffle labels as long as the underlying feature-label mapping for that subject remains. However, the tool description says 'permute labels within each subject while preserving class counts; window and trial splits.' This breaks any specific label-to-trial association but keeps identity intact? Actually, H2 relies on ID predicting label. If we permute labels per subject (keeping count), does the model still predict based on ID? Yes, if it's purely ID-based. So performance should remain high for H2."
+        }
+      ],
+      "update_rule_if_opposite": "If trial_shuffle_trial_ba_mean is positive (>0.5+epsilon) or near 1.0, this supports H2 (identity effects). If it drops to chance (~0.5), this supports H1 (trial-specific signatures)."
+    }
+  },
+  "canonical_json": "{\"distinguishes\":[\"H1\",\"H2\"],\"parameters\":{},\"prediction\":{\"check_facts\":[],\"conditional_predictions\":[{\"direction\":\"positive\",\"hypothesis_id\":\"H1\",\"rationale\":\"If trial-specific signatures exist and are preserved within subjects but shuffled across trials, performance should drop significantly if the shuffle breaks the trial-task relation.\"},{\"direction\":\"near_zero\",\"hypothesis_id\":\"H2\",\"rationale\":\"Identity effects persist regardless of label permutation within a subject; shuffling labels per window while keeping class counts constant might not destroy identity-based prediction, but this tool permutes at the trial level? Wait: 'permute labels within each subject'. If H2 is true (identity), performance should remain high even if we shuffle labels as long as the underlying feature-label mapping for that subject remains. However, the tool description says 'permute labels within each subject while preserving class counts; window and trial splits.' This breaks any specific label-to-trial association but keeps identity intact? Actually, H2 relies on ID predicting label. If we permute labels per subject (keeping count), does the model still predict based on ID? Yes, if it's purely ID-based. So performance should remain high for H2.\"}],\"metric_key\":\"trial_shuffle_trial_ba_mean\",\"primary_direction\":\"near_zero\",\"scoring_status\":\"numeric\",\"threshold\":0.05,\"update_rule_if_opposite\":\"If trial_shuffle_trial_ba_mean is positive (>0.5+epsilon) or near 1.0, this supports H2 (identity effects). If it drops to chance (~0.5), this supports H1 (trial-specific signatures).\"},\"request_id\":\"req_2\",\"tool_id\":\"trial_shuffle_within_subject\"}",
+  "sha256": "2addc8e95ae499e9119beb4bea12dc4817a8da8768a676ece9329e5dedcf1a9a",
+  "sealed_at": "2026-10-18T17:47:47Z",
+  "event_sequence": 9,
+  "run_dir": "X:\\projects\\EEG-AI-Scientist\\runs\\study_20261019\\development\\case_002\\s0"
+}

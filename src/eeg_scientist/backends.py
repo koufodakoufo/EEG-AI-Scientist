@@ -13,8 +13,10 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .credentials import load_deepseek_key
-from .deepseek_api import DeepSeekClient
+from .anthropic_api import AnthropicClient
+from .credentials import load_deepseek_key, load_secret
+from .deepseek_api import DeepSeekClient, ModelChatClient
+from .gemini_api import GeminiClient
 from .ledger import BudgetLedger
 
 
@@ -104,6 +106,73 @@ def require_verified(backend: ChatBackend | ToolBackend) -> None:
         )
 
 
+def _build_chat_client(
+    *,
+    backend: ChatBackend,
+    ledger: BudgetLedger,
+    attribution: str,
+) -> ModelChatClient:
+    require_verified(backend)
+    model = backend.model_name
+    if not model:
+        raise BackendError(f"backend {backend.id!r} has no model_name; set a real model ID first")
+    if backend.provider == "deepseek":
+        key, _report = load_deepseek_key(Path(backend.credential_file), backend.credential_variable)
+        return DeepSeekClient(
+            api_key=key,
+            ledger=ledger,
+            base_url=backend.base_url or "https://api.deepseek.com",
+            model=model,
+            timeout_seconds=600,
+            connect_timeout_seconds=20,
+            search_timeout_seconds=60,
+            fetch_timeout_seconds=60,
+            max_retries=2,
+            attribution=attribution,
+            provider_name=backend.provider,
+            backend_status=backend.status,
+        )
+    if backend.provider == "anthropic":
+        if not backend.credential_file:
+            raise BackendError("Claude backend has no credential_file configured")
+        key, _report = load_secret(
+            Path(backend.credential_file),
+            backend.credential_variable,
+            allowed_prefixes=("sk-ant-",),
+        )
+        client = AnthropicClient(
+            api_key=key,
+            ledger=ledger,
+            model=model,
+            base_url=backend.base_url or "https://api.anthropic.com",
+            max_tokens=backend.max_output_tokens,
+            attribution=attribution,
+            thinking=backend.thinking,
+        )
+        client.backend_status = backend.status
+        return client
+    if backend.provider == "google":
+        if not backend.credential_file:
+            raise BackendError("Gemini backend has no credential_file configured")
+        key, _report = load_secret(
+            Path(backend.credential_file),
+            backend.credential_variable,
+            allowed_prefixes=("AIza",),
+        )
+        client = GeminiClient(
+            api_key=key,
+            ledger=ledger,
+            model=model,
+            base_url=backend.base_url or "https://generativelanguage.googleapis.com",
+            max_tokens=backend.max_output_tokens,
+            attribution=attribution,
+            thinking=backend.thinking,
+        )
+        client.backend_status = backend.status
+        return client
+    raise BackendError(f"no real chat adapter for provider {backend.provider!r}")
+
+
 def _build_deepseek_client(
     *,
     backend: ChatBackend | ToolBackend,
@@ -138,9 +207,9 @@ def create_chat_client(
     *,
     ledger: BudgetLedger,
     attribution: str,
-) -> DeepSeekClient:
+) -> ModelChatClient:
     backend = registry.chat(backend_id)
-    return _build_deepseek_client(backend=backend, ledger=ledger, attribution=attribution)
+    return _build_chat_client(backend=backend, ledger=ledger, attribution=attribution)
 
 
 def create_tool_client(

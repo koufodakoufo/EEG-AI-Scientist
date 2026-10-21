@@ -1,0 +1,31 @@
+{
+  "episode": {
+    "episode_id": "study_20261019_case_006_s1",
+    "case_id": "case_006",
+    "case_specs_path": "data/private/case_specs.json",
+    "rule_path": "prompts\\S1.md",
+    "provider": {
+      "kind": "ollama_native",
+      "base_url": "http://127.0.0.1:11434",
+      "model": "qwen3.5:9b",
+      "timeout_seconds": 120,
+      "max_retries": 2,
+      "max_output_tokens": "[REDACTED]",
+      "temperature": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "use_schema": false
+    },
+    "backend": "real_llm",
+    "model": "qwen3.5:9b",
+    "max_actions": 3,
+    "max_calls": 4,
+    "max_attempts": 12,
+    "deadline": "2026-10-19T09:14:21+08:00",
+    "run_dir": "runs\\study_20261019\\holdout\\case_006\\s1",
+    "shared_facts_path": "runs\\study_20261019\\shared_development_facts.json"
+  },
+  "rule_sha256": "6c667a7db75a144daa692ed4ed5747ac1d571598b2db8acf318b74d36f1677ee",
+  "data_hash": "7a0e5d6193559e15f3fd2409fb9fc5185b2a8d74daeda9dc6f2e05ecc7963a57",
+  "case_id": "case_006"
+}
