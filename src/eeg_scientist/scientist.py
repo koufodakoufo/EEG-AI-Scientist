@@ -154,12 +154,14 @@ def _normalize_decision_payload(payload: object) -> dict[str, object]:
                     prediction["check_facts"] = []
                 if prediction.get("conditional_predictions") is None:
                     prediction["conditional_predictions"] = []
-            for hypothesis in data.get("hypotheses", []) if isinstance(data.get("hypotheses"), list) else []:
-                if isinstance(hypothesis, dict):
-                    if hypothesis.get("supporting_evidence_ids") is None:
-                        hypothesis["supporting_evidence_ids"] = []
-                    if hypothesis.get("limitations") is None:
-                        hypothesis["limitations"] = ""
+            hypotheses = data.get("hypotheses")
+            if isinstance(hypotheses, list):
+                for hypothesis in hypotheses:
+                    if isinstance(hypothesis, dict):
+                        if hypothesis.get("supporting_evidence_ids") is None:
+                            hypothesis["supporting_evidence_ids"] = []
+                        if hypothesis.get("limitations") is None:
+                            hypothesis["limitations"] = ""
     elif decision_type == "stop":
         if not isinstance(data.get("stop"), dict):
             data["stop"] = {key: data[key] for key in stop_keys if key in data}

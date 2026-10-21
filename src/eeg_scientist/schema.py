@@ -209,7 +209,7 @@ class ExperimentResult(StrictModel):
     invalid_reason: str | None = None
     metrics: dict[str, float] = Field(default_factory=dict)
     randomization: dict[str, object] = Field(default_factory=dict)
-    audit: dict[str, object] = Field(default_factory=dict)
+    audit: dict[str, dict[str, object]] = Field(default_factory=dict)
     data_hash: str
     config_hash: str
     elapsed_seconds: float

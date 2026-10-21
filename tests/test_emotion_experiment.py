@@ -14,7 +14,7 @@ from eeg_scientist.evidence import EvidenceStore
 from eeg_scientist.ledger import BudgetLedger
 from eeg_scientist.meta import build_meta_messages
 from eeg_scientist.research import ResearchConfig, ResearchRunner
-from eeg_scientist.run_manifest import sha256_file
+from eeg_scientist.run_manifest import sha256_file, snapshot_code
 
 
 def _ledger(tmp_path: Path, *, input_price: float = 2.0, output_price: float = 8.0) -> BudgetLedger:
@@ -208,3 +208,14 @@ def test_meta_messages_do_not_contain_the_new_question(tmp_path: Path) -> None:
 
 def test_study_lock_matches_frozen_artifacts() -> None:
     _assert_lock(load_study())
+
+
+def test_code_snapshot_copies_executable_sources(tmp_path: Path) -> None:
+    result = snapshot_code(Path("."), tmp_path / "run")
+    assert result["files"] > 10
+    assert (tmp_path / "run" / "code_snapshot" / "src" / "eeg_scientist" / "scientist.py").exists()
+    manifest = json.loads(
+        (tmp_path / "run" / "code_snapshot" / "MANIFEST.json").read_text(encoding="utf-8")
+    )
+    assert manifest["aggregate_sha256"] == result["aggregate_sha256"]
+    assert any(item["path"] == "pyproject.toml" for item in manifest["files"])

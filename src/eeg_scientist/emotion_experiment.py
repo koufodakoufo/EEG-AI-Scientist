@@ -351,6 +351,9 @@ def retry_failed_runs(study_path: Path = STUDY_CONFIG) -> dict[str, object]:
             continue
         latest = failed[-1]
         retry_number = sum(1 for item in records if "__retry" in item.run_id) + 1
+        max_retries = int(study.get("retry", {}).get("max_extra_attempts_per_cell", 1))
+        if retry_number > max_retries:
+            continue
         retry_id = latest.run_id.split("__retry", 1)[0] + f"__retry{retry_number}"
         retry_dir = latest.run_dir.split("__retry", 1)[0] + f"__retry{retry_number}"
         if any(item.run_id == retry_id and item.phase in {"completed", "completed_unverified"} for item in state.runs):
@@ -432,7 +435,9 @@ def evaluate_study(study_path: Path = STUDY_CONFIG) -> dict[str, object]:
     for key in sorted(groups):
         records = groups[key]
         accepted = [item for item in records if item.phase in {"completed", "completed_unverified"} and item.accepted]
-        primary.append(accepted[-1] if accepted else records[-1])
+        # Frozen selection rule: first accepted attempt per arm/repeat cell.
+        # Later accepted retries are secondary and never replace it.
+        primary.append(accepted[0] if accepted else records[-1])
 
     proposals: list[dict[str, object]] = []
     material_ids = {str(item["evidence_id"]) for item in _read_json(Path(str(study["materials"]["manifest_path"])))["materials"]}
@@ -494,7 +499,8 @@ def evaluate_study(study_path: Path = STUDY_CONFIG) -> dict[str, object]:
         "# Blinded proposal review\n\n"
         "Read only `blinded/proposal_*.md`. The model/rule-group/run metadata is in `KEY.json`; do not open it until after scoring.\n\n"
         "Use the frozen criteria in `configs/eval/emotion_rubric_v1.json`: citation support, reasoning errors, discriminability, executability, cost.\n\n"
-        "This is a human review packet. dsh's initial review is separate and is not a scientific truth score.\n",
+        "The automated file `FORMAT_INTEGRITY_CHECK.md` checks only format/trace integrity; it is not a scientific score.\n\n"
+        "This is a human review packet. dsh's manual review is separate and is not a scientific truth score.\n",
     )
 
     arm_cost: dict[str, float] = {}
@@ -515,16 +521,16 @@ def evaluate_study(study_path: Path = STUDY_CONFIG) -> dict[str, object]:
     }
     atomic_write_json(reviews_dir / "evaluation.json", summary)
     lines = [
-        "# INITIAL REVIEW — dsh (not a truth score)",
+        "# FORMAT / INTEGRITY CHECK — not a scientific score",
         "",
-        "This is dsh's initial review of the proposals. It is not independent expert review and does not establish scientific correctness.",
+        "This file records only programmatic format and trace-integrity checks. It is not a scientific quality score, not an independent expert review, and not evidence that a proposal is correct.",
         "",
         f"- Meta decision: `{(state.meta_decision or {}).get('decision', 'not_run')}`; accepted: `{(state.meta_decision or {}).get('accepted', False)}`",
         f"- Attempts: {len(state.runs)}; accepted: {summary['accepted_runs']}; primary proposals: {len(primary)}",
         f"- Baseline attempts: {sum(1 for r in state.runs if r.arm == 'baseline')}; meta-rule attempts: {sum(1 for r in state.runs if r.arm == 'meta_rule')}",
         f"- Total cost by arm: {json.dumps(arm_cost, ensure_ascii=False)}",
         "",
-        "| run | arm | accepted | cited IDs | checks passed | cost CNY |",
+        "| run | arm | accepted | cited IDs | format checks passed | cost CNY |",
         "|---|---|---|---:|---:|---:|",
     ]
     for item in proposals:
@@ -537,14 +543,16 @@ def evaluate_study(study_path: Path = STUDY_CONFIG) -> dict[str, object]:
     lines.extend(
         [
             "",
-            "## What this review can and cannot say",
+            "## What this check can and cannot say",
             "",
-            "- It can compare whether outputs cite material, define within/between units, propose a discriminating experiment, and stay within budget.",
-            "- It cannot establish that a proposal is correct or that the proposed experiment would identify a mechanism.",
+            "- It checks format and trace integrity: accepted status, citation ID validity, and presence of required proposal elements.",
+            "- It cannot establish that a proposal is scientifically correct or that the proposed experiment would identify a mechanism.",
             "- With at most two runs per arm, differences are descriptive only; no p-value or population claim is warranted.",
             "- The blinded files in `blinded/` omit model/rule labels for human reading; `KEY.json` is the separate key.",
             "",
         ]
     )
+    atomic_write_text(reviews_dir / "FORMAT_INTEGRITY_CHECK.md", "\n".join(lines))
+    # Keep the historical filename as an exact copy for older links.
     atomic_write_text(reviews_dir / "INITIAL_REVIEW.md", "\n".join(lines))
     return summary

@@ -1,64 +1,97 @@
-# MANUAL INITIAL REVIEW — dsh (not a truth score)
+# MANUAL REVIEW — dsh initial, not a scientific score
 
-Scope: four primary proposals from the controlled emotion state-vs-trait study. This is dsh's initial, non-blinded working review. The human-review packet is `runs/flash_emotion_20261021/reviews/blinded/`; the key is `reviews/KEY.json` and should be opened only after independent scoring. No real EEG data were collected or analyzed.
+Scope: the four primary proposals selected by the frozen rule **first accepted
+attempt per arm/repeat**. The separate machine-readable file
+`reviews/FORMAT_INTEGRITY_CHECK.md` only checks format/trace integrity. This file
+contains dsh's initial qualitative review; it is not independent expert review
+and does not establish correctness. No real EEG data were collected or analyzed.
 
-## 1. What was actually compared
+## 1. Selection and counts
 
-- Meta decision: **rules accepted** (one citation-verification rule). Meta saw only the old `literature_v1` trajectory plus explicitly labelled `EVIDENCE_AUDIT` / `REASONING_REVIEW` feedback.
-- Primary runs: baseline repeats 01 and 02; Meta-rule repeats 01 and 02. All four were accepted via `finish_study`.
-- Attempts: 10 total (including failed attempts and bounded retries). Four *primary* proposals; extra accepted retries are preserved but not treated as additional evidence.
-- The two groups used the same material package, system prompt, deliverables, Flash model, and per-run limits.
+- Attempts: **10**; accepted: **6**; primary proposals: **4**.
+- Failed attempts: **4**. Two later accepted retries are recorded as secondary
+  and are not used as additional evidence.
+- Primary selection: `baseline__01`, `baseline__02__retry`,
+  `meta_rule__01__retry2`, `meta_rule__02__retry`.
+- Baseline primary cost: 0.236454 + 0.21853 = **0.454984 CNY**.
+- Meta-rule primary cost: 0.198848 + 0.22541 = **0.424258 CNY**.
+- Primary total: **0.879242 CNY**. Whole study (including failed/retry/material/
+  Meta attempts): **2.253552 / 10 CNY**.
+- Meta decision: one rule accepted (citation verification against the actual read
+  range). Meta saw only the old `literature_v1` trajectory and labelled review
+  feedback, not the new question/materials/answers/scores.
 
 ## 2. Scores (dsh 0–2, subjective)
 
 | proposal | arm | citation support | reasoning | discriminability | executability | cost | note |
 |---|---|---|---|---:|---:|---:|---:|
-| proposal_01 | meta_rule | 2 | 2 | 2 | 2 | 1 | strong design and 6 cited IDs; read-range section present; highest primary-run cost |
-| proposal_02 | baseline | 2 | 2 | 2 | 2 | 2 | strongest design: explicit within-person slope, session variance, 2×2 generalization matrix; a few numeric ranges need exact table check |
-| proposal_03 | baseline | 2 | 2 | 2 | 2 | 2 | strong ICC/permutation logic; DREAMER 0.62 and class-imbalance numbers need exact source check |
-| proposal_04 | meta_rule | 2 | 2 | 2 | 2 | 2 | explicit read-range section; fewer sources (4) but clear within-subject permutation control |
+| proposal_01 (`baseline__02__retry`) | baseline | 2 | 2 | 2 | 2 | 2 | strong ICC/permutation model; DEAP 0.62/0.64 and class-imbalance numbers are source-supported if attributed correctly |
+| proposal_02 (`baseline__01`) | baseline | 2 | 2 | 2 | 2 | 2 | strongest experiment design: person × session × fixed stimulus, 2×2 generalization matrix |
+| proposal_03 (`meta_rule__02__retry`) | meta_rule | 2 | 1 | 2 | 2 | 2 | good variance decomposition; “1-s adjacent epoch” detail is an inference, and “≈0 → all hypotheses falsified” is too strong |
+| proposal_04 (`meta_rule__01__retry2`) | meta_rule | 2 | 1 | 2 | 2 | 2 | explicit read-range section; person/session centering steps conflate components; otherwise clear |
 
-The scores are not a scientific quality metric. They only record whether the proposal (a) cites read material, (b) avoids obvious state/trait conflation, (c) proposes a discriminating experiment, (d) is executable, and (e) stays within budget.
+These scores are a working aid, not a measurement.
 
 ## 3. Did the Meta rule change anything?
 
-**Behavioral signature:** yes, partially.
+**Behavioral signature:** partially. `proposal_04` ends with an explicit list of
+the evidence IDs and character ranges actually read. `proposal_03` has a read
+scope/limitations section. The baseline proposals also contain “读法” and
+“提取范围” caveats, so this is not unique.
 
-- proposal_04 (Meta rule) ends with an explicit list of the evidence IDs and the character ranges actually read.
-- proposal_01 (Meta rule) has a "提取范围与局限" section and is explicit about what was read, though it does not list exact ranges in the same format.
-- The baseline proposals also contain "读法" / "提取范围" caveats, so this is not unique to the Meta group.
-- The Meta group cited **4 and 6** sources in its two primary proposals; the baseline group cited **6** in each. Fewer citations is not automatically better or worse, and the Meta group is not uniformly broader.
-- No proposal cites an unknown evidence ID; all cited IDs were read. No fabricated paper or DOI was found in a first pass.
+**Coverage:** the Meta group cites 4 sources in each primary proposal; the
+baseline group cites 6 in each. Fewer sources is not automatically better.
 
-**Verdict:** the rule changed citation/reporting style, but there is **no clear improvement in scientific quality**. Baseline proposal_01 is arguably the strongest design; baseline proposal_02 is also strong. The Meta group is comparable, not better. With n=2 per arm, this is descriptive only.
+**Conclusion:** the rule changed citation/reporting style, but there is **no
+clear improvement in scientific quality**. `proposal_02` remains the strongest
+design; the Meta proposals are comparable, not better. With 2+2 primary runs,
+this is descriptive only.
 
-## 4. What the four proposals agree on
+## 4. Common design that survives review
 
-All four converge on the same structural insight:
+All four proposals converge on the same literature-grounded structure:
 
-1. A single-session dataset cannot separate a person's stable level from a session/state offset; repeated sessions with a fixed stimulus set are needed.
-2. The analysis should decompose variance into person, session, and trial (or within-person) components, not just report pooled decoding accuracy.
-3. Controls should include identity decoding, within-person label permutation, and session/state covariates.
-4. The minimal experiment is a 3-session, fixed-stimulus, repeated-measures design with trial-level ratings and both within-person and between-person predictions.
-5. Even then, stable non-emotional individual signatures and response-scale habits remain confounded with "trait".
+1. A single-session dataset cannot separate a person’s stable level from a
+   session/state offset; repeated sessions with a fixed stimulus set are needed.
+2. Estimate person, session, and trial-level variance jointly rather than
+   relying on pooled decoding accuracy.
+3. Include identity decoding, within-person permutation, and session/state
+   covariates as controls.
+4. Use trial-level ratings and both within-person and between-person predictions.
+5. Even then, stable non-emotional individual signatures and rating-scale habits
+   remain confounded with “trait”.
 
-This convergence is a literature-based proposal, **not an EEG result**.
+This is a proposal, **not an EEG result**.
 
-## 5. Citation and reasoning flags for human review
+## 5. Specific flags for human review
 
-- All cited IDs were read; this does not prove that every numeric detail is inside the read range. Spot checks found some numbers in the source that were not exact matches in the read slices (HTML escaping and table placement complicate automatic matching).
-- `proposal_03`'s DREAMER 0.62 and class-imbalance percentages were not located exactly in the cited read text in a quick check; verify against the source before reuse.
-- `proposal_01`'s claim about FACED's 1-s adjacent epochs and 10-fold within-session validation should be checked against the FACED methods/results; it may be an inference.
-- `proposal_04` contains a well-scoped read-range statement, but it is not a substitute for a full source audit.
-- The Meta rule itself is about citation verification, not about state/trait inference; an improvement in citation formatting would not establish an improvement in scientific reasoning.
+1. **Absence of evidence vs falsification.** `proposal_03` treats a near-zero
+   within-person effect as simultaneously falsifying H1/H2/H3; this requires an
+   equivalence margin and adequate power. See `PROPOSAL_CORRECTIONS.md` §2.
+2. **Individual vs session centering.** `proposal_04` subtracts a person-session
+   mean under the label “个体中心化”; the two components are not separable by
+   sequential centering. See §3.
+3. **Identity ≠ emotional trait.** H2 in `proposal_01`/`proposal_02` and the
+   trait language in `proposal_03` need an external anchor; identity decoding can
+   reflect anatomy, impedance, hardware, or response style. See §4.
+4. **Numeric qualification.** The 1-s/adjacent-epoch detail is not located in the
+   extracted FACED text; “30–40% valence commonality” is a broad summary of 30%
+   and 40% specific tendencies. See `PROPOSAL_CORRECTIONS.md` §1.
+5. **No external criterion.** None of the proposals distinguishes emotional trait
+   from response-style trait with an independent measure.
 
 ## 6. Cost
 
-Primary-run costs (peak-rate accounting): baseline 0.2365 + 0.2558 CNY; Meta rule 0.1988 + 0.3104 CNY. Total arm costs including failed/retry attempts: baseline 0.8523 CNY, Meta rule 1.3008 CNY. Whole-study spend at review time: **CNY 2.2536 / 10** (no unknown cost). The Meta arm's retries make it more expensive overall, so the rule group is not cheaper.
+Primary-run costs (peak-rate accounting): baseline 0.2365 + 0.2185 CNY; Meta
+0.1988 + 0.2254 CNY. Whole-study spend is **CNY 2.253552 / 10** with no unknown
+cost. Including failed/retry attempts, the baseline arm cost 0.8523 CNY and the
+Meta arm 1.3008 CNY; retries make the Meta arm more expensive overall.
 
 ## 7. What a human should do next
 
-1. Score the four blinded proposals independently before opening `KEY.json`.
-2. Check the flagged numeric claims against the source snapshots.
-3. Decide whether the Meta rule is worth keeping; the current evidence does **not** justify claiming improvement.
-4. Do not treat these proposals as real EEG findings or as a test of the proposed experiment.
+1. Read `PROPOSAL_CORRECTIONS.md` before reusing any claim.
+2. Score the four blinded proposals in `reviews/blinded/` before opening `KEY.json`.
+3. Check the flagged numeric details against source snapshots.
+4. Decide whether the citation-discipline Meta rule is worth keeping; current
+   evidence does not justify claiming improvement.
+5. Do not treat the proposals as real EEG findings.

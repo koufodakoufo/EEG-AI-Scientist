@@ -75,6 +75,16 @@
     "baseline": 2,
     "rule": 2
   },
+  "selection": {
+    "primary": "first_accepted_per_arm_repeat",
+    "later_accepted_retries": "secondary_not_used",
+    "no_replacement_after_accept": true
+  },
+  "retry": {
+    "max_extra_attempts_per_cell": 1,
+    "stop_after_accepted": true,
+    "preserve_failed_runs": true
+  },
   "meta": {
     "model_backend": "deepseek_flash",
     "max_output_tokens": 4000,
