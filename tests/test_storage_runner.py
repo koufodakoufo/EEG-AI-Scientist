@@ -254,7 +254,7 @@ def test_format_repair_cannot_see_experiment_result(tmp_path: Path) -> None:
 
 
 def test_resume_after_result_does_not_rerun_experiment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    import eeg_scientist.runner as runner
+    import eeg_scientist.legacy.runner as runner
 
     calls = {"count": 0}
     original = runner.run_sealed_experiment

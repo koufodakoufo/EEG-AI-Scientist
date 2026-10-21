@@ -11,6 +11,7 @@ explicitly says otherwise.
   `.venv\Scripts\python.exe` (Python 3.12.4); bare `python` on PATH is not this
   project's environment.
 - **Architecture:** [`docs/architecture.md`](docs/architecture.md)
+- **Command reference:** [`docs/COMMAND_REFERENCE.md`](docs/COMMAND_REFERENCE.md)
 - **Archived experiments:** [`archive/README.md`](archive/README.md) — read-only
   history with old-to-new path map and hashes.
 - **New studies:** [`studies/README.md`](studies/README.md).
@@ -18,7 +19,7 @@ explicitly says otherwise.
 ## What is active
 
 ```text
-src/eeg_scientist/    active harness modules
+src/eeg_scientist/    active harness modules + legacy/ (old code, shims)
 tests/                offline tests
 configs/              active models, materials, prompts, rules, rubric, version policy
 studies/              new studies (empty until you create one)

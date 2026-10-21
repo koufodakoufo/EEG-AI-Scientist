@@ -31,6 +31,12 @@ ResearchRunner
 - `archive/` is read-only and indexed by `archive/README.md` plus
   `archive/MIGRATION_MAP.json`.
 
+## Legacy
+
+`src/eeg_scientist/legacy/` contains the old synthetic/reporting implementation;
+the root modules of the same names are one-line compatibility shims. New work
+must not add features there.
+
 ## Explicit non-goals
 
 No multi-agent platform, no automatic infinite Meta loop, no PDF/OCR platform,

@@ -33,8 +33,8 @@ archive/plans/         historical design notes
 archive/               read-only history
 ```
 
-Old synthetic code (`runner.py`, `study.py`, `provider.py`) and legacy fixtures
-remain under `src/`/`archive/` for compatibility; they are not the new entry.
+Old synthetic code now lives in `src/eeg_scientist/legacy/`; the root module
+names are compatibility shims. New code must use `study`/`review`.
 
 ## 3. How to start and view a study
 
