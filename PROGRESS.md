@@ -145,3 +145,15 @@ Read `reports/flash_20261020_0058/HANDOFF_SYSTEM.md` for the system map, then `R
 
 Human-score the four blinded proposals before opening `reviews/KEY.json`; check the flagged numeric claims; decide whether the citation-discipline Meta rule is worth keeping. Do not treat the proposals as real EEG findings. A next method experiment should fix the per-run read/finalization budget before adding more arms.
 
+---
+
+# 2026-10-21 Environment / version / proposal-review handoff
+
+- Unified project interpreter: `.venv\Scripts\python.exe` (Python 3.12.4); VS Code settings and `ENVIRONMENT.md` added. Declared dependencies were installed with `uv sync --extra dev`; bare terminal Python 3.14 is not the project environment.
+- `scientist.py` object-type errors fixed with narrowed types and a precise `ExperimentResult.audit` annotation; mypy no longer reports scientist.py lines. Package-wide mypy still reports legacy storage/experiments findings and is not suppressed.
+- New runs snapshot actual `src/`, `tests/`, `configs/`, prompts, and dependency metadata under `code_snapshot/` with per-file and aggregate SHA-256; commit/dirty are supplementary.
+- Next-round retry/selection policy frozen in `configs/versions/next_round_20261021.json`: first accepted per arm/repeat is primary; later accepted retries are secondary; one extra attempt per failed cell; no replacement after acceptance.
+- Automated proposal checks renamed `FORMAT_INTEGRITY_CHECK`; they are format/trace checks, not science scores. `PROPOSAL_CORRECTIONS.md` records three reasoning corrections and numeric qualifications without editing original answers.
+- Actual run refresh: 10 attempts, 6 accepted, 4 primary proposals; primary cost CNY 0.879242; whole study CNY 2.253552/10.
+- One-page handoff: `reports/flash_emotion_20261021/HANDOFF_NEXT_ROUND.md`; review bundle rebuilt under `artifacts/review_bundle_emotion_20261021.zip`.
+- No push; user's staged `.gitignore`, `src.zip`, `tests.zip` preserved.

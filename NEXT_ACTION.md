@@ -1,5 +1,9 @@
 # NEXT ACTION
 
+Current handoff: `reports/flash_emotion_20261021/HANDOFF_NEXT_ROUND.md` (2026-10-21). Environment: `.venv\Scripts\python.exe`; see `ENVIRONMENT.md`. No new paid run was started in this handoff.
+
+Next comparison: first run a metadata audit of the public music dataset (participant/session/stimulus links, trial ratings, raw EEG/licence, event timing). If it passes, compare baseline vs frozen Meta-rule proposals on the same 3-session multilevel within/between analysis, using the frozen first-accepted selection and retry policy. If it fails, publish the metadata gap and do not claim state-vs-trait separation.
+
 Current study: `emotion_state_trait_20261021` (2026-10-21, controlled Flash state-vs-trait literature study with Meta rule). **Status: completed.** Read `reports/flash_emotion_20261021/RESULT_SUMMARY.md` first, then `reports/flash_emotion_20261021/RUN_INDEX.md`.
 
 ## Human review next

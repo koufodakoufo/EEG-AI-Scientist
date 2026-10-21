@@ -83,3 +83,13 @@ C:\Users\14090\anaconda3\python.exe -m eeg_scientist.cli emotion-study evaluate
 - `n=2` cannot separate rule effect from run variance.
 - Some numeric claims still need exact source/read-range checking; see manual review.
 - Claude/Gemini/DeepSeek Pro were not called; their config entries are marked unverified.
+
+## Handoff additions (2026-10-21)
+
+- `ENVIRONMENT.md` — canonical `.venv\Scripts\python.exe`, versions, commands.
+- `configs/versions/next_round_20261021.json` — frozen program version, retry policy, first-accepted selection policy, backend status.
+- `reports/flash_emotion_20261021/PROPOSAL_CORRECTIONS.md` — three reasoning corrections and key-number audit; original answers untouched.
+- `reports/flash_emotion_20261021/MINIMAL_EMOTION_STUDY.md` — minimal existing-public-data analysis and missing metadata.
+- `reports/flash_emotion_20261021/HANDOFF_NEXT_ROUND.md` — one-page Chinese handoff.
+- `runs/flash_emotion_20261021/reviews/FORMAT_INTEGRITY_CHECK.md` — format/trace checks only, not science scores.
+- New-run manifests now include `code_snapshot/` with per-file and aggregate SHA-256.

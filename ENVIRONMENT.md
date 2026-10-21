@@ -23,8 +23,8 @@ uv sync --extra dev
 # tests
 .\.venv\Scripts\python.exe -m pytest -q
 
-# type check of the requested module (mypy 1.10 is the external base-env tool;
-# package-wide mypy still has legacy findings outside this module)
+# type check: no scientist.py errors remain; the command still follows imports
+# and reports unrelated legacy findings in storage.py / experiments.py.
 C:\Users\14090\anaconda3\python.exe -m mypy src\eeg_scientist\scientist.py
 
 # CLI
