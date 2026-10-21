@@ -13,15 +13,20 @@ from pathlib import Path
 
 from .storage import atomic_write_text, ensure_dir, utc_now
 
-FLASH_STUDY = Path("configs/studies/overnight_flash_20261020.json")
+DEFAULT_FLASH_STUDY = Path("configs/studies/overnight_flash_20261020.json")
 
 
 def _read_json(path: Path) -> dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def render_flash_reports(reports_dir: Path, *, run_id: str) -> dict[str, str]:
-    study = _read_json(FLASH_STUDY)
+def render_flash_reports(
+    reports_dir: Path,
+    *,
+    run_id: str,
+    study_config_path: Path | str = DEFAULT_FLASH_STUDY,
+) -> dict[str, str]:
+    study = _read_json(Path(study_config_path))
     paths = study["paths"]
     target = ensure_dir(reports_dir)
     capability_path = Path(str(paths["capability_dir"])) / "capability.json"
@@ -44,7 +49,7 @@ def render_flash_reports(reports_dir: Path, *, run_id: str) -> dict[str, str]:
         f"# RUN INDEX — {run_id}",
         "",
         f"- rendered_at: {utc_now()}",
-        f"- study_config: `{FLASH_STUDY}`",
+        f"- study_config: `{study_config_path}`",
         f"- deadline: {study['deadline']}",
         f"- stop_new_research_at: {study['stop_new_research_at']}",
         "",

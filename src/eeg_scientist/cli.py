@@ -416,7 +416,7 @@ def command_flash_research(args: argparse.Namespace) -> int:
             return 2
     question = str(research["main_question"]) + "\n\nExtension choice: " + str(research["secondary_extension"])
     config = ResearchConfig(
-        run_id=f"{study['run_id']}_literature_v1",
+        run_id=f"{study['run_id']}_{getattr(args, 'name', 'research')}",
         run_dir=str(research_dir),
         question=question,
         deadline=str(study["deadline"]),
@@ -468,7 +468,11 @@ def command_flash_report(args: argparse.Namespace) -> int:
     from .flash_report import render_flash_reports
 
     study, _model, _client, _ledger, _report = _flash_client(args)
-    paths = render_flash_reports(Path(str(study["paths"]["reports_dir"])), run_id=str(study["run_id"]))
+    paths = render_flash_reports(
+        Path(str(study["paths"]["reports_dir"])),
+        run_id=str(study["run_id"]),
+        study_config_path=Path(args.config),
+    )
     print(json.dumps(paths, ensure_ascii=False, indent=2))
     return 0
 
