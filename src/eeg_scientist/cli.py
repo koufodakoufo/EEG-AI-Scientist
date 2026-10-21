@@ -635,19 +635,19 @@ def main(argv: list[str] | None = None) -> int:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     preflight = subparsers.add_parser("preflight")
-    preflight.add_argument("--config", default="configs/overnight.json")
+    preflight.add_argument("--config", default="archive/experiments/synthetic_20261019/configs/overnight.json")
     preflight.set_defaults(func=command_preflight)
 
     episode = subparsers.add_parser("episode")
-    episode.add_argument("--config", default="configs/dev_episode.json")
+    episode.add_argument("--config", default="archive/experiments/synthetic_20261019/configs/dev_episode.json")
     episode.set_defaults(func=command_episode)
 
     overnight = subparsers.add_parser("overnight")
-    overnight.add_argument("--config", default="configs/overnight.json")
+    overnight.add_argument("--config", default="archive/experiments/synthetic_20261019/configs/overnight.json")
     overnight.set_defaults(func=command_overnight)
 
     resume = subparsers.add_parser("resume")
-    resume.add_argument("--config", default="configs/overnight.json")
+    resume.add_argument("--config", default="archive/experiments/synthetic_20261019/configs/overnight.json")
     resume.set_defaults(func=command_resume)
 
     report = subparsers.add_parser("report")
