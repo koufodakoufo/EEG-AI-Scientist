@@ -430,7 +430,7 @@ def command_flash_research(args: argparse.Namespace) -> int:
     summary = runner.run()
     print(summary.model_dump_json(indent=2))
     print(f"ledger: {json.dumps(ledger.snapshot(), ensure_ascii=False)}")
-    return 0 if summary.phase == "completed" else 1
+    return 0 if summary.accepted else 1
 
 
 def command_flash_status(args: argparse.Namespace) -> int:
@@ -459,6 +459,7 @@ def command_flash_status(args: argparse.Namespace) -> int:
         final = root / "final.json"
         if final.exists():
             payload[f"{name}_final"] = str(final)
+    payload["subruns"] = _scan_subruns(Path(str(paths["run_root"])))
     print(json.dumps(payload, ensure_ascii=False, indent=2, default=str))
     return 0
 
@@ -481,6 +482,87 @@ def command_check_dataset(args: argparse.Namespace) -> int:
     summary = check_feature_table(target, split_seed=int(args.split_seed))
     print(json.dumps(summary, ensure_ascii=False, indent=2, default=str))
     return 0 if all(not audit.get("invalid_reason") for audit in summary["audits"].values()) else 1
+
+
+def _scan_subruns(root: Path) -> list[dict[str, object]]:
+    """Collect nested research/study state without overwriting anything."""
+
+    found: list[dict[str, object]] = []
+    if not root.exists():
+        return found
+    for state_path in sorted(root.rglob("state.json")):
+        try:
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            state = {"error": "unreadable"}
+        manifest_path = state_path.parent / "run_manifest.json"
+        manifest: dict[str, object] = {}
+        if manifest_path.exists():
+            try:
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                manifest = {"error": "unreadable"}
+        found.append(
+            {
+                "path": str(state_path.parent),
+                "phase": state.get("phase", ""),
+                "accepted": state.get("accepted", False),
+                "acceptance": state.get("acceptance", ""),
+                "stop_reason": state.get("stop_reason", ""),
+                "model_calls": state.get("model_calls", 0),
+                "run_id": state.get("run_id", ""),
+                "model": (manifest.get("model") or {}).get("model_name", "") if isinstance(manifest, dict) else "",
+                "rule_version": (manifest.get("rule") or {}).get("version", "") if isinstance(manifest, dict) else "",
+            }
+        )
+    return found
+
+
+def command_emotion_run(args: argparse.Namespace) -> int:
+    from .emotion_experiment import load_study, run_study
+
+    study = load_study(Path(args.config))
+    print(json.dumps({"study_id": study["study_id"], "phase": "starting"}, ensure_ascii=False))
+    result = run_study(Path(args.config))
+    print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
+    return 0 if result.get("phase") == "completed" else 1
+
+
+def command_emotion_evaluate(args: argparse.Namespace) -> int:
+    from .emotion_experiment import evaluate_study
+
+    summary = evaluate_study(Path(args.config))
+    print(json.dumps(summary, ensure_ascii=False, indent=2, default=str))
+    return 0
+
+
+def command_emotion_retry(args: argparse.Namespace) -> int:
+    from .emotion_experiment import retry_failed_runs
+
+    result = retry_failed_runs(Path(args.config))
+    print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
+    return 0
+
+
+def command_emotion_status(args: argparse.Namespace) -> int:
+    from .emotion_experiment import load_study, make_ledger
+    from .backends import load_registry
+
+    study = load_study(Path(args.config))
+    registry = load_registry(Path("configs/models/backends_20261021.json"))
+    ledger = make_ledger(study, registry)
+    root = Path(str(study["paths"]["run_root"]))
+    state_path = root / "study_state.json"
+    payload: dict[str, object] = {
+        "study_id": study["study_id"],
+        "run_root": str(root),
+        "study_state": json.loads(state_path.read_text(encoding="utf-8")) if state_path.exists() else None,
+        "subruns": _scan_subruns(root / "runs"),
+        "ledger": ledger.snapshot(),
+    }
+    print(json.dumps(payload, ensure_ascii=False, indent=2, default=str))
+    return 0
+
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -534,6 +616,19 @@ def main(argv: list[str] | None = None) -> int:
     check_dataset.add_argument("--split-seed", type=int, default=20261020)
     check_dataset.add_argument("--write-fixture", action="store_true")
     check_dataset.set_defaults(func=command_check_dataset)
+
+    emotion = subparsers.add_parser("emotion-study", help="Controlled emotion state-vs-trait study")
+    emotion_sub = emotion.add_subparsers(dest="emotion_command", required=True)
+    emotion_config = "configs/studies/flash_emotion_20261021.json"
+    for name, function in (
+        ("run", command_emotion_run),
+        ("evaluate", command_emotion_evaluate),
+        ("retry-failed", command_emotion_retry),
+        ("status", command_emotion_status),
+    ):
+        sub = emotion_sub.add_parser(name)
+        sub.add_argument("--config", default=emotion_config)
+        sub.set_defaults(func=function)
 
     args = parser.parse_args(argv)
     return int(args.func(args))

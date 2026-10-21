@@ -102,7 +102,11 @@ class FetchResponse(BaseModel):
     raw: dict[str, object] = Field(default_factory=dict)
 
 
-class ChatClient(Protocol):
+class ModelChatClient(Protocol):
+    model_name: str
+    provider_name: str
+    backend_status: str
+
     def chat(
         self,
         messages: list[dict[str, object]],
@@ -113,9 +117,15 @@ class ChatClient(Protocol):
         stage: str = "",
     ) -> DeepSeekChatResult: ...
 
+
+class SearchFetchClient(Protocol):
     def search(self, query: str, *, count: int = 8, need_content: bool = False) -> SearchResponse: ...
 
     def fetch(self, url: str) -> FetchResponse: ...
+
+
+class ChatClient(ModelChatClient, SearchFetchClient, Protocol):
+    """Backward-compatible combined protocol for the original client."""
 
 
 def _message_wire(message: dict[str, object]) -> dict[str, object]:
@@ -222,6 +232,9 @@ class DeepSeekClient:
         max_retries: int = 2,
         retry_wait_seconds: tuple[float, ...] = (2.0, 8.0),
         transport: httpx.BaseTransport | None = None,
+        attribution: str = "",
+        provider_name: str = "deepseek_official",
+        backend_status: str = "verified",
     ) -> None:
         if not api_key:
             raise DeepSeekError("credential", "empty API key")
@@ -229,6 +242,9 @@ class DeepSeekClient:
         self.ledger = ledger
         self.base_url = base_url.rstrip("/")
         self.model_name = model
+        self.provider_name = provider_name
+        self.backend_status = backend_status
+        self.attribution = attribution
         self.timeout_seconds = timeout_seconds
         self.connect_timeout_seconds = connect_timeout_seconds
         self.search_timeout_seconds = search_timeout_seconds
@@ -340,7 +356,9 @@ class DeepSeekClient:
         started = time.perf_counter()
         last_error: DeepSeekError | None = None
         for attempt in range(self.max_retries + 1):
-            reservation = self.ledger.reserve_model(reservation_payload, max_tokens)
+            reservation = self.ledger.reserve_model(
+                reservation_payload, max_tokens, attribution=self.attribution
+            )
             self._call_count += 1
             try:
                 with self._client(self._timeout(self.timeout_seconds, self.connect_timeout_seconds)) as client:
@@ -528,7 +546,7 @@ class DeepSeekClient:
     ) -> dict[str, object]:
         last_error: DeepSeekError | None = None
         for attempt in range(self.max_retries + 1):
-            reservation = self.ledger.reserve_tool(kind)
+            reservation = self.ledger.reserve_tool(kind, attribution=self.attribution)
             try:
                 with self._client(self._timeout(timeout, 20)) as client:
                     response = client.post(

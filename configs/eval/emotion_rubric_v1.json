@@ -1,0 +1,38 @@
+{
+  "version": "emotion_rubric_v1",
+  "frozen_at": "2026-10-21T09:40:00+08:00",
+  "criteria": [
+    {
+      "id": "citation_support",
+      "label": "引用支持",
+      "description": "Key empirical claims are backed by evidence IDs that were read and support the stated scope.",
+      "checks": ["inline_ids_match_finish", "all_cited_ids_in_material", "methods_or_results_claims_have_read_ranges"]
+    },
+    {
+      "id": "reasoning_errors",
+      "label": "推理错误",
+      "description": "No state/trait conflation, no within-person correlation treated as a between-person effect, no decoding accuracy treated as mechanism.",
+      "checks": ["no_state_trait_equivalence", "no_ecological_fallacy", "no_accuracy_equals_mechanism"]
+    },
+    {
+      "id": "discriminability",
+      "label": "实验区分能力",
+      "description": "The proposed experiment separates at least two competing explanations on the same observable and has a falsifier.",
+      "checks": ["two_competing_explanations", "same_observable", "falsifier", "what_remains_indistinguishable"]
+    },
+    {
+      "id": "executability",
+      "label": "可执行性",
+      "description": "Data, design, controls, and analysis are specified enough to implement or reject.",
+      "checks": ["data_source", "within_between_units", "controls", "sample_or_session_plan"]
+    },
+    {
+      "id": "cost",
+      "label": "费用",
+      "description": "The proposal's resource cost is proportionate; actual run cost is attributed separately.",
+      "checks": ["no_unbounded_training", "cost_attribution_present"]
+    }
+  ],
+  "scale": ["not_met", "partial", "met", "unclear"],
+  "note": "This is dsh's initial review rubric, not a scientific truth score. Human review is required."
+}

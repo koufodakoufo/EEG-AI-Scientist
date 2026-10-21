@@ -163,6 +163,35 @@ class EvidenceStore:
     def list_meta(self) -> list[EvidenceMeta]:
         return [self._records[key] for key in sorted(self._records)]
 
+    def import_from(self, source_root: Path | str) -> int:
+        """Copy registered source snapshots without copying read injections.
+
+        Every independent Scientist run gets its own evidence directory while
+        keeping the frozen material text and evidence IDs identical.
+        """
+
+        source = EvidenceStore(source_root)
+        imported = 0
+        for meta in source.list_meta():
+            record = source.get(meta.evidence_id)
+            target = self.sources_dir / f"{record.evidence_id}.json"
+            if not target.exists():
+                atomic_write_json(target, record.model_dump(mode="json"))
+            self._records[record.evidence_id] = EvidenceMeta(
+                evidence_id=record.evidence_id,
+                url=record.url,
+                title=record.title,
+                fetched_at=record.fetched_at,
+                sha256=record.sha256,
+                char_count=record.char_count,
+                source_kind=record.source_kind,
+                extractor=record.extractor,
+                page_count=len(record.pages),
+            )
+            imported += 1
+        self._save_index()
+        return imported
+
     def has(self, evidence_id: str) -> bool:
         return evidence_id in self._records
 

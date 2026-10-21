@@ -1,0 +1,126 @@
+{
+  "schema_version": "1",
+  "checked_at": "2026-10-21T09:40:00+08:00",
+  "chat_backends": [
+    {
+      "id": "deepseek_flash",
+      "provider": "deepseek",
+      "protocol": "openai_chat",
+      "model_name": "deepseek-flash",
+      "model_version": "DeepSeek-V4.1-Flash-1017",
+      "status": "verified",
+      "reason": "Official endpoint and native tool loop were verified in the 2026-10-20 run and are re-used.",
+      "base_url": "https://api.deepseek.com",
+      "credential_file": "credentials/deepseek.env",
+      "credential_variable": "DEEPSEEK_API_KEY",
+      "max_output_tokens": 16384,
+      "thinking": true,
+      "reasoning_effort": "high",
+      "price": {
+        "input_cache_miss_peak_cny_per_mtok": 2.0,
+        "output_peak_cny_per_mtok": 8.0,
+        "input_cache_miss_offpeak_cny_per_mtok": 1.0,
+        "output_offpeak_cny_per_mtok": 4.0,
+        "search_cny_per_success": 0.005,
+        "fetch_cny_per_success": 0.005,
+        "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/",
+        "checked_at": "2026-10-21T09:40:00+08:00"
+      }
+    },
+    {
+      "id": "deepseek_pro",
+      "provider": "deepseek",
+      "protocol": "openai_chat",
+      "model_name": "deepseek-v4-pro",
+      "model_version": "DeepSeek-V4-Pro-0813",
+      "status": "unverified",
+      "reason": "Config entry only. No DeepSeek Pro request was made or validated in this project.",
+      "base_url": "https://api.deepseek.com",
+      "credential_file": "credentials/deepseek.env",
+      "credential_variable": "DEEPSEEK_API_KEY",
+      "max_output_tokens": 16384,
+      "thinking": true,
+      "reasoning_effort": "high",
+      "price": {
+        "input_cache_miss_peak_cny_per_mtok": 9.0,
+        "output_peak_cny_per_mtok": 27.0,
+        "input_cache_miss_offpeak_cny_per_mtok": 4.5,
+        "output_offpeak_cny_per_mtok": 13.5,
+        "search_cny_per_success": 0.005,
+        "fetch_cny_per_success": 0.005,
+        "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/",
+        "checked_at": "2026-10-21T09:40:00+08:00"
+      }
+    },
+    {
+      "id": "claude_opus",
+      "provider": "anthropic",
+      "protocol": "anthropic_messages",
+      "model_name": null,
+      "model_version": "",
+      "status": "unverified",
+      "reason": "No Claude credential is available in this round; no request was made. Config entry only.",
+      "base_url": "https://api.anthropic.com",
+      "credential_file": "",
+      "credential_variable": "ANTHROPIC_API_KEY",
+      "max_output_tokens": 16384,
+      "thinking": true,
+      "reasoning_effort": "high",
+      "price": null
+    },
+    {
+      "id": "claude_sonnet",
+      "provider": "anthropic",
+      "protocol": "anthropic_messages",
+      "model_name": null,
+      "model_version": "",
+      "status": "unverified",
+      "reason": "No Claude credential is available in this round; no request was made. Config entry only.",
+      "base_url": "https://api.anthropic.com",
+      "credential_file": "",
+      "credential_variable": "ANTHROPIC_API_KEY",
+      "max_output_tokens": 16384,
+      "thinking": true,
+      "reasoning_effort": "high",
+      "price": null
+    },
+    {
+      "id": "gemini",
+      "provider": "google",
+      "protocol": "gemini_generate_content",
+      "model_name": null,
+      "model_version": "",
+      "status": "unverified",
+      "reason": "No Gemini credential is available in this round; no request was made. Config entry only.",
+      "base_url": "https://generativelanguage.googleapis.com",
+      "credential_file": "",
+      "credential_variable": "GEMINI_API_KEY",
+      "max_output_tokens": 16384,
+      "thinking": true,
+      "reasoning_effort": "high",
+      "price": null
+    }
+  ],
+  "tool_backends": [
+    {
+      "id": "deepseek_search_fetch",
+      "provider": "deepseek",
+      "protocol": "deepseek_search_fetch",
+      "status": "verified",
+      "reason": "Official Search/Fetch endpoints were verified with real requests in the 2026-10-20 run.",
+      "base_url": "https://api.deepseek.com",
+      "credential_file": "credentials/deepseek.env",
+      "credential_variable": "DEEPSEEK_API_KEY",
+      "price": {
+        "input_cache_miss_peak_cny_per_mtok": 0.0,
+        "output_peak_cny_per_mtok": 0.0,
+        "input_cache_miss_offpeak_cny_per_mtok": 0.0,
+        "output_offpeak_cny_per_mtok": 0.0,
+        "search_cny_per_success": 0.005,
+        "fetch_cny_per_success": 0.005,
+        "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/",
+        "checked_at": "2026-10-21T09:40:00+08:00"
+      }
+    }
+  ]
+}

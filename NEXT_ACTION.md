@@ -1,6 +1,29 @@
 # NEXT ACTION
 
-Current run: `flash_20261020_0058` (2026-10-20, DeepSeek Flash literature study). **Status: completed and wrapped up early at 01:30 +08:00.** A later handoff pass (2026-10-20 evening) added small fixes and a review bundle without paid model calls, new data, or a rerun.
+Current study: `emotion_state_trait_20261021` (2026-10-21, controlled Flash state-vs-trait literature study with Meta rule). **Status: completed.** Read `reports/flash_emotion_20261021/RESULT_SUMMARY.md` first, then `reports/flash_emotion_20261021/RUN_INDEX.md`.
+
+## Human review next
+
+1. Score the four blinded proposals in `runs/flash_emotion_20261021/reviews/blinded/` before opening `reviews/KEY.json`.
+2. Read the citation/reasoning flags in `reports/flash_emotion_20261021/MANUAL_INITIAL_REVIEW.md`.
+3. Decide whether the citation-discipline Meta rule is worth keeping. The current comparison (2+2 primary runs) shows no clear improvement.
+4. Do not treat the proposals as real EEG findings; no real EEG data were read.
+
+## Study state
+
+- Meta decision: one rule accepted; Meta saw only the old `literature_v1` trajectory and labelled review feedback.
+- Four primary proposals accepted; 10 attempts total including failed/retried runs. All accepted runs used `finish_study`.
+- New ledger: `runs/flash_emotion_20261021/budget.json`; spend CNY 2.253552 / 10; old ledger untouched.
+- Review bundle: `artifacts/review_bundle_emotion_20261021.zip`.
+- No push. User's `.gitignore` staged change and `src.zip`/`tests.zip` remain untouched.
+
+## Previous overnight run (2026-10-20, Flash literature study)
+
+`flash_20261020_0058` is complete; its reports and review bundle remain valid for that run. See `reports/flash_20261020_0058/HANDOFF_SYSTEM.md`, `REASONING_REVIEW.md`, and `artifacts/review_bundle_20261020.zip`. Do not rerun it as part of the emotion study.
+
+## Earlier handoff details (kept for continuity)
+
+- Current run: `flash_20261020_0058` (2026-10-20, DeepSeek Flash literature study). **Status: completed and wrapped up early at 01:30 +08:00.** A later handoff pass (2026-10-20 evening) added small fixes and a review bundle without paid model calls, new data, or a rerun.
 
 ## Handoff review (read before reusing the priority claim)
 

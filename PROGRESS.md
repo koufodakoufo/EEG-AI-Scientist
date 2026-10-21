@@ -126,3 +126,22 @@ Updated: 2026-10-20 21:40 +08:00.
 
 Read `reports/flash_20261020_0058/HANDOFF_SYSTEM.md` for the system map, then `REASONING_REVIEW.md` before reusing the Scientist's priority claim. The next scientific step remains a separate decision; no paid run was started.
 
+---
+
+# 2026-10-21 Controlled emotion state-vs-trait study (complete)
+
+- New question: EEG 对情绪评分的预测，如何区分同一个人的状态变化与不同人的稳定差异？什么最小实验能区分竞争解释？
+- New study `emotion_state_trait_20261021`, new ledger `runs/flash_emotion_20261021/budget.json` (CNY 10 cap); old ledger untouched.
+- Prepared a frozen material package of 6 public full-text papers (dsh as preparer), with manifest and study lock; no old Scientist answers or private data.
+- Meta: Flash independent context, only old `literature_v1` trajectory + labelled review feedback; accepted one citation-verification rule.
+- Primary runs: two baseline and two Meta-rule runs, all accepted via `finish_study`; 10 attempts total including failures/retries. Four primary proposals.
+- Findings: all four converge on a 3-session fixed-stimulus within/between decomposition; the Meta rule changed citation/reporting style but did **not** show a clear quality improvement. n=2, descriptive only.
+- Runner fixes: finish_study no longer counts against the evidence-tool budget; a finalization counter now allows the promised final calls; retries preserve failed directories.
+- Spend CNY 2.253552 / 10; 65 model attempts, 7 Search, 8 Fetch; no unknown cost.
+- Reports: `reports/flash_emotion_20261021/`; review bundle: `artifacts/review_bundle_emotion_20261021.zip`.
+- No push; user `.gitignore` staged change and `src.zip`/`tests.zip` untouched.
+
+## Next action after this study
+
+Human-score the four blinded proposals before opening `reviews/KEY.json`; check the flagged numeric claims; decide whether the citation-discipline Meta rule is worth keeping. Do not treat the proposals as real EEG findings. A next method experiment should fix the per-run read/finalization budget before adding more arms.
+

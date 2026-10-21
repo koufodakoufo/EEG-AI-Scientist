@@ -54,6 +54,8 @@ class LedgerState(BaseModel):
     input_price_cny_per_mtok: float = 2.0
     output_price_cny_per_mtok: float = 8.0
     tool_price_cny_per_request: float = 0.005
+    price_source: str = ""
+    price_checked_at: str = ""
     pending: dict[str, dict[str, object]] = Field(default_factory=dict)
     history: list[dict[str, object]] = Field(default_factory=list)
     created_at: str = ""
@@ -84,6 +86,11 @@ class BudgetLedger:
         fetch_attempts_limit: int = 90,
         input_tokens_limit: int = 2_000_000,
         output_tokens_limit: int = 500_000,
+        input_price_cny_per_mtok: float = 2.0,
+        output_price_cny_per_mtok: float = 8.0,
+        tool_price_cny_per_request: float = 0.005,
+        price_source: str = "",
+        price_checked_at: str = "",
     ) -> None:
         self.path = Path(path)
         ensure_dir(self.path.parent)
@@ -106,6 +113,11 @@ class BudgetLedger:
                 fetch_attempts_limit=fetch_attempts_limit,
                 input_tokens_limit=input_tokens_limit,
                 output_tokens_limit=output_tokens_limit,
+                input_price_cny_per_mtok=input_price_cny_per_mtok,
+                output_price_cny_per_mtok=output_price_cny_per_mtok,
+                tool_price_cny_per_request=tool_price_cny_per_request,
+                price_source=price_source,
+                price_checked_at=price_checked_at,
                 created_at=utc_now(),
                 updated_at=utc_now(),
             )
@@ -149,7 +161,7 @@ class BudgetLedger:
                 f"available before the CNY {self.state.wrap_up_reserve_cny:.2f} wrap-up reserve"
             )
 
-    def reserve_model(self, input_text: str, max_output_tokens: int) -> Reservation:
+    def reserve_model(self, input_text: str, max_output_tokens: int, *, attribution: str = "") -> Reservation:
         """Reserve worst-case cost for one Chat Completions attempt.
 
         Input tokens are upper-bounded by the UTF-8 byte count, which is
@@ -186,6 +198,7 @@ class BudgetLedger:
             "input_upper_tokens": input_upper,
             "max_output_tokens": max_output_tokens,
             "created_at": reservation.created_at,
+            "attribution": attribution,
         }
         self.state.reserved_cny += reservation.reserved_cny
         self.state.model_attempts += 1
@@ -196,6 +209,7 @@ class BudgetLedger:
             input_upper_tokens=input_upper,
             max_output_tokens=max_output_tokens,
             attempt=self.state.model_attempts,
+            attribution=attribution,
         )
         self._save()
         return reservation
@@ -227,6 +241,7 @@ class BudgetLedger:
             completion_tokens=completion_tokens,
             returned_model=returned_model,
             finish_reason=finish_reason,
+            attribution=str(pending.get("attribution", "")),
         )
         self._save()
         return actual
@@ -235,7 +250,13 @@ class BudgetLedger:
         pending = self._pop_pending(reservation_id, None)
         reserved_value = float(pending.get("reserved_cny", 0.0))
         self.state.reserved_cny = max(0.0, self.state.reserved_cny - reserved_value)
-        self._record("release", reservation_id=reservation_id, released_cny=reserved_value, reason=reason)
+        self._record(
+            "release",
+            reservation_id=reservation_id,
+            released_cny=reserved_value,
+            reason=reason,
+            attribution=str(pending.get("attribution", "")),
+        )
         self._save()
 
     def mark_unknown(self, reservation_id: str, reason: str) -> None:
@@ -243,7 +264,13 @@ class BudgetLedger:
         reserved_value = float(pending.get("reserved_cny", 0.0))
         self.state.reserved_cny = max(0.0, self.state.reserved_cny - reserved_value)
         self.state.unknown_cny += reserved_value
-        self._record("unknown", reservation_id=reservation_id, unknown_cny=reserved_value, reason=reason)
+        self._record(
+            "unknown",
+            reservation_id=reservation_id,
+            unknown_cny=reserved_value,
+            reason=reason,
+            attribution=str(pending.get("attribution", "")),
+        )
         self._save()
 
     def mark_all_pending_unknown(self, reason: str) -> int:
@@ -261,7 +288,7 @@ class BudgetLedger:
         return self.state.pending.pop(reservation_id)
 
     # ------------------------------------------------------------------ tools
-    def reserve_tool(self, kind: str) -> Reservation:
+    def reserve_tool(self, kind: str, *, attribution: str = "") -> Reservation:
         if kind not in {"search", "fetch"}:
             raise LedgerError(f"unknown tool kind {kind}")
         limit = (
@@ -284,13 +311,14 @@ class BudgetLedger:
             "kind": kind,
             "reserved_cny": cost,
             "created_at": reservation.created_at,
+            "attribution": attribution,
         }
         self.state.reserved_cny += cost
         if kind == "search":
             self.state.search_attempts += 1
         else:
             self.state.fetch_attempts += 1
-        self._record(f"reserve_{kind}", reservation_id=reservation.reservation_id, reserved_cny=cost)
+        self._record(f"reserve_{kind}", reservation_id=reservation.reservation_id, reserved_cny=cost, attribution=attribution)
         self._save()
         return reservation
 
@@ -306,10 +334,27 @@ class BudgetLedger:
             charged_cny=reserved_value if succeeded else 0.0,
             succeeded=succeeded,
             note=note,
+            attribution=str(pending.get("attribution", "")),
         )
         self._save()
 
     # ---------------------------------------------------------------- summary
+    def cost_by_attribution(self) -> dict[str, float]:
+        totals: dict[str, float] = {}
+        for entry in self.state.history:
+            action = entry.get("action")
+            amount = 0.0
+            if action == "settle_model":
+                amount = float(entry.get("actual_cny", 0.0))
+            elif action == "settle_tool":
+                amount = float(entry.get("charged_cny", 0.0))
+            elif action == "unknown":
+                amount = float(entry.get("unknown_cny", 0.0))
+            if amount:
+                key = str(entry.get("attribution", "")) or "(unattributed)"
+                totals[key] = round(totals.get(key, 0.0) + amount, 6)
+        return totals
+
     def snapshot(self) -> dict[str, object]:
         return {
             "run_id": self.state.run_id,
@@ -330,6 +375,12 @@ class BudgetLedger:
             "output_tokens": self.state.output_tokens,
             "input_tokens_limit": self.state.input_tokens_limit,
             "output_tokens_limit": self.state.output_tokens_limit,
+            "input_price_cny_per_mtok": self.state.input_price_cny_per_mtok,
+            "output_price_cny_per_mtok": self.state.output_price_cny_per_mtok,
+            "tool_price_cny_per_request": self.state.tool_price_cny_per_request,
+            "price_source": self.state.price_source,
+            "price_checked_at": self.state.price_checked_at,
+            "cost_by_attribution": self.cost_by_attribution(),
             "pending": len(self.state.pending),
             "updated_at": self.state.updated_at,
         }
