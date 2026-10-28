@@ -4,7 +4,7 @@
   "deadline_at": "2026-10-29T08:29:40+08:00",
   "stop_new_research_at": "2026-10-29T07:59:40+08:00",
   "extra_model_calls_max": 24,
-  "extra_model_calls_reserved": 13,
+  "extra_model_calls_reserved": 15,
   "max_parallel_model_workers": 2,
   "per_call_timeout_seconds": 1800,
   "preflight_timeout_seconds": 90,
@@ -152,11 +152,32 @@
     {
       "id": "M13",
       "role": "submission_extractor",
-      "status": "running",
+      "status": "completed",
       "reserved_at": "2026-10-28T18:19:56.157547+00:00",
       "timeout_seconds": 600,
       "cost_usd": "unknown",
-      "updated_at": "2026-10-28T18:19:57.238182+00:00"
+      "updated_at": "2026-10-28T18:22:36.751286+00:00",
+      "elapsed_seconds": 72.672,
+      "evidence": "server/evidence/M13"
+    },
+    {
+      "id": "M14",
+      "role": "semantic_judge",
+      "status": "completed",
+      "reserved_at": "2026-10-28T18:22:37.087441+00:00",
+      "timeout_seconds": 600,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-28T18:24:31.359103+00:00",
+      "elapsed_seconds": 68.984,
+      "evidence": "server/evidence/M14"
+    },
+    {
+      "id": "M15",
+      "role": "skill_distiller",
+      "status": "reserved",
+      "reserved_at": "2026-10-28T18:26:18.094068+00:00",
+      "timeout_seconds": 600,
+      "cost_usd": "unknown"
     }
   ]
 }
