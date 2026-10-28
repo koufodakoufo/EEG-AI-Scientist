@@ -27,7 +27,7 @@ class ActorConfigTests(unittest.TestCase):
         argv=actor_argv({'native_binary':'/runtime/codex','case':'/isolated/case'},'ONLY THIS PROMPT',Path('/trusted/final.txt'))
         self.assertIn('--ignore-rules',argv)
         self.assertNotIn('--ignore-user-config',argv)  # 0.165.0 would discard the restrictive profile
-        self.assertIn('--ephemeral',argv)
+        self.assertNotIn('--ephemeral',argv)  # fresh protected rollout needed for nested tool provenance
         self.assertNotIn('resume',argv)
         self.assertNotIn('--sandbox',argv)
         self.assertEqual(argv[-1],'ONLY THIS PROMPT')
