@@ -92,3 +92,5 @@ review_only/
 /framework/tasks/reve_isa/src/split_manifest.json
 
 
+# Local coordination locks are runtime state, not checkpoint artifacts.
+/docs/overnight/**/*.lock

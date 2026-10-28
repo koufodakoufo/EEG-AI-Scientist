@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "started_at": "2026-10-29T00:29:40+08:00",
+  "deadline_at": "2026-10-29T08:29:40+08:00",
+  "stop_new_research_at": "2026-10-29T07:59:40+08:00",
+  "extra_model_calls_max": 24,
+  "extra_model_calls_reserved": 3,
+  "max_parallel_model_workers": 2,
+  "per_call_timeout_seconds": 1800,
+  "preflight_timeout_seconds": 90,
+  "compute_threads": 4,
+  "memory_limit_bytes": 12884901888,
+  "gpu_allocated": 0,
+  "storage_limit_bytes": 10737418240,
+  "download_limit_bytes": 1073741824,
+  "cost_usd": "unknown",
+  "calls": [
+    {
+      "id": "M01",
+      "role": "builder_research",
+      "kind": "collaboration_subagent",
+      "status": "reserved",
+      "timeout_seconds": 1800,
+      "context": "fresh builder context; allowed complete sources; never reused as actor/distiller",
+      "cost_usd": "unknown"
+    },
+    {
+      "id": "M02",
+      "role": "builder_scoring",
+      "kind": "collaboration_subagent",
+      "status": "completed",
+      "timeout_seconds": 1800,
+      "context": "fresh builder context, never actor or distiller",
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-28T16:56:41.065533+00:00",
+      "tests": "owned modules passed; Windows symlink tests require Linux"
+    },
+    {
+      "id": "M03",
+      "role": "preflight",
+      "status": "reserved",
+      "reserved_at": "2026-10-28T16:56:41.078681+00:00",
+      "timeout_seconds": 90,
+      "cost_usd": "unknown"
+    }
+  ]
+}
