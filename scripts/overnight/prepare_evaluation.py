@@ -17,6 +17,20 @@ from eegfm.research_bench.scoring import score_directional
 def read(path: Path): return json.loads(path.read_text(encoding='utf-8'))
 
 
+def read_submission(frozen: Path) -> tuple[str,list,dict]:
+    """A broken optional annex cannot discard an otherwise usable report."""
+    error=None
+    try:
+        proposed=read(frozen/'claims.json') if (frozen/'claims.json').is_file() else {'claims':[]}
+        if not isinstance(proposed,dict) or not isinstance(proposed.get('claims'),list):
+            raise ValueError('Invalid proposed-claims annex')
+    except (OSError,ValueError,TypeError) as exc:
+        proposed={'claims':[]}; error=str(exc)
+    path=frozen/'REPORT.md'
+    return (path.read_text(encoding='utf-8') if path.is_file() else '',proposed['claims'],
+            {'report_sha256':digest_file(path) if path.is_file() else None,'report_missing':not path.is_file(),'annex_error':error})
+
+
 def new_job(call_id: str,role: str,protocol: str,payload: dict) -> Path:
     source=PRIVATE/f'jobs/{call_id}/source'; source.mkdir(parents=True,exist_ok=False)
     names={'atomic_extract_v1':'extract_claims_v1.md','directional_judge_v1':'judge_directional_v1.md'}
@@ -41,10 +55,10 @@ def main() -> None:
         for index,episode in enumerate(args.episodes,1):
             frozen=NIGHT/f'submissions/{episode}/output'; identifier=f'S{index:02d}'
             # Raw proposed annex does not constrain complete-report extraction.
-            proposed=read(frozen/'claims.json') if (frozen/'claims.json').is_file() else {'claims':[]}
+            text,proposed,errors=read_submission(frozen)
             docs.append({'document_id':identifier,'source':identifier+'.md','task_id':task_id,
-                         'text':(frozen/'REPORT.md').read_text(encoding='utf-8'),'proposed_claims':proposed.get('claims',[])})
-            mapping.append({'document_id':identifier,'episode':episode,'report_sha256':digest_file(frozen/'REPORT.md')})
+                         'text':text,'proposed_claims':proposed})
+            mapping.append({'document_id':identifier,'episode':episode,**errors})
         job=new_job(args.call_id,'submission_extractor','atomic_extract_v1',{'documents':docs})
         if digest_file(job/'source/PROTOCOL.md')!=seal['scoring_policy']['extraction_protocol_sha256']:
             raise ValueError('Extractor prompt differs from sealed version')
@@ -93,10 +107,16 @@ def main() -> None:
             episode=next(v['episode'] for v in mapping['documents'] if v['document_id']==result['evaluation_id'])
             score=score_directional(item['agent_claims'],item['reference_claims'],result['matches'],run_id=episode)
             write_atomic(target/(episode+'-score.json'),score)
+            extraction=read(PRIVATE/f"jobs/{mapping['extraction_id']}/FILTERED.json")
+            extracted=next(d for d in extraction['documents'] if d['document_id']==result['evaluation_id'])
+            quality={'status':'at_claim_cap' if len(extracted['claims'])>=30 else 'within_claim_cap',
+                'extraction_notes':extracted['extraction_notes'],'claim_count':len(extracted['claims']),
+                'limitations':'Arithmetic status=scored does not establish complete or ideally atomic extraction. Cap and compound packaging can change precision.'}
+            write_atomic(target/(episode+'-extraction-quality.json'),quality)
             write_atomic(target/(episode+'-judge-notes.json'),{k:result.get(k,[]) for k in ('uncertainty','alternative_findings')})
             summaries.append({'episode':episode,'status':score['status'],'scores':score['scores'],
                               'agent_claims':score['counts']['agent_claims'],'reference_claims':score['counts']['reference_claims'],
-                              'review_items':len(score['review_items'])})
+                              'review_items':len(score['review_items']),'extraction_quality':quality['status']})
         write_atomic(target/'SUMMARY.json',summaries); print(json.dumps(summaries,indent=2))
 
 

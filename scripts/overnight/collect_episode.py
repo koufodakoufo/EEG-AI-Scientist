@@ -19,6 +19,8 @@ def main() -> None:
     evidence=WORK/f'evidence/{call_id}'; status=json.loads((evidence/'status.json').read_text())
     if status['status'] not in {'completed','failed','timed_out','memory_exceeded','output_exceeded','storage_exceeded','disk_free_floor','launcher_failed'}:
         raise ValueError('Episode has no terminal launcher status')
+    if status.get('process_cleanup',{}).get('surviving_owned_pids') != []:
+        raise ValueError('Refuse to freeze while Actor descendants may still write outputs')
     case=WORK/f'cases/{call_id}-actor'; verify_public_bundle(case/'public')
     frozen=WORK/f'submissions/{call_id}/output'
     manifest=freeze_submission(case/'output',frozen)

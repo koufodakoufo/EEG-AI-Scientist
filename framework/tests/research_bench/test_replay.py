@@ -18,6 +18,11 @@ class ReplayContractTests(unittest.TestCase):
         with self.assertRaises(ValueError): validate_commands([command,command])
         command['artifacts']=['../private/gold.json']
         with self.assertRaises(ValueError): validate_commands([command])
+
+    def test_second_command_cannot_claim_first_commands_old_output(self) -> None:
+        first=self.command(); second={**self.command(),'command_id':'c2','argv':['python3','output/noop.py']}
+        with self.assertRaisesRegex(ValueError,'multiple commands'):
+            validate_commands([first,second])
     def test_freeze_preserves_and_cannot_overwrite(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp); output=root/'output'; output.mkdir()

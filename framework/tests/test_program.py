@@ -8,6 +8,7 @@ import sys
 import time
 
 import pytest
+import yaml
 
 CODE = Path(__file__).resolve().parents[1]
 BIN = str(CODE / "bin" / "eegfm")
@@ -81,6 +82,37 @@ def test_full_loop_with_brief_review_and_sealed_test(root):
     assert [a["event"] for a in audit].count("lock") == 2 and audit[-1]["event"] == "unsealed"
     sessions = [json.loads(l) for l in (run / "sessions.jsonl").read_text().splitlines()]
     assert all(s["progressed"] for s in sessions)
+
+
+def test_iteration_budget_rejects_extra_proposals_and_concurrent_allocation(root):
+    task_path=root/'tasks/synthetic_demo/task.yaml'
+    task=yaml.safe_load(task_path.read_text()); task['search']['max_attempts']=1
+    task_path.write_text(yaml.safe_dump(task,sort_keys=False))
+    eegfm('run','init','--task','synthetic_demo','--run-id','r')
+    eegfm('attempt','new','r','--kind','setup','--title','setup')
+    eegfm('freeze','r','--note','budget test')
+    eegfm('attempt','new','r','--kind','baseline','--title','baseline')
+    # Two simultaneous candidates compete for one remaining iteration slot.
+    argv=[BIN,'attempt','new','r','--kind','iteration','--title','candidate']
+    workers=[subprocess.Popen(argv,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True) for _ in range(2)]
+    results=[(p.communicate(timeout=20),p.returncode) for p in workers]
+    assert sorted(code for _,code in results)==[0,1]
+    failure=next(stderr for (stdout,stderr),code in results if code)
+    assert 'Iteration budget exhausted' in failure
+    records=[json.loads(p.read_text()) for p in (root/'runs/r/attempts').glob('A*/attempt.json')]
+    assert len(records)==3 and sum(a['kind']=='iteration' for a in records)==1
+    # Proposed/failed work consumes its slot too; no repeated resubmission loop.
+    denied=eegfm('attempt','new','r','--kind','iteration','--title','retry',ok=False)
+    assert denied.returncode and 'Iteration budget exhausted' in denied.stderr
+
+
+def test_attempt_budget_cannot_be_raised_by_editing_started_task(root):
+    eegfm('run','init','--task','synthetic_demo','--run-id','r')
+    task_path=root/'tasks/synthetic_demo/task.yaml'
+    task=yaml.safe_load(task_path.read_text()); task['search']['max_attempts']=100
+    task_path.write_text(yaml.safe_dump(task,sort_keys=False))
+    denied=eegfm('attempt','new','r','--kind','setup','--title','changed contract',ok=False)
+    assert denied.returncode and 'task.yaml changed' in denied.stderr
 
 
 def test_resume_after_driver_kill_continues_without_duplicates(root):

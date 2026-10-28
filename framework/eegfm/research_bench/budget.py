@@ -206,7 +206,7 @@ def run_bounded(argv: Sequence[str], *, cwd: Path, output_dir: Path, timeout_sec
                         record['status'] = 'disk_free_floor'; break
                     next_storage_poll = time.monotonic() + 1.0
                 time.sleep(0.1)
-            if process.poll() is not None:
+            if record['status']=='running' and process.poll() is not None:
                 record['status'] = 'completed' if process.returncode == 0 else 'failed'
     except BaseException as exc:
         record.update(status='launcher_failed', error_type=type(exc).__name__, error=str(exc))

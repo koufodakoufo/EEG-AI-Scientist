@@ -9,6 +9,7 @@ runs/<run>/
   sealed/             test outputs; not read before finalize (see evaluation.py)
 """
 import json
+import fcntl
 from pathlib import Path
 import shutil
 import subprocess
@@ -79,9 +80,27 @@ def save_attempt(run, record):
 
 
 def new_attempt(run, kind, title, parent=None, hypothesis=None):
+    # Serialize allocation and budget checks across concurrent CLI processes.
+    # This is an operational guard, not isolation from a malicious same-user edit.
+    with (run / 'attempts' / '.allocation.lock').open('a+b') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        return _new_attempt_locked(run, kind, title, parent, hypothesis)
+
+
+def _new_attempt_locked(run, kind, title, parent=None, hypothesis=None):
     if kind not in KINDS:
         raise SystemExit(f"kind must be one of {sorted(KINDS)}")
+    meta=read_json(run / 'run.json'); task=load_task(meta['task_id'])
+    if sha256(task['_path']) != meta['task_yaml_sha256']:
+        raise SystemExit('task.yaml changed after the run started; start a new run for a new contract')
     existing = attempts(run)
+    limit=task['search'].get('max_attempts')
+    if limit is not None and (type(limit) is not int or limit < 0):
+        raise SystemExit('search.max_attempts must be a nonnegative integer')
+    # Existing reve_isa contract defines this as iterations after the baseline.
+    # Proposed and failed iterations consume allocation; setup/baseline do not.
+    if kind == 'iteration' and limit is not None and sum(a['kind']=='iteration' for a in existing) >= limit:
+        raise SystemExit(f'Iteration budget exhausted: {limit} allocated; finalize or start a separately authorized run')
     if parent and parent not in {a["id"] for a in existing}:
         raise SystemExit(f"Unknown parent attempt {parent}")
     freeze = read_json(run / "freeze.json")

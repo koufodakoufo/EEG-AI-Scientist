@@ -128,6 +128,19 @@ class BudgetTests(unittest.TestCase):
         self.assertEqual(result['status'],'completed')
         self.assertEqual((self.root/'stdin-run/stdout.jsonl').read_text().strip(),'240000')
 
+    @unittest.skipUnless(sys.platform=='linux','Linux supervisor race regression')
+    def test_limit_reason_survives_child_exit_race(self) -> None:
+        from unittest.mock import Mock,patch
+        child=Mock(pid=123,returncode=0); child.poll.side_effect=[None,0]
+        tree=Mock(); tree.rss_bytes.return_value=0; tree.terminate.return_value={'surviving_owned_pids':[]}
+        with patch('eegfm.research_bench.budget.subprocess.Popen',return_value=child), \
+             patch('eegfm.research_bench.processes.OwnedProcessTree',return_value=tree), \
+             patch('eegfm.research_bench.processes.affinity_lock',return_value=lambda:None), \
+             patch('eegfm.research_bench.budget.time.monotonic',side_effect=[0,2,3]):
+            report=run_bounded(['fixture'],cwd=self.root,output_dir=self.root/'race',timeout_seconds=1,minimum_free_bytes=0)
+        self.assertEqual(report['status'],'timed_out')
+        self.assertEqual(report['exit_code'],0)
+
     @unittest.skipUnless(sys.platform=='linux','Linux launcher enforcement test')
     def test_hard_timeout_and_affinity(self) -> None:
         report=run_bounded([sys.executable,'-c','import time; time.sleep(20)'],cwd=self.root,output_dir=self.root/'run',timeout_seconds=0.4,minimum_free_bytes=0)

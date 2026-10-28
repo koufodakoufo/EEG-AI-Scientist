@@ -19,7 +19,7 @@ from .bundle import checked_file,digest_file,safe_relative,verify_public_bundle
 def validate_commands(value: Any) -> list[dict[str,Any]]:
     if not isinstance(value,list) or not 0<len(value)<=8:
         raise ValueError('COMMANDS.json needs 1–8 analysis commands')
-    identifiers:set[str]=set()
+    identifiers:set[str]=set(); owners:set[str]=set()
     records=[]
     for item in value:
         if not isinstance(item,dict) or set(item)!={'command_id','argv','artifacts'}:
@@ -40,6 +40,9 @@ def validate_commands(value: Any) -> list[dict[str,Any]]:
         for name in artifacts:
             if not isinstance(name,str): raise ValueError('Artifact path is not text')
             safe_relative(name)
+            if name in owners:
+                raise ValueError('An artifact cannot be claimed by multiple commands; preserve distinct stage outputs')
+            owners.add(name)
         records.append({'command_id':identifier,'argv':list(argv),'artifacts':list(artifacts)})
     return records
 

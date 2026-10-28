@@ -4,7 +4,7 @@
   "deadline_at": "2026-10-29T08:29:40+08:00",
   "stop_new_research_at": "2026-10-29T07:59:40+08:00",
   "extra_model_calls_max": 24,
-  "extra_model_calls_reserved": 15,
+  "extra_model_calls_reserved": 18,
   "max_parallel_model_workers": 2,
   "per_call_timeout_seconds": 1800,
   "preflight_timeout_seconds": 90,
@@ -181,6 +181,39 @@
       "updated_at": "2026-10-28T18:27:54.451248+00:00",
       "elapsed_seconds": 41.738,
       "evidence": "server/evidence/M15"
+    },
+    {
+      "id": "M16",
+      "role": "holdout_actor_baseline_pair1",
+      "status": "failed",
+      "reserved_at": "2026-10-28T18:29:44.781827+00:00",
+      "timeout_seconds": 900,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-28T18:37:03.557689+00:00",
+      "outcome": "external_model_capacity_failure",
+      "elapsed_seconds": 115.394,
+      "evidence": "server/evidence/M16",
+      "failure_message": "Selected model is at capacity"
+    },
+    {
+      "id": "M24",
+      "role": "builder_final_independent_review",
+      "status": "completed",
+      "reserved_at": "2026-10-28T18:30:34.558443+00:00",
+      "timeout_seconds": 600,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-28T18:42:43.486308+00:00",
+      "evidence": "docs/overnight/2026-10-29/INDEPENDENT_REVIEW.md",
+      "outcome": "four_P2_findings_no_P1_demonstrated"
+    },
+    {
+      "id": "M17",
+      "role": "holdout_actor_skill_pair1",
+      "status": "running",
+      "reserved_at": "2026-10-28T18:37:03.610579+00:00",
+      "timeout_seconds": 900,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-28T18:37:03.630697+00:00"
     }
   ]
 }
