@@ -4,7 +4,7 @@
   "deadline_at": "2026-10-29T08:29:40+08:00",
   "stop_new_research_at": "2026-10-29T07:59:40+08:00",
   "extra_model_calls_max": 24,
-  "extra_model_calls_reserved": 6,
+  "extra_model_calls_reserved": 12,
   "max_parallel_model_workers": 2,
   "per_call_timeout_seconds": 1800,
   "preflight_timeout_seconds": 90,
@@ -73,11 +73,78 @@
     {
       "id": "M06",
       "role": "builder_runtime_review",
-      "status": "running",
+      "status": "completed",
       "reserved_at": "2026-10-28T17:12:45.384940+00:00",
       "timeout_seconds": 1800,
       "cost_usd": "unknown",
-      "updated_at": "2026-10-28T17:14:16.775431+00:00"
+      "updated_at": "2026-10-28T17:33:52.233532+00:00",
+      "evidence": "RUNTIME_REVIEW.md"
+    },
+    {
+      "id": "M07",
+      "role": "isolation_canary",
+      "status": "completed",
+      "reserved_at": "2026-10-28T17:26:26.968864+00:00",
+      "timeout_seconds": 300,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-28T17:37:30.031605+00:00",
+      "outcome": "infrastructure_blocked",
+      "blocked_reason": "absolute runtime alias under denied control home",
+      "evidence": "server/evidence/M07"
+    },
+    {
+      "id": "M08",
+      "role": "builder_independent_review",
+      "status": "cancelled",
+      "reserved_at": "2026-10-28T17:33:52.304977+00:00",
+      "timeout_seconds": 1500,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-28T18:08:29.216586+00:00",
+      "outcome": "interrupted_after_timebox",
+      "evidence": "CPU affinity review finding addressed in 57ed1be; no final independent review report delivered"
+    },
+    {
+      "id": "M09",
+      "role": "isolation_canary",
+      "status": "completed",
+      "reserved_at": "2026-10-28T17:37:30.086358+00:00",
+      "timeout_seconds": 300,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-28T17:44:13.678910+00:00",
+      "outcome": "infrastructure_blocked",
+      "blocked_reason": "broad deny overrides runtime exception on this Linux profile",
+      "evidence": "server/evidence/M09"
+    },
+    {
+      "id": "M10",
+      "role": "isolation_canary",
+      "status": "completed",
+      "reserved_at": "2026-10-28T17:44:13.730068+00:00",
+      "timeout_seconds": 300,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-28T17:48:36.201047+00:00",
+      "outcome": "live_isolation_canary_passed",
+      "evidence": "server/evidence/M10",
+      "elapsed_seconds": 39.137
+    },
+    {
+      "id": "M11",
+      "role": "reference_extractor",
+      "status": "completed",
+      "reserved_at": "2026-10-28T17:57:03.530873+00:00",
+      "timeout_seconds": 600,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-28T17:59:44.521518+00:00",
+      "evidence": "server/evidence/M11",
+      "elapsed_seconds": 63.315
+    },
+    {
+      "id": "M12",
+      "role": "development_actor",
+      "status": "reserved",
+      "reserved_at": "2026-10-28T18:08:29.250862+00:00",
+      "timeout_seconds": 900,
+      "cost_usd": "unknown"
     }
   ]
 }

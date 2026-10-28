@@ -35,8 +35,34 @@ def validate_extraction(value: Any,documents: list[dict[str,Any]]) -> dict[str,A
             else:
                 if span.get('source')!=source['source']: raise ValidationError('Wrong source filename')
             validated=AtomicClaim.from_dict(claim)
+            if source.get('task_id') and validated.scope.get('task_id') != source['task_id']:
+                raise ValidationError('Extracted claim has wrong task scope')
             if validated.claim_id in ids: raise ValidationError('Duplicate extracted claim ID')
             ids.add(validated.claim_id); claims.append(validated.to_dict())
         result.append({'document_id':identifier,'claims':claims,'extraction_notes':item['extraction_notes']})
     if seen!=set(sources): raise ValidationError('Extraction omitted a source document')
     return {'protocol_version':'atomic_extract_v1','documents':result,'deterministic_span_alignments':alignments}
+
+
+FIXTURE_ADMIN_HEADER = 'Synthetic-only frozen reference; no Actor performance has been measured or imputed.'
+
+
+def exclude_fixture_administration(validated: dict[str,Any]) -> dict[str,Any]:
+    """Frozen, symmetric exact-text filter for non-scientific fixture provenance.
+
+    Retain raw extraction separately. This is not semantic claim selection:
+    only the one generator's administrative header is excluded, on either side.
+    """
+    result=json.loads(json.dumps(validated)); excluded=[]
+    for document in result['documents']:
+        keep=[]
+        for claim in document['claims']:
+            if claim['text']==FIXTURE_ADMIN_HEADER:
+                excluded.append({'document_id':document['document_id'],'claim_id':claim['claim_id'],
+                                 'text':claim['text'],'reason':'exact_fixture_administrative_header'})
+            else:
+                keep.append(claim)
+        document['claims']=keep
+    result['postprocessing']={'version':'exclude_fixture_admin_v1','applies_to':'reference_and_submission',
+                              'excluded':excluded}
+    return result

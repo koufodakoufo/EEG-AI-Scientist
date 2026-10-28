@@ -1,6 +1,6 @@
 from __future__ import annotations
 import unittest
-from eegfm.research_bench.extraction import validate_extraction
+from eegfm.research_bench.extraction import validate_extraction,exclude_fixture_administration,FIXTURE_ADMIN_HEADER
 from eegfm.research_bench.schema import ValidationError
 
 
@@ -21,6 +21,20 @@ class ExtractionTests(unittest.TestCase):
         with self.assertRaises(ValidationError): validate_extraction(value,documents)
     def test_missing_document_rejected(self) -> None:
         value,documents=self.example(); value['documents']=[]
+        with self.assertRaises(ValidationError): validate_extraction(value,documents)
+
+    def test_administrative_header_exclusion_preserves_raw_and_other_limitations(self) -> None:
+        value,documents=self.example(FIXTURE_ADMIN_HEADER)
+        raw=validate_extraction(value,documents); filtered=exclude_fixture_administration(raw)
+        self.assertEqual(len(raw['documents'][0]['claims']),1)
+        self.assertEqual(filtered['documents'][0]['claims'],[])
+        self.assertEqual(len(filtered['postprocessing']['excluded']),1)
+        value,documents=self.example('Synthetic evidence does not establish physiological causality.')
+        filtered=exclude_fixture_administration(validate_extraction(value,documents))
+        self.assertEqual(len(filtered['documents'][0]['claims']),1)
+
+    def test_task_scope_must_match_document(self) -> None:
+        value,documents=self.example(); documents[0]['task_id']='expected'
         with self.assertRaises(ValidationError): validate_extraction(value,documents)
 
 

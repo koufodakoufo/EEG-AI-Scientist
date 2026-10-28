@@ -1,16 +1,129 @@
 {
-  "schema_version": "isolation_report_v1",
-  "status": "blocked",
-  "blocked_reason": "isolation",
-  "detail": "Offline native sandbox boundaries passed, but live model tool execution is blocked by missing codex-code-mode-host; hosted web/MCP tool exclusion not yet verified.",
+  "schema_version": "isolation_report_v2",
+  "status": "passed",
+  "call_id": "M10",
   "cli_version": "0.165.0",
-  "offline_probe": "server/evidence/isolation-probe-v4.json",
-  "live_probe": "server/evidence/M05",
-  "model_control_response": "M03 CODEX_READY, exit0,46.34s",
-  "offline_positive_checks": ["public_read", "current_run_write"],
-  "offline_denied_checks": ["private_absolute", "private_parent", "private_symlink", "other_case", "control_home", "ancestor_agents", "gold_write", "budget_write", "public_write", "direct_https", "local_proxy", "local_ssh"],
-  "unresolved_checks": ["live_shell_permissions", "hosted_web_unavailable", "mcp_unavailable", "collaboration_unavailable", "fresh_context_instruction_audit", "host_proc_namespace"],
-  "tested_research_actors": 0,
-  "distillers": 0,
-  "blind_evaluation_claimed": false
+  "native_binary_sha256": "c06a67fd8ac76508dc78bd99ce20c9f317b8d568beda59485f3f4134df9962d5",
+  "code_mode_host_sha256": "522935d4392ec9674fab60b239b5495992c6a93e4deb65113a216b6f5451ccd4",
+  "bwrap_sha256": "bf6cf3d4456665f5d80c14eb79a76e0ce87b39a0883e614a161658b4ec33492c",
+  "profile_template_sha256": "a6113f182ca2781126e21a82753857a42acad4ca9e3783a49b6fc69f177c28c3",
+  "profile_sha256": "0f940d1b32fc7f87866b91fcc1e0eafee18f8b10c1d6758acc4cdb6702c27663",
+  "probes": {
+    "ancestor_agents": {
+      "allowed": false,
+      "errno": 2,
+      "error": "FileNotFoundError"
+    },
+    "budget.json": {
+      "allowed": false,
+      "errno": 2,
+      "error": "FileNotFoundError"
+    },
+    "control_config": {
+      "allowed": false,
+      "errno": 13,
+      "error": "PermissionError"
+    },
+    "direct_socket": {
+      "allowed": false,
+      "errno": 1,
+      "error": "PermissionError"
+    },
+    "events.jsonl": {
+      "allowed": false,
+      "errno": 2,
+      "error": "FileNotFoundError"
+    },
+    "generic_proxy": {
+      "allowed": false,
+      "errno": 1,
+      "error": "PermissionError"
+    },
+    "gold.txt": {
+      "allowed": false,
+      "errno": 2,
+      "error": "FileNotFoundError"
+    },
+    "host_controller_proc": {
+      "allowed": false,
+      "errno": 2,
+      "error": "FileNotFoundError"
+    },
+    "https": {
+      "allowed": false,
+      "detail": "<urlopen error [Errno -3] Temporary failure in name resolution>",
+      "error": "URLError"
+    },
+    "live_local_service": {
+      "allowed": false,
+      "errno": 1,
+      "error": "PermissionError"
+    },
+    "other_case": {
+      "allowed": false,
+      "errno": 2,
+      "error": "FileNotFoundError"
+    },
+    "own_write": {
+      "allowed": true
+    },
+    "private_absolute": {
+      "allowed": false,
+      "errno": 2,
+      "error": "FileNotFoundError"
+    },
+    "private_parent": {
+      "allowed": false,
+      "errno": 2,
+      "error": "FileNotFoundError"
+    },
+    "private_symlink": {
+      "allowed": false,
+      "errno": 2,
+      "error": "FileNotFoundError"
+    },
+    "proxy_environment_present": false,
+    "public_read": {
+      "allowed": true,
+      "bytes": 134
+    },
+    "public_write": {
+      "allowed": false,
+      "errno": 30,
+      "error": "OSError"
+    },
+    "scorer.py": {
+      "allowed": false,
+      "errno": 2,
+      "error": "FileNotFoundError"
+    },
+    "visible_process_ids": [
+      "1",
+      "2"
+    ]
+  },
+  "tool_surface_verified": true,
+  "model_control_succeeded": true,
+  "actual_model": "gpt-6.1-sol",
+  "reasoning_effort": "medium",
+  "declared_top_level_tools": [
+    "clock.sleep",
+    "functions.exec",
+    "functions.request_user_input",
+    "functions.request_user_input_async",
+    "functions.wait"
+  ],
+  "mcp_status": "generic resource helper APIs remain; configured resource/template lists empty and unknown server fails closed",
+  "evidence": {
+    "events_sha256": "a5bed082a3f9e33e019606fdababc900390c583e0227bf89820cfb3992ffd3d1",
+    "visible_trace_sha256": "aca46add5052d273dc2e3ba1e6ba19db22db2fade6c3f8a39daa9e69f39b1c39",
+    "probe_sha256": "5d4f384bfbbb30eac9cff60b01b654e067caa2114163f9b31ee8ee120a576738",
+    "native_status_sha256": "154dea8bab82277747ad4928d97ea5c17481d87cce476cbc819243aef7bc4601"
+  },
+  "limits": [
+    "Empirical boundary for this exact binary/profile, not a kernel vulnerability proof.",
+    "RAM is enforced by sampled descendant RSS (100ms), not a delegated kernel cgroup; virtual address space is intentionally not capped.",
+    "Hosted model control traffic is permitted; tool network traffic is denied.",
+    "No claim of absence of pretraining knowledge or absolute paper contamination."
+  ]
 }
