@@ -56,6 +56,7 @@ class ChatBackend(BaseModel):
     credential_variable: str = "DEEPSEEK_API_KEY"
     max_output_tokens: int = 16384
     thinking: bool = True
+    thinking_level: str | None = None
     reasoning_effort: str = "high"
     price: PriceConfig | None = None
 
@@ -167,6 +168,7 @@ def _build_chat_client(
             max_tokens=backend.max_output_tokens,
             attribution=attribution,
             thinking=backend.thinking,
+            thinking_level=backend.thinking_level,
         )
         gemini_client.backend_status = backend.status
         return gemini_client

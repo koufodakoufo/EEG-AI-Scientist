@@ -87,7 +87,8 @@ class ProposalRecord(StrictModel):
     body_path: str
     body_sha256: str
     produced_at: str = ""
-    cost_cny: float = 0.0
+    cost_cny: float | None = None
+    binding_source: str = "path"
 
     @field_validator("proposal_id")
     @classmethod
@@ -106,6 +107,7 @@ class ReviewRecord(StrictModel):
     review_id: str
     study_id: str
     packet_id: str
+    display_id: str = ""
     proposal_id: str
     run_id: str
     body_sha256: str
@@ -120,6 +122,8 @@ class ReviewRecord(StrictModel):
     unreviewed: list[str] = Field(default_factory=list)
     raw_path: str
     raw_sha256: str
+    form_version: str = ""
+    binding_source: str = ""
     converter: str = "review_import.py"
     notes: str = ""
 
@@ -155,6 +159,7 @@ def resolve(root: Path, value: str) -> Path:
 
 def validate_spec(spec: StudySpec, root: Path, registry: BackendRegistry | None = None) -> list[str]:
     errors: list[str] = []
+    task_path = resolve(root, spec.task_path)
     for label, value in (
         ("task", spec.task_path),
         ("material manifest", spec.material_manifest_path),
@@ -163,8 +168,24 @@ def validate_spec(spec: StudySpec, root: Path, registry: BackendRegistry | None 
     ):
         if not resolve(root, value).exists():
             errors.append(f"{label} missing: {value}")
-    if not spec.question.strip():
-        errors.append("question is empty")
+    if task_path.exists():
+        try:
+            if not task_path.read_text(encoding="utf-8").strip():
+                errors.append(f"task file is empty: {spec.task_path}")
+        except OSError as error:
+            errors.append(f"task file unreadable: {spec.task_path} ({type(error).__name__})")
+    elif not spec.question.strip():
+        errors.append("no task text: task.md is missing and question is empty")
+    manifest_path = resolve(root, spec.material_manifest_path)
+    if manifest_path.exists():
+        try:
+            raw_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as error:
+            errors.append(f"material manifest unreadable: {spec.material_manifest_path} ({type(error).__name__})")
+        else:
+            materials = raw_manifest.get("materials") if isinstance(raw_manifest, dict) else None
+            if not isinstance(materials, list) or not materials:
+                errors.append("material manifest has no materials; add at least one registered item before running")
     if not spec.arms:
         errors.append("no arms configured")
     if len({arm.name for arm in spec.arms}) != len(spec.arms):
@@ -172,8 +193,16 @@ def validate_spec(spec: StudySpec, root: Path, registry: BackendRegistry | None 
     for arm in spec.arms:
         if arm.repeats < 1 or arm.repeats > 3:
             errors.append(f"arm {arm.name}: repeats must be 1..3")
-        if arm.rule_path and not resolve(root, arm.rule_path).exists():
-            errors.append(f"arm {arm.name}: rule missing: {arm.rule_path}")
+        if arm.rule_path:
+            rule_path = resolve(root, arm.rule_path)
+            if not rule_path.exists():
+                errors.append(f"arm {arm.name}: rule missing: {arm.rule_path}")
+            else:
+                try:
+                    if not rule_path.read_text(encoding="utf-8").strip():
+                        errors.append(f"arm {arm.name}: rule file is empty: {arm.rule_path}")
+                except OSError as error:
+                    errors.append(f"arm {arm.name}: rule unreadable: {arm.rule_path} ({type(error).__name__})")
     if registry is not None:
         for arm in spec.arms:
             try:

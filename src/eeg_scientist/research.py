@@ -52,6 +52,12 @@ class ResearchConfig(BaseModel):
     question: str
     deadline: str
     stop_new_at: str
+    # Authoritative task body.  ``question`` is metadata/backward compatibility
+    # only; when a task file is configured its exact text is sent to the model.
+    task_text_path: str | None = None
+    study_id: str = ""
+    arm: str = ""
+    repeat: int = 0
     system_prompt_path: str = ""
     deliverables: list[str] = Field(default_factory=list)
     materials_manifest_path: str | None = None
@@ -82,6 +88,9 @@ class ResearchState(BaseModel):
     model_config = ConfigDict(extra="forbid", protected_namespaces=())
 
     run_id: str
+    study_id: str = ""
+    arm: str = ""
+    repeat: int = 0
     phase: Literal["pending", "running", "completed", "completed_unverified", "incomplete", "failed", "blocked"] = "pending"
     accepted: bool = False
     acceptance: Literal["pending", "accepted", "unverified", "rejected"] = "pending"
@@ -170,11 +179,59 @@ def _int_argument(arguments: dict[str, object], key: str, default: int) -> int:
         return default
 
 
-def _load_text(path: str, fallback: str) -> str:
-    candidate = Path(path) if path else None
-    if candidate is not None and candidate.exists():
-        return candidate.read_text(encoding="utf-8")
-    return fallback
+def _read_required_text(path_value: str, label: str) -> str:
+    """Read a configured file or fail loudly; never fall back to empty text."""
+
+    path = Path(path_value)
+    if not path.is_file():
+        raise ResearchError(f"{label} is configured but missing: {path}")
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as error:
+        raise ResearchError(f"{label} is configured but unreadable: {path} ({type(error).__name__})") from error
+    if not text.strip():
+        raise ResearchError(f"{label} is empty: {path}; an empty file is not a valid frozen input")
+    return text
+
+
+def load_task_text(config: ResearchConfig) -> tuple[str, str]:
+    """Return the authoritative task text and its source.
+
+    New studies set ``task_text_path`` to the frozen ``task.md``.  Only runs
+    created before that field existed fall back to ``question``.
+    """
+
+    if config.task_text_path:
+        return _read_required_text(config.task_text_path, "task file"), config.task_text_path
+    if config.question.strip():
+        return config.question, "question (legacy fallback)"
+    raise ResearchError("no task configured: set task_text_path or a non-empty question")
+
+
+def load_base_system_prompt(config: ResearchConfig) -> tuple[str, str]:
+    if config.system_prompt_path:
+        return _read_required_text(config.system_prompt_path, "system prompt"), config.system_prompt_path
+    return GENERIC_SYSTEM_PROMPT, "built-in generic prompt"
+
+
+def compose_system_prompt(base_text: str, rule_text: str, rule_version: str) -> str:
+    """Embed the applied rule package inside the system message.
+
+    The block is part of the request itself, not just of a sidecar snapshot.
+    The exact text and its hash are recorded in ``input_snapshot.json``.
+    """
+
+    text = base_text.rstrip()
+    normalized_rule = rule_text.strip()
+    if not normalized_rule:
+        return text + "\n"
+    return (
+        text
+        + f"\n\n## Applied research rules (version: {rule_version})\n\n"
+        + "The following rule package is a frozen part of this run's instructions.\n\n"
+        + normalized_rule
+        + "\n"
+    )
 
 
 def _material_index(config: ResearchConfig) -> list[dict[str, object]]:
@@ -192,7 +249,13 @@ def _material_index(config: ResearchConfig) -> list[dict[str, object]]:
     return result
 
 
-def _user_prompt(config: ResearchConfig) -> str:
+def compose_user_prompt(
+    config: ResearchConfig,
+    task_text: str,
+    task_source: str,
+    *,
+    local_time: str | None = None,
+) -> str:
     deliverables = config.deliverables or [
         "一份主要研究提案：竞争解释、区分实验、预期结果、限制和未解决问题。",
     ]
@@ -209,11 +272,14 @@ def _user_prompt(config: ResearchConfig) -> str:
         if config.research_mode == "materials_only"
         else "You may search and fetch public sources, but fetch and read before citing."
     )
-    deadline_note = f"Current local time: {_local_time()}. Finish before {config.deadline}."
-    return f"""Research question:
-{config.question}
+    deadline_note = f"Current local time: {local_time or _local_time()}. Finish before {config.deadline}."
+    question_line = ""
+    if config.question.strip() and task_source != "question (legacy fallback)":
+        question_line = f"Task label (metadata only; the full task body is above):\n{config.question}\n\n"
+    return f"""Research task (authoritative source: {task_source}):
+{task_text.rstrip()}
 
-{mode_note}
+{question_line}{mode_note}
 
 Material package (version: {config.material_version}):
 {materials_block}
@@ -399,33 +465,230 @@ class ResearchRunner:
     def _material_manifest_path(self) -> Path | None:
         return Path(self.config.materials_manifest_path) if self.config.materials_manifest_path else None
 
-    def _snapshot_rule(self) -> dict[str, object]:
-        text = ""
-        source = "inline-empty"
+    def _snapshot_rule(self, *, write: bool = True) -> dict[str, object]:
+        """Freeze the rule text that will actually be embedded in the request.
+
+        A configured rule file that is missing, unreadable, or empty is a hard
+        error.  On resume the frozen snapshot is authoritative; a changed source
+        file is refused rather than silently replacing the rule mid-run.
+        ``write=False`` is used for a legacy resume without an input snapshot, so
+        old run directories are never modified just by resuming.
+        """
+
+        version = self.config.rule_version.strip()
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,60}", version):
+            raise ResearchError(f"unsafe rule_version for a snapshot filename: {version!r}")
+        source_text: str | None = None
+        source = "none (no rule configured)"
         if self.config.rule_text_path:
-            path = Path(self.config.rule_text_path)
-            if path.exists():
-                text = path.read_text(encoding="utf-8")
-                source = str(path)
+            source_text = _read_required_text(self.config.rule_text_path, "rule file")
+            source = self.config.rule_text_path
         rule_dir = ensure_dir(self.run_dir / "rules")
-        target = rule_dir / f"{self.config.rule_version}.md"
+        target = rule_dir / f"{version}.md"
         if target.exists():
-            existing = target.read_text(encoding="utf-8")
-            if existing != (text if text.endswith("\n") else text + "\n"):
-                raise ResearchError(f"rule snapshot already exists with different content: {target}")
+            snapshot_text = target.read_text(encoding="utf-8")
+            if source_text is not None:
+                normalized_source = source_text if source_text.endswith("\n") else source_text + "\n"
+                if snapshot_text != normalized_source:
+                    raise ResearchError(
+                        "rule source changed after this run was frozen: "
+                        f"{source}; restore it or start a new run with a new rule_version ({target})"
+                    )
+            text = snapshot_text
+        elif not write:
+            text = source_text or ""
             return {
-                "version": self.config.rule_version,
+                "version": version,
                 "source": source,
                 "path": str(target),
-                "sha256": sha256_file(target),
-                "chars": len(text),
+                "sha256": "",
+                "text_sha256": sha256_text(text),
+                "chars": len(text.rstrip("\n")),
+                "injected_into": "system" if text.strip() else "none",
+                "text": text,
             }
-        return write_rule_snapshot(
-            self.run_dir,
-            rule_text=text,
-            rule_version=self.config.rule_version,
-            source=source,
+        else:
+            write_rule_snapshot(
+                self.run_dir,
+                rule_text=source_text or "",
+                rule_version=version,
+                source=source,
+            )
+            text = target.read_text(encoding="utf-8")
+        return {
+            "version": version,
+            "source": source,
+            "path": str(target),
+            "sha256": sha256_file(target),
+            "text_sha256": sha256_text(text),
+            "chars": len(text.rstrip("\n")),
+            "injected_into": "system" if text.strip() else "none",
+            "text": text,
+        }
+
+    def _input_snapshot_path(self) -> Path:
+        return self.run_dir / "input_snapshot.json"
+
+    def _material_snapshot(self) -> dict[str, object]:
+        material_path = self._material_manifest_path()
+        actual_sha = sha256_file(material_path) if material_path is not None and material_path.exists() else ""
+        return {
+            "version": self.config.material_version,
+            "manifest_path": str(material_path) if material_path is not None else "",
+            "manifest_sha256": actual_sha,
+            "expected_manifest_sha256": self.config.material_manifest_sha256,
+            "evidence_ids": sorted(
+                str(item["evidence_id"]) for item in _material_index(self.config) if isinstance(item.get("evidence_id"), str)
+            ),
+        }
+
+    def _input_snapshot_payload(
+        self,
+        *,
+        system_text: str,
+        user_text: str,
+        base_system: str,
+        base_source: str,
+        task_text: str,
+        task_source: str,
+        rule_snapshot: dict[str, object],
+    ) -> dict[str, object]:
+        tool_specs = _tool_specs(self.config)
+        return {
+            "schema_version": "1",
+            "run_id": self.config.run_id,
+            "created_at": utc_now(),
+            "study_id": self.config.study_id,
+            "arm": self.config.arm,
+            "repeat": self.config.repeat,
+            "system": {
+                "path": self.config.system_prompt_path,
+                "source": base_source,
+                "base_sha256": sha256_text(base_system),
+                "sha256": sha256_text(system_text),
+                "text": system_text,
+            },
+            "task": {
+                "path": self.config.task_text_path or "",
+                "source": task_source,
+                "sha256": sha256_text(task_text),
+                "text": task_text,
+            },
+            "question": {"text": self.config.question, "sha256": sha256_text(self.config.question)},
+            "rule": {
+                "version": rule_snapshot["version"],
+                "source": rule_snapshot["source"],
+                "snapshot_path": rule_snapshot["path"],
+                "snapshot_sha256": rule_snapshot["sha256"],
+                "text_sha256": rule_snapshot["text_sha256"],
+                "chars": rule_snapshot["chars"],
+                "injected_into": rule_snapshot["injected_into"],
+                "text": rule_snapshot["text"],
+            },
+            "material": self._material_snapshot(),
+            "tools": {
+                "names": _tool_names(self.config),
+                "sha256": sha256_text(json.dumps(tool_specs, sort_keys=True, ensure_ascii=False)),
+                "specs": tool_specs,
+            },
+            "request": {
+                "system_sha256": sha256_text(system_text),
+                "user_sha256": sha256_text(user_text),
+                "message_roles": ["system", "user"],
+            },
+        }
+
+    def _write_scientist_input(
+        self,
+        payload: dict[str, object],
+        *,
+        system_text: str,
+        user_text: str,
+    ) -> None:
+        rule = payload["rule"]
+        task = payload["task"]
+        tools = payload["tools"]
+        system = payload["system"]
+        request = payload["request"]
+        if not (isinstance(rule, dict) and isinstance(task, dict) and isinstance(tools, dict) and isinstance(system, dict) and isinstance(request, dict)):
+            raise ResearchError("input snapshot payload is malformed")
+        rule_text = str(rule.get("text", ""))
+        rule_section = (
+            f"## Rule package (version `{rule.get('version')}`, verbatim; embedded in System)\n\n"
+            f"source: `{rule.get('source')}`  \n"
+            f"snapshot: `{rule.get('snapshot_path')}`  \n"
+            f"sha256: `{rule.get('snapshot_sha256')}`\n\n"
+            + (rule_text if rule_text.strip() else "(no rule configured for this arm)")
+            + "\n"
         )
+        atomic_write_text(
+            self.run_dir / "scientist_input.md",
+            "# Exact Scientist input (first turn)\n\n"
+            f"- run_id: `{self.config.run_id}`\n"
+            f"- task source: `{task.get('source')}` (`{task.get('path')}`)\n"
+            f"- task sha256: `{task.get('sha256')}`\n"
+            f"- system sha256: `{system.get('sha256')}`\n"
+            f"- user sha256: `{request.get('user_sha256')}`\n"
+            f"- material_version: `{self.config.material_version}`\n"
+            f"- rule_version: `{rule.get('version')}` (injected into: `{rule.get('injected_into')}`)\n"
+            f"- tool names: {', '.join(str(name) for name in tools.get('names', []) if isinstance(name, str))}\n"
+            f"- tool definitions sha256: `{tools.get('sha256')}`\n\n"
+            "## System\n\n" + system_text + "\n\n" + rule_section + "\n## User\n\n" + user_text + "\n",
+        )
+
+    def _verify_frozen_inputs(self, *, rule_text: str, task_text: str) -> None:
+        if len(self.messages) < 2 or self.messages[0].get("role") != "system" or self.messages[1].get("role") != "user":
+            raise ResearchError("existing messages.json does not start with system/user messages")
+        actual_system = str(self.messages[0].get("content", ""))
+        actual_user = str(self.messages[1].get("content", ""))
+        snapshot_path = self._input_snapshot_path()
+        if snapshot_path.exists():
+            snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+            request = snapshot.get("request", {})
+            rule = snapshot.get("rule", {})
+            task = snapshot.get("task", {})
+            if not isinstance(request, dict) or not isinstance(rule, dict) or not isinstance(task, dict):
+                raise ResearchError(f"input snapshot is malformed: {snapshot_path}")
+            if sha256_text(actual_system) != request.get("system_sha256"):
+                raise ResearchError("frozen system prompt does not match the system message actually stored")
+            if sha256_text(actual_user) != request.get("user_sha256"):
+                raise ResearchError("frozen user prompt does not match the user message actually stored")
+            frozen_rule = str(rule.get("text", ""))
+            if sha256_text(frozen_rule) != rule.get("text_sha256"):
+                raise ResearchError("frozen rule text hash does not match input_snapshot.json")
+            if frozen_rule != rule_text:
+                raise ResearchError(
+                    "the configured rule differs from the rule frozen for this run; "
+                    "restore the original rule or start a new run"
+                )
+            if frozen_rule.strip() and frozen_rule.strip() not in actual_system:
+                raise ResearchError("frozen rule text is absent from the system message; refusing to continue")
+            frozen_task = str(task.get("text", ""))
+            if frozen_task != task_text:
+                raise ResearchError(
+                    "the task file differs from the task frozen for this run; "
+                    "restore the original task or start a new run"
+                )
+            if frozen_task.strip() and frozen_task.strip() not in actual_user:
+                raise ResearchError("frozen task text is absent from the user message; refusing to continue")
+            manifest_path = self.run_dir / "run_manifest.json"
+            if manifest_path.exists():
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                manifest_rule = manifest.get("rule", {})
+                if isinstance(manifest_rule, dict) and manifest_rule.get("sha256") != rule.get("snapshot_sha256"):
+                    raise ResearchError("run manifest rule hash does not match the frozen rule snapshot")
+            return
+        # Legacy run created before input_snapshot.json existed: never patch it.
+        if rule_text.strip() and rule_text.strip() not in actual_system:
+            raise ResearchError(
+                "this existing run predates rule injection (the rule text is not in its system message); "
+                "its history is left unchanged. Start a new run instead of resuming this one"
+            )
+        if self.config.task_text_path and task_text.strip() not in actual_user:
+            raise ResearchError(
+                "this existing run predates task.md injection (the task body is not in its user message); "
+                "its history is left unchanged. Start a new run instead of resuming this one"
+            )
 
     def _initialize(self) -> None:
         material_path = self._material_manifest_path()
@@ -443,7 +706,79 @@ class ResearchRunner:
         if missing:
             raise ResearchError(f"material package references missing evidence: {', '.join(missing[:5])}")
 
-        rule_snapshot = self._snapshot_rule()
+        legacy_resume = self.messages_path.exists() and not self._input_snapshot_path().exists()
+        rule_snapshot = self._snapshot_rule(write=not legacy_resume)
+        task_text, task_source = load_task_text(self.config)
+        base_system, base_source = load_base_system_prompt(self.config)
+        system_text = compose_system_prompt(base_system, str(rule_snapshot["text"]), str(rule_snapshot["version"]))
+        user_text = compose_user_prompt(self.config, task_text, task_source)
+        snapshot_payload = self._input_snapshot_payload(
+            system_text=system_text,
+            user_text=user_text,
+            base_system=base_system,
+            base_source=base_source,
+            task_text=task_text,
+            task_source=task_source,
+            rule_snapshot=rule_snapshot,
+        )
+
+        if self.messages_path.exists():
+            raw = json.loads(self.messages_path.read_text(encoding="utf-8"))
+            if not isinstance(raw, list):
+                raise ResearchError("messages.json is not a list")
+            self.messages = [item for item in raw if isinstance(item, dict)]
+            self._verify_frozen_inputs(rule_text=str(rule_snapshot["text"]), task_text=task_text)
+            if self._input_snapshot_path().exists():
+                stored_snapshot = json.loads(self._input_snapshot_path().read_text(encoding="utf-8"))
+                if isinstance(stored_snapshot, dict):
+                    snapshot_payload = stored_snapshot
+            if not self._input_snapshot_path().exists():
+                # Legacy run resumed from before input snapshots existed.  Do not
+                # invent a first-turn snapshot; record only what the stored
+                # messages prove, and leave the old files untouched.
+                snapshot_payload = {
+                    "schema_version": "1",
+                    "run_id": self.config.run_id,
+                    "status": "legacy_run_without_input_snapshot",
+                    "note": "No first-turn snapshot was written for this run; only hashes of the stored messages are recorded.",
+                    "request": {
+                        "system_sha256": sha256_text(str(self.messages[0].get("content", ""))),
+                        "user_sha256": sha256_text(str(self.messages[1].get("content", ""))),
+                    },
+                }
+            self._repair_incomplete_tool_calls()
+            self.state.phase = "running" if self.state.phase in {"pending", "running", "incomplete"} else self.state.phase
+            self._event("research_resumed", {"run_id": self.config.run_id, "model_calls": self.state.model_calls})
+        else:
+            system: dict[str, object] = {"role": "system", "content": system_text}
+            user: dict[str, object] = {"role": "user", "content": user_text}
+            self.messages = [system, user]
+            # Write the snapshot before messages so a crash cannot leave new
+            # messages without their frozen input record.
+            atomic_write_json(self._input_snapshot_path(), snapshot_payload)
+            self._save_messages()
+            self._write_scientist_input(snapshot_payload, system_text=system_text, user_text=user_text)
+            self.state.phase = "running"
+            self.state.accepted = False
+            self.state.acceptance = "pending"
+            self.state.started_at = utc_now()
+            self._event(
+                "research_started",
+                {
+                    "run_id": self.config.run_id,
+                    "model": getattr(self.model_client, "model_name", ""),
+                    "provider_status": getattr(self.model_client, "backend_status", "unverified"),
+                    "task_sha256": sha256_text(task_text),
+                    "task_source": task_source,
+                    "question_sha256": sha256_text(self.config.question),
+                    "system_sha256": sha256_text(system_text),
+                    "material_version": self.config.material_version,
+                    "rule_version": self.config.rule_version,
+                    "rule_sha256": rule_snapshot["sha256"],
+                    "rule_injected_into": rule_snapshot["injected_into"],
+                },
+            )
+
         if not (self.run_dir / "run_manifest.json").exists():
             model_info = dict(self.config.model_info)
             if not model_info:
@@ -462,52 +797,16 @@ class ResearchRunner:
                 tool_info=tool_info,
                 question=self.config.question,
                 rule_snapshot=rule_snapshot,
+                input_snapshot=snapshot_payload,
                 material_manifest_path=material_path,
                 material_version=self.config.material_version,
                 ledger_path=Path(self.config.ledger_path) if self.config.ledger_path else self.ledger.path,
                 attribution=self.config.run_id,
                 code_root=Path(self.config.code_root),
             )
-
-        if self.messages_path.exists():
-            raw = json.loads(self.messages_path.read_text(encoding="utf-8"))
-            if not isinstance(raw, list):
-                raise ResearchError("messages.json is not a list")
-            self.messages = [item for item in raw if isinstance(item, dict)]
-            self._repair_incomplete_tool_calls()
-            self.state.phase = "running" if self.state.phase in {"pending", "running", "incomplete"} else self.state.phase
-            self._event("research_resumed", {"run_id": self.config.run_id, "model_calls": self.state.model_calls})
-        else:
-            system_text = _load_text(self.config.system_prompt_path, GENERIC_SYSTEM_PROMPT)
-            system: dict[str, object] = {"role": "system", "content": system_text}
-            user: dict[str, object] = {"role": "user", "content": _user_prompt(self.config)}
-            self.messages = [system, user]
-            self._save_messages()
-            atomic_write_text(
-                self.run_dir / "scientist_input.md",
-                "# Exact Scientist input (first turn)\n\n"
-                f"- system sha256: `{sha256_text(system_text)}`\n"
-                f"- user sha256: `{sha256_text(str(user['content']))}`\n"
-                f"- material_version: `{self.config.material_version}`\n"
-                f"- rule_version: `{self.config.rule_version}`\n\n"
-                "## System\n\n" + system_text + "\n\n## User\n\n" + str(user["content"]) + "\n",
-            )
-            self.state.phase = "running"
-            self.state.accepted = False
-            self.state.acceptance = "pending"
-            self.state.started_at = utc_now()
-            self._save_state()
-            self._event(
-                "research_started",
-                {
-                    "run_id": self.config.run_id,
-                    "model": getattr(self.model_client, "model_name", ""),
-                    "provider_status": getattr(self.model_client, "backend_status", "unverified"),
-                    "question_sha256": sha256_text(self.config.question),
-                    "material_version": self.config.material_version,
-                    "rule_version": self.config.rule_version,
-                },
-            )
+        self.state.study_id = self.config.study_id or self.state.study_id
+        self.state.arm = self.config.arm or self.state.arm
+        self.state.repeat = self.config.repeat or self.state.repeat
         self._save_state()
         self._heartbeat()
 
@@ -772,16 +1071,30 @@ class ResearchRunner:
         raise ResearchError(f"experiment {experiment_id!r} has no implementation")
 
     def _tool_finish(self, arguments: dict[str, object], call: DeepSeekToolCall) -> dict[str, object]:
-        answer = str(arguments.get("answer", "")).strip()
-        evidence_ids_raw = arguments.get("evidence_ids", [])
-        unresolved_raw = arguments.get("unresolved", [])
-        limitations = str(arguments.get("limitations", "")).strip()
+        if "answer" not in arguments:
+            raise ResearchError("finish_study requires a string 'answer' argument")
+        answer_raw = arguments.get("answer")
+        if not isinstance(answer_raw, str):
+            raise ResearchError("finish_study 'answer' must be a string")
+        answer = answer_raw.strip()
+        if "evidence_ids" not in arguments:
+            raise ResearchError("finish_study requires an 'evidence_ids' list")
+        evidence_ids_raw = arguments.get("evidence_ids")
+        if "unresolved" not in arguments:
+            raise ResearchError("finish_study requires an 'unresolved' list; pass [] only if nothing is unresolved")
+        unresolved_raw = arguments.get("unresolved")
+        limitations_raw = arguments.get("limitations", "")
+        if not isinstance(limitations_raw, str):
+            raise ResearchError("finish_study 'limitations' must be a string when provided")
+        limitations = limitations_raw.strip()
         if len(answer) < 200:
             raise ResearchError("final answer is implausibly short (< 200 characters)")
         if not isinstance(evidence_ids_raw, list) or not all(isinstance(item, str) for item in evidence_ids_raw):
             raise ResearchError("evidence_ids must be a list of strings")
         if not isinstance(unresolved_raw, list) or not all(isinstance(item, str) for item in unresolved_raw):
             raise ResearchError("unresolved must be a list of strings")
+        if any(not item.strip() for item in unresolved_raw):
+            raise ResearchError("unresolved entries must be non-empty strings; pass [] for none")
         if not evidence_ids_raw:
             raise ResearchError("finish_study needs at least one evidence_id that was actually read")
         unknown = [item for item in evidence_ids_raw if not self.evidence.has(item)]
@@ -868,6 +1181,22 @@ class ResearchRunner:
             self._save_messages()
             self._event("context_compacted", {"omitted_chars": omitted, "kept_messages": len(self.messages) - keep_from})
 
+    def _frozen_tool_specs(self) -> list[dict[str, object]]:
+        """Return the tool definitions, refusing to drift from the frozen snapshot."""
+
+        specs = _tool_specs(self.config)
+        snapshot_path = self._input_snapshot_path()
+        if snapshot_path.exists():
+            snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+            tools = snapshot.get("tools")
+            expected = tools.get("sha256") if isinstance(tools, dict) else None
+            actual = sha256_text(json.dumps(specs, sort_keys=True, ensure_ascii=False))
+            if expected and actual != expected:
+                raise ResearchError(
+                    "tool definitions changed after the run was frozen; refusing to send a different tool schema"
+                )
+        return specs
+
     def _call_model(self) -> DeepSeekChatResult:
         if _now() >= _parse_iso(self.config.deadline):
             raise ResearchError("hard deadline reached before a new model call")
@@ -879,7 +1208,7 @@ class ResearchRunner:
         try:
             result = self.model_client.chat(
                 self.messages,
-                tools=_tool_specs(self.config),
+                tools=self._frozen_tool_specs(),
                 max_tokens=max_tokens,
                 stage=f"turn_{self.state.turn}",
             )
@@ -898,6 +1227,7 @@ class ResearchRunner:
     def _save_exchange(self, result: DeepSeekChatResult) -> None:
         self._request_counter += 1
         self._response_counter += 1
+        tool_specs = _tool_specs(self.config)
         atomic_write_json(
             self.run_dir / "requests" / f"request_{self._request_counter:03d}.json",
             {
@@ -905,6 +1235,8 @@ class ResearchRunner:
                 "messages": self.messages,
                 "message_count": len(self.messages),
                 "tools": _tool_names(self.config),
+                "tool_names": _tool_names(self.config),
+                "tool_specs": tool_specs,
             },
         )
         atomic_write_json(
@@ -914,10 +1246,12 @@ class ResearchRunner:
                 "model": result.returned_model,
                 "request_id": result.request_id,
                 "finish_reason": result.finish_reason,
+                "truncated": result.truncated,
                 "usage": result.usage.model_dump(mode="json"),
                 "content": result.content,
                 "reasoning_content": result.reasoning_content,
                 "tool_calls": [item.model_dump(mode="json") for item in result.tool_calls],
+                "native_blocks": result.native_blocks,
                 "raw": result.raw,
             },
         )
@@ -927,8 +1261,10 @@ class ResearchRunner:
                 "call": self.state.model_calls,
                 "request_id": result.request_id,
                 "finish_reason": result.finish_reason,
+                "truncated": result.truncated,
                 "prompt_tokens": result.usage.prompt_tokens,
                 "completion_tokens": result.usage.completion_tokens,
+                "reasoning_tokens": result.usage.reasoning_tokens,
                 "tool_calls": [item.name for item in result.tool_calls],
                 "content_chars": len(result.content),
                 "reasoning_chars": len(result.reasoning_content),
@@ -950,6 +1286,8 @@ class ResearchRunner:
                 }
                 for item in result.tool_calls
             ]
+        if result.native_blocks:
+            message["native_blocks"] = [dict(block) for block in result.native_blocks]
         return message
 
     def _add_user_nudge(self, text: str) -> None:
@@ -1015,9 +1353,13 @@ class ResearchRunner:
                 self._save_exchange(result)
                 if result.truncated:
                     self._event("truncated_response", {"finish_reason": result.finish_reason, "tool_calls": len(result.tool_calls)})
+                    if self.state.model_calls >= self.config.max_model_calls:
+                        raise ResearchError("response truncated at the model-call budget; refusing a paid retry")
+                    if _now() >= _parse_iso(self.config.deadline):
+                        raise ResearchError("response truncated at the hard deadline; refusing a paid retry")
                     retry = self.model_client.chat(
                         self.messages,
-                        tools=_tool_specs(self.config),
+                        tools=self._frozen_tool_specs(),
                         max_tokens=self.config.max_output_tokens_retry,
                         stage=f"turn_{self.state.turn}_truncation_retry",
                     )

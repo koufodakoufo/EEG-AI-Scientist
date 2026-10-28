@@ -31,6 +31,7 @@ class GeminiClient:
         max_tokens: int = 16384,
         attribution: str = "",
         thinking: bool = True,
+        thinking_level: str | None = None,
         transport: httpx.BaseTransport | None = None,
     ) -> None:
         if not api_key:
@@ -46,6 +47,7 @@ class GeminiClient:
         self.max_tokens = max_tokens
         self.attribution = attribution
         self.thinking = thinking
+        self.thinking_level = thinking_level
         self.transport = transport
         self.call_count = 0
 
@@ -79,6 +81,18 @@ class GeminiClient:
                         names[identifier] = name
         return names
 
+    @staticmethod
+    def _existing_tool_ids(messages: list[dict[str, object]]) -> set[str]:
+        identifiers: set[str] = set()
+        for message in messages:
+            calls = message.get("tool_calls")
+            if not isinstance(calls, list):
+                continue
+            for call in calls:
+                if isinstance(call, dict) and isinstance(call.get("id"), str):
+                    identifiers.add(str(call["id"]))
+        return identifiers
+
     def _wire(self, messages: list[dict[str, object]], tools: list[dict[str, object]] | None) -> tuple[str, list[dict[str, object]]]:
         system_parts: list[str] = []
         contents: list[dict[str, object]] = []
@@ -102,45 +116,10 @@ class GeminiClient:
                     payload = json.loads(text) if text.strip() else {}
                 except json.JSONDecodeError:
                     payload = {"result": text}
-                contents.append(
-                    {
-                        "role": "user",
-                        "parts": [
-                            {
-                                "functionResponse": {
-                                    "name": name,
-                                    "response": payload if isinstance(payload, dict) else {"result": payload},
-                                }
-                            }
-                        ],
-                    }
-                )
+                self._append_function_response(contents, name, payload)
                 continue
             if role == "assistant":
-                parts: list[dict[str, object]] = []
-                if text:
-                    parts.append({"text": text})
-                calls = message.get("tool_calls")
-                if isinstance(calls, list):
-                    for call in calls:
-                        if not isinstance(call, dict):
-                            continue
-                        function = call.get("function")
-                        if not isinstance(function, dict):
-                            raise DeepSeekError("bad_message", "assistant tool_call lacks function")
-                        arguments = str(function.get("arguments", "{}"))
-                        try:
-                            args = json.loads(arguments) if arguments.strip() else {}
-                        except json.JSONDecodeError as error:
-                            raise DeepSeekError("bad_message", f"tool arguments are not JSON: {error}") from error
-                        parts.append(
-                            {
-                                "functionCall": {
-                                    "name": str(function.get("name", "")),
-                                    "args": args if isinstance(args, dict) else {},
-                                }
-                            }
-                        )
+                parts = self._assistant_parts(message, text)
                 if parts:
                     contents.append({"role": "model", "parts": parts})
                 continue
@@ -162,6 +141,66 @@ class GeminiClient:
         else:
             self._converted_tools = []
         return "\n\n".join(system_parts), contents
+
+    def _assistant_parts(self, message: dict[str, object], text: str) -> list[dict[str, object]]:
+        """Replay the vendor-native parts (including thoughtSignature) verbatim."""
+
+        native = message.get("native_blocks")
+        parts: list[dict[str, object]] = []
+        if isinstance(native, list) and native:
+            for part in native:
+                if isinstance(part, dict):
+                    parts.append(dict(part))
+            return parts
+        if text:
+            parts.append({"text": text})
+        calls = message.get("tool_calls")
+        if isinstance(calls, list):
+            for call in calls:
+                if not isinstance(call, dict):
+                    continue
+                function = call.get("function")
+                if not isinstance(function, dict):
+                    raise DeepSeekError("bad_message", "assistant tool_call lacks function")
+                arguments = str(function.get("arguments", "{}"))
+                try:
+                    args = json.loads(arguments) if arguments.strip() else {}
+                except json.JSONDecodeError as error:
+                    raise DeepSeekError("bad_message", f"tool arguments are not JSON: {error}") from error
+                parts.append(
+                    {
+                        "functionCall": {
+                            "name": str(function.get("name", "")),
+                            "args": args if isinstance(args, dict) else {},
+                        }
+                    }
+                )
+        return parts
+
+    @staticmethod
+    def _append_function_response(
+        contents: list[dict[str, object]],
+        name: str,
+        payload: dict[str, object],
+    ) -> None:
+        response_part: dict[str, object] = {
+            "functionResponse": {
+                "name": name,
+                "response": payload if isinstance(payload, dict) else {"result": payload},
+            }
+        }
+        if contents:
+            last = contents[-1]
+            last_parts = last.get("parts")
+            if (
+                last.get("role") == "user"
+                and isinstance(last_parts, list)
+                and last_parts
+                and all(isinstance(item, dict) and "functionResponse" in item for item in last_parts)
+            ):
+                last_parts.append(response_part)
+                return
+        contents.append({"role": "user", "parts": [response_part]})
 
     def chat(
         self,
@@ -187,8 +226,12 @@ class GeminiClient:
             payload["tools"] = converted_tools
         if json_mode:
             generation_config["responseMimeType"] = "application/json"
-        if self.thinking:
-            generation_config["thinkingConfig"] = {"thinkingBudget": min(4096, max(1024, max_tokens // 2))}
+        if self.thinking and max_tokens > 1024:
+            if self.thinking_level:
+                # Gemini 3-style control; verify against the chosen model before a real run.
+                generation_config["thinkingConfig"] = {"thinkingLevel": self.thinking_level}
+            else:
+                generation_config["thinkingConfig"] = {"thinkingBudget": min(4096, max_tokens - 1)}
         reservation = self.ledger.reserve_model(
             json.dumps(payload, ensure_ascii=False, default=str),
             max_tokens,
@@ -219,7 +262,8 @@ class GeminiClient:
             )
         try:
             raw = response.json()
-            result = self._parse(raw, started)
+            existing_ids = self._existing_tool_ids(messages)
+            result = self._parse(raw, started, call_index_start=len(existing_ids), reserved_ids=existing_ids)
         except (ValueError, KeyError, TypeError) as error:
             self.ledger.mark_unknown(reservation.reservation_id, "unparseable Gemini response")
             raise DeepSeekError("protocol", f"Gemini parse: {type(error).__name__}") from error
@@ -235,7 +279,14 @@ class GeminiClient:
         )
         return result
 
-    def _parse(self, raw: object, started: float) -> DeepSeekChatResult:
+    def _parse(
+        self,
+        raw: object,
+        started: float,
+        *,
+        call_index_start: int = 0,
+        reserved_ids: set[str] | None = None,
+    ) -> DeepSeekChatResult:
         if not isinstance(raw, dict):
             raise ValueError("response is not an object")
         candidates = raw.get("candidates", [])
@@ -247,48 +298,89 @@ class GeminiClient:
         content = candidate.get("content", {})
         parts = content.get("parts", []) if isinstance(content, dict) else []
         texts: list[str] = []
+        thinking: list[str] = []
         calls: list[DeepSeekToolCall] = []
+        native_blocks: list[dict[str, object]] = []
+        used_ids: set[str] = set(reserved_ids or set())
+        next_index = call_index_start
         if isinstance(parts, list):
-            for index, part in enumerate(parts):
+            for part in parts:
                 if not isinstance(part, dict):
+                    continue
+                native_blocks.append(dict(part))
+                if part.get("thought") is True:
+                    thinking.append(str(part.get("text", "")))
                     continue
                 if "text" in part:
                     texts.append(str(part.get("text", "")))
                 call = part.get("functionCall")
                 if isinstance(call, dict):
+                    name = str(call.get("name", ""))
+                    if not name:
+                        raise ValueError("functionCall lacks a name")
+                    args = call.get("args", {})
+                    provider_id = call.get("id")
+                    identifier = provider_id if isinstance(provider_id, str) and provider_id else ""
+                    if not identifier or identifier in used_ids:
+                        while True:
+                            next_index += 1
+                            candidate_id = f"gcall_{next_index:03d}"
+                            if candidate_id not in used_ids:
+                                identifier = candidate_id
+                                break
+                    used_ids.add(identifier)
                     calls.append(
                         DeepSeekToolCall(
-                            id=f"call_{index}",
-                            name=str(call.get("name", "")),
-                            arguments=json.dumps(call.get("args", {}), ensure_ascii=False, separators=(",", ":")),
+                            id=identifier,
+                            name=name,
+                            arguments=json.dumps(args if isinstance(args, dict) else {}, ensure_ascii=False, separators=(",", ":")),
                         )
                     )
         usage_raw = raw.get("usageMetadata")
-        usage = DeepSeekUsage()
+        usage = DeepSeekUsage(reported=False, valid=False)
         if isinstance(usage_raw, dict):
-            prompt = usage_raw.get("promptTokenCount")
-            completion = usage_raw.get("candidatesTokenCount")
-            if isinstance(prompt, int) and isinstance(completion, int) and prompt >= 0 and completion >= 0:
+            def nonnegative_integer(value: object) -> int | None:
+                if isinstance(value, bool) or not isinstance(value, int):
+                    return None
+                return value if value >= 0 else None
+
+            prompt = nonnegative_integer(usage_raw.get("promptTokenCount"))
+            candidates_tokens = nonnegative_integer(usage_raw.get("candidatesTokenCount"))
+            thoughts = nonnegative_integer(usage_raw.get("thoughtsTokenCount", 0))
+            cached = nonnegative_integer(usage_raw.get("cachedContentTokenCount", 0))
+            reported_total = nonnegative_integer(usage_raw.get("totalTokenCount", 0))
+            if (
+                prompt is None
+                or candidates_tokens is None
+                or thoughts is None
+                or cached is None
+                or reported_total is None
+            ):
+                usage = DeepSeekUsage(reported=True, valid=False)
+            else:
+                completion = candidates_tokens + thoughts
+                total = reported_total or (prompt + completion)
                 usage = DeepSeekUsage(
                     prompt_tokens=prompt,
                     completion_tokens=completion,
-                    total_tokens=prompt + completion,
+                    total_tokens=total,
+                    reasoning_tokens=thoughts,
+                    cache_read_tokens=cached,
                     reported=True,
-                    valid=True,
+                    valid=total >= prompt + completion,
                 )
-            else:
-                usage = DeepSeekUsage(reported=True, valid=False)
-        else:
-            usage = DeepSeekUsage(reported=False, valid=False)
+        finish_reason = str(candidate.get("finishReason", ""))
         return DeepSeekChatResult(
             content="".join(texts),
-            reasoning_content="",
+            reasoning_content="".join(thinking),
             tool_calls=calls,
-            finish_reason=str(candidate.get("finishReason", "")),
+            finish_reason=finish_reason,
             requested_model=self.model_name,
             returned_model=str(raw.get("modelVersion", "")),
             usage=usage,
             request_id=str(raw.get("responseId", "")) or None,
             latency_ms=(time.perf_counter() - started) * 1000.0,
+            truncated=finish_reason == "MAX_TOKENS",
+            native_blocks=native_blocks,
             raw=cast(dict[str, object], raw),
         )

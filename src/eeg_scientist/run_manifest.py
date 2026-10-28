@@ -133,6 +133,7 @@ def write_run_manifest(
     ledger_path: Path,
     attribution: str,
     code_root: Path,
+    input_snapshot: dict[str, object] | None = None,
 ) -> dict[str, object]:
     material_info: dict[str, object] = {
         "version": material_version,
@@ -157,6 +158,7 @@ def write_run_manifest(
         "tool": tool_info,
         "rule": rule_snapshot,
         "material": material_info,
+        "inputs": input_snapshot or {},
         "cost_attribution": {
             "ledger": str(ledger_path),
             "attribution": attribution,

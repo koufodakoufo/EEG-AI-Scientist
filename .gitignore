@@ -30,6 +30,8 @@ __pycache__/
 .venv/
 venv/
 .env
+/.env.*
+!/.env.example
 
 .pytest_cache/
 .mypy_cache/
@@ -61,12 +63,14 @@ ref/
 
 #-------------------------credentials-----------------------
 *.secrets.*
+/credentials/
 
 
 #------------------------Others--------------------------
 temp/
 downloads/
 # bin/
+/group-meeting/
 
 #------------------------Overnight study------------------------
 data/private/

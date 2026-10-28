@@ -48,12 +48,17 @@ class DeepSeekUsage(BaseModel):
     total_tokens: int = 0
     prompt_cache_hit_tokens: int = 0
     prompt_cache_miss_tokens: int = 0
+    # Thinking tokens that the vendor reports separately (Gemini thoughtsTokenCount).
+    reasoning_tokens: int = 0
+    # Prompt-cache accounting (Anthropic cache_creation/cache_read; Gemini cachedContent).
+    cache_creation_tokens: int = 0
+    cache_read_tokens: int = 0
     reported: bool = True
     valid: bool = True
 
 
 class DeepSeekChatResult(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", protected_namespaces=())
 
     content: str = ""
     reasoning_content: str = ""
@@ -65,6 +70,9 @@ class DeepSeekChatResult(BaseModel):
     request_id: str | None = None
     latency_ms: float = 0.0
     truncated: bool = False
+    # Vendor-native assistant content blocks/parts, preserved verbatim so the
+    # next request can replay thinking signatures and redacted blocks.
+    native_blocks: list[dict[str, object]] = Field(default_factory=list)
     raw: dict[str, object] = Field(default_factory=dict)
 
 

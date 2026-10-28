@@ -1,6 +1,8 @@
 # Command reference
 
-Run from the repository root:
+Commands resolve the project root from `EEG_SCIENTIST_ROOT`, the current
+directory, or the installed package location, so they also work from a
+subdirectory such as `group-meeting/`.
 
 ```powershell
 cd X:\projects\EEG-AI-Scientist
@@ -17,15 +19,17 @@ uv run python -m eeg_scientist.cli --help
 
 | command | what it does | paid? | writes / touches | copy-paste example |
 |---|---|---:|---|---|
-| `study init --id <id>` | Create `studies/<id>/study.json` and `task.md`; arms are empty. | no | `studies/<id>/` | `uv run python -m eeg_scientist.cli study init --id my_study` |
-| `study validate --study <id>` | Check config, files, arms, verified backends, model IDs, prices. | no | nothing | `uv run python -m eeg_scientist.cli study validate --study my_study` |
-| `study run --study <id> --confirm-cost` | Run configured arms/repeats through `ResearchRunner`. | **yes** | run dirs, evidence, budgets, manifests | `uv run python -m eeg_scientist.cli study run --study my_study --confirm-cost` |
+| `study init --id <id>` | Create a generic self-contained draft (`task.md`, `system_prompt.md`, empty material manifest). | no | `studies/<id>/` | `uv run python -m eeg_scientist.cli study init --id my_study` |
+| `study init --id <id> --template emotion_20261021` | Explicitly select archived emotion material/prompt; not the default. | no | `studies/<id>/` | `uv run python -m eeg_scientist.cli study init --id old_material --template emotion_20261021` |
+| `study validate --study <id>` | Check config, task/system/rule files, non-empty material manifest, arms, verified backends, model IDs, prices. | no | nothing | `uv run python -m eeg_scientist.cli study validate --study my_study` |
+| `study preflight --study <id>` | Show each arm's model, task/material/rule hashes, prompt hashes and diff; reject identical rule text as a rule contrast. | no | nothing | `uv run python -m eeg_scientist.cli study preflight --study my_study` |
+| `study run --study <id> --confirm-cost` | Run configured arms/repeats through `ResearchRunner` after preflight. | **yes** | run dirs, evidence, budgets, manifests | `uv run python -m eeg_scientist.cli study run --study my_study --confirm-cost` |
 | `study run --study <id>` | Print budget/arms and exit; does not run. | no | nothing | `uv run python -m eeg_scientist.cli study run --study my_study` |
 | `study status --study <id>` | Show states, accepted flags, budgets. | no | nothing | `uv run python -m eeg_scientist.cli study status --study my_study` |
 | `study report --study <id>` | Generate `studies/<id>/report.md`. | no | `report.md` | `uv run python -m eeg_scientist.cli study report --study my_study` |
-| `review export --study <id>` | Export accepted proposals as a blind packet; writes packet + coordinator key. | no | `studies/<id>/reviews/` | `uv run python -m eeg_scientist.cli review export --study my_study` |
-| `review import --study <id> --file <path>` | Import one Markdown review; bind proposal/body SHA. | no | `reviews/raw/`, `reviews/records/` | `uv run python -m eeg_scientist.cli review import --study my_study --file .\feedback\reviewer_A.md` |
-| `review select --study <id> --reviews <ids> --version <v>` | Create a versioned feedback set for later Meta. | no | `reviews/feedback_set_<v>.json` | `uv run python -m eeg_scientist.cli review select --study my_study --reviews r_abc123 --version v1` |
+| `review export --study <id>` | Export one fillable form per proposal (`forms/Bxx.md`), an overview packet, and the coordinator key. | no | `studies/<id>/reviews/` | `uv run python -m eeg_scientist.cli review export --study my_study` |
+| `review import --study <id> --file <path>` | Import Markdown form(s); bind packet/display/run/full body SHA; reject conflicts. Repeat `--file` for multiple forms. | no | `reviews/raw/`, `reviews/records/` | `uv run python -m eeg_scientist.cli review import --study my_study --file .\forms\B01.md` |
+| `review select --study <id> --reviews <ids> --version <v>` | Create an immutable versioned feedback set for later Meta; same version/content is read-only. | no | `reviews/feedback_set_<v>.json` | `uv run python -m eeg_scientist.cli review select --study my_study --reviews r_abc123 --version v1` |
 | `check-dataset --path <csv>` | Audit a binary-label feature table's splits; unrelated to study. | no | prints audit | `uv run python -m eeg_scientist.cli check-dataset --path .\features.csv` |
 
 ## Read-only archived display

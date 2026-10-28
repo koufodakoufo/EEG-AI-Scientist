@@ -7,11 +7,20 @@ import json
 from pathlib import Path
 
 from .backends import load_registry
+from .paths import project_root
 from .review_io import ReviewIOError, export_packet, import_review, make_feedback_set
-from .study_runtime import StudyRuntimeError, init_study, load_study, report, run_study, status
+from .study_runtime import (
+    StudyRuntimeError,
+    init_study,
+    load_study,
+    preflight,
+    report,
+    run_study,
+    status,
+)
 from .study_spec import validate_spec
 
-ROOT = Path(".")
+ROOT = project_root()
 BACKENDS = "configs/models/backends_20261021.json"
 
 
@@ -21,7 +30,7 @@ def _print(payload: object) -> None:
 
 def command_study_init(args: argparse.Namespace) -> int:
     try:
-        target = init_study(args.id, ROOT)
+        target = init_study(args.id, ROOT, template=args.template)
     except (StudyRuntimeError, ValueError) as error:
         print(f"study init failed: {error}")
         return 2
@@ -67,6 +76,16 @@ def command_study_run(args: argparse.Namespace) -> int:
     return 0 if all(isinstance(item, dict) and item.get("status") in {"completed", "completed_unverified", "already_terminal"} for item in results) else 1
 
 
+def command_study_preflight(args: argparse.Namespace) -> int:
+    try:
+        payload = preflight(ROOT, args.study)
+    except Exception as error:  # noqa: BLE001 - preflight boundary
+        print(f"study preflight failed: {type(error).__name__}: {error}")
+        return 2
+    _print(payload)
+    return 0 if payload.get("ok") else 1
+
+
 def command_study_status(args: argparse.Namespace) -> int:
     try:
         _print(status(ROOT, args.study))
@@ -96,12 +115,16 @@ def command_review_export(args: argparse.Namespace) -> int:
 
 
 def command_review_import(args: argparse.Namespace) -> int:
-    try:
-        payload = import_review(ROOT, args.study, Path(args.file))
-    except (ReviewIOError, OSError, ValueError) as error:
-        print(f"review import failed: {type(error).__name__}: {error}")
-        return 2
-    _print(payload)
+    files = args.file if isinstance(args.file, list) else [args.file]
+    imported: list[dict[str, object]] = []
+    for value in files:
+        try:
+            payload = import_review(ROOT, args.study, Path(value))
+        except (ReviewIOError, OSError, ValueError) as error:
+            print(f"review import failed for {value}: {type(error).__name__}: {error}")
+            return 2
+        imported.append(payload)
+    _print({"imported": imported})
     return 0
 
 
@@ -124,6 +147,7 @@ def add_commands(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]
 
     init = study_sub.add_parser("init", help="create a draft study directory")
     init.add_argument("--id", required=True)
+    init.add_argument("--template", choices=["generic", "emotion_20261021"], default="generic")
     init.set_defaults(func=command_study_init)
 
     validate = study_sub.add_parser("validate", help="validate study files and verified backends")
@@ -139,6 +163,12 @@ def add_commands(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]
     status_cmd.add_argument("--study", required=True)
     status_cmd.set_defaults(func=command_study_status)
 
+    preflight_cmd = study_sub.add_parser(
+        "preflight", help="show task/material/rule hashes and per-arm prompt diffs (offline)"
+    )
+    preflight_cmd.add_argument("--study", required=True)
+    preflight_cmd.set_defaults(func=command_study_preflight)
+
     report_cmd = study_sub.add_parser("report", help="write studies/<id>/report.md from state")
     report_cmd.add_argument("--study", required=True)
     report_cmd.set_defaults(func=command_study_report)
@@ -150,9 +180,9 @@ def add_commands(subparsers: argparse._SubParsersAction[argparse.ArgumentParser]
     export.add_argument("--study", required=True)
     export.set_defaults(func=command_review_export)
 
-    import_cmd = review_sub.add_parser("import", help="import one Markdown review and bind it to a proposal")
+    import_cmd = review_sub.add_parser("import", help="import one or more Markdown reviews and bind them to proposals")
     import_cmd.add_argument("--study", required=True)
-    import_cmd.add_argument("--file", required=True)
+    import_cmd.add_argument("--file", required=True, action="append", help="form path; repeat for multiple forms")
     import_cmd.set_defaults(func=command_review_import)
 
     select = review_sub.add_parser("select", help="create a versioned feedback set for Meta")
