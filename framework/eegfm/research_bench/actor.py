@@ -35,6 +35,7 @@ def build_profile(*, case: Path, public: Path, control_home: Path, runtime: Path
         raise ValueError('Authentication/control home must be outside Actor case')
     model_line = '' if model is None else f'model = {_quote(model)}\n'
     return f'''{model_line}approval_policy = "never"
+model_reasoning_effort = "medium"
 web_search = "disabled"
 project_doc_max_bytes = 0
 project_doc_fallback_filenames = []
@@ -76,8 +77,19 @@ image_generation = false
 view_image = false
 artifact = false
 code_mode = false
-code_mode_host = false
+code_mode_host = true
 daemon_auto_start = false
+[features.multi_agent_v2]
+enabled = false
+disable_native_tools = true
+[agents]
+enabled = false
+[skills]
+include_instructions = false
+[skills.bundled]
+enabled = false
+[cloud.skills]
+enabled = false
 '''
 
 
@@ -114,6 +126,7 @@ def prepare_control(*, case: Path, public: Path, control_home: Path, native_bina
     metadata = {'schema_version': 'actor_control_v1', 'case': str(case), 'public': str(public),
                 'control_home': str(control_home), 'runtime': str(runtime), 'native_binary': str(native_binary),
                 'native_binary_sha256': digest_file(native_binary), 'profile_sha256': hashlib.sha256(profile.encode()).hexdigest(),
+                'code_mode_host_sha256':digest_file(native_binary.parent/'codex-code-mode-host') if (native_binary.parent/'codex-code-mode-host').is_file() else None,
                 'model_requested': model, 'auth_copied': True, 'auth_contents_logged': False,
                 'context': 'fresh exec; no parent conversation; no resumed session',
                 'isolation_status': 'requires_live_canary_validation'}
@@ -144,7 +157,8 @@ def launch_actor(metadata: dict[str, Any], prompt: str, *, output_dir: Path, tim
            'HTTP_PROXY': proxy_url, 'HTTPS_PROXY': proxy_url, 'http_proxy': proxy_url, 'https_proxy': proxy_url,
            'NO_PROXY': '127.0.0.1,localhost', 'no_proxy': '127.0.0.1,localhost'}
     argv = actor_argv(metadata, prompt, output_dir / 'final.txt')
-    report = run_bounded(argv, cwd=Path(metadata['case']), output_dir=output_dir, timeout_seconds=timeout_seconds, env=env)
+    report = run_bounded(argv, cwd=Path(metadata['case']), output_dir=output_dir, timeout_seconds=timeout_seconds, env=env,
+                         limit_address_space=False,storage_limit_bytes=64*1024**2)
     report.update(role=role, profile_sha256=metadata['profile_sha256'], context=metadata['context'])
     write_atomic(output_dir / 'status.json', report)
     return report

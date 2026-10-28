@@ -132,12 +132,13 @@ def run_bounded(argv: Sequence[str], *, cwd: Path, output_dir: Path, timeout_sec
                 env: Mapping[str, str] | None = None, memory_limit_bytes: int = 12 * 1024**3,
                 threads: int = 4, stdout_limit_bytes: int = 64 * 1024**2,
                 storage_scope: Path | None = None, storage_limit_bytes: int = 10 * 1024**3,
-                minimum_free_bytes: int = 20 * 1024**3) -> dict[str, Any]:
+                minimum_free_bytes: int = 20 * 1024**3, limit_address_space: bool = True) -> dict[str, Any]:
     """Linux only: affinity, address-space cap, aggregate group RSS, wall clock.
 
-    Own process group is terminated on timeout, failure and normal exit to collect
-    background children. A cgroup-resistant hostile daemon is outside this threat
-    model; Actor tools additionally run inside Codex's PID/network namespace.
+    A subreaper tracks and terminates owned descendants even across new process
+    groups. RSS is sampled; this is not a kernel cgroup memory ceiling. V8 control
+    processes require limit_address_space=False because virtual reservations are
+    much larger than resident RAM. CPU affinity and RSS limits still apply.
     """
     if sys.platform != 'linux':
         raise RuntimeError('Bounded compute launcher requires Linux; fail closed')
@@ -154,10 +155,12 @@ def run_bounded(argv: Sequence[str], *, cwd: Path, output_dir: Path, timeout_sec
         raise BudgetExceeded('Owned storage scope already exceeds cap')
     output_dir.mkdir(parents=True, mode=0o700)
     import resource
+    from .processes import OwnedProcessTree
     available = sorted(os.sched_getaffinity(0))[:threads]
     def limit_child() -> None:
         os.sched_setaffinity(0, available)
-        resource.setrlimit(resource.RLIMIT_AS, (memory_limit_bytes, memory_limit_bytes))
+        if limit_address_space:
+            resource.setrlimit(resource.RLIMIT_AS, (memory_limit_bytes, memory_limit_bytes))
         resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
         resource.setrlimit(resource.RLIMIT_FSIZE, (512 * 1024**2, 512 * 1024**2))
     child_env = dict(os.environ if env is None else env)
@@ -167,19 +170,24 @@ def run_bounded(argv: Sequence[str], *, cwd: Path, output_dir: Path, timeout_sec
                               'status': 'starting', 'timeout_seconds': timeout_seconds, 'memory_limit_bytes': memory_limit_bytes,
                               'affinity_cpus': available, 'threads': threads, 'cost_usd': 'unknown', 'peak_group_rss_bytes': 0,
                               'storage_scope':str(scope),'storage_limit_bytes':storage_limit_bytes,
-                              'storage_poll_seconds':1.0,'per_file_limit_bytes':512*1024**2}
+                              'storage_poll_seconds':1.0,'per_file_limit_bytes':512*1024**2,
+                              'address_space_limited':limit_address_space,'rss_poll_seconds':0.1,
+                              'peak_tree_rss_bytes':0}
     write_atomic(output_dir / 'status.json', record)
     process: subprocess.Popen[bytes] | None = None
+    tree = OwnedProcessTree()
     try:
         with (output_dir / 'stdout.jsonl').open('wb') as stdout, (output_dir / 'stderr.log').open('wb') as stderr:
             process = subprocess.Popen(list(argv), cwd=cwd, env=child_env, stdout=stdout, stderr=stderr,
                                        stdin=subprocess.DEVNULL, start_new_session=True, preexec_fn=limit_child)
+            tree.attach(process.pid)
             record.update(status='running', pid=process.pid)
             write_atomic(output_dir / 'status.json', record)
             next_storage_poll = start
             while process.poll() is None:
-                rss = _group_rss_bytes(process.pid)
+                rss = tree.rss_bytes()
                 record['peak_group_rss_bytes'] = max(record['peak_group_rss_bytes'], rss)
+                record['peak_tree_rss_bytes'] = max(record['peak_tree_rss_bytes'], rss)
                 if time.monotonic() - start >= timeout_seconds:
                     record['status'] = 'timed_out'; break
                 if rss > memory_limit_bytes:
@@ -202,14 +210,11 @@ def run_bounded(argv: Sequence[str], *, cwd: Path, output_dir: Path, timeout_sec
         raise
     finally:
         if process is not None:
-            try:
-                os.killpg(process.pid, signal.SIGTERM)
-                time.sleep(0.15)
-                os.killpg(process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
+            record['process_cleanup']=tree.terminate()
             process.wait(timeout=5)
             record['exit_code'] = process.returncode
+        else:
+            record['process_cleanup']=tree.terminate()
         record.update(finished_at=utc_now(), elapsed_seconds=round(time.monotonic() - start, 3))
         write_atomic(output_dir / 'status.json', record)
     return record

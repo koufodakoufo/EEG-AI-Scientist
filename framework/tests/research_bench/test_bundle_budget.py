@@ -122,7 +122,7 @@ class BudgetTests(unittest.TestCase):
 
     @unittest.skipUnless(sys.platform=='linux','Linux launcher enforcement test')
     def test_hard_timeout_and_affinity(self) -> None:
-        report=run_bounded([sys.executable,'-c','import time; time.sleep(20)'],cwd=self.root,output_dir=self.root/'run',timeout_seconds=0.4)
+        report=run_bounded([sys.executable,'-c','import time; time.sleep(20)'],cwd=self.root,output_dir=self.root/'run',timeout_seconds=0.4,minimum_free_bytes=0)
         self.assertEqual(report['status'],'timed_out')
         self.assertLess(report['elapsed_seconds'],3)
         self.assertLessEqual(len(report['affinity_cpus']),4)
@@ -131,13 +131,29 @@ class BudgetTests(unittest.TestCase):
 
     @unittest.skipUnless(sys.platform=='linux','Linux process group test')
     def test_background_children_collected_after_success(self) -> None:
-        script='import subprocess,sys; p=subprocess.Popen([sys.executable,"-c","import time; time.sleep(20)"]); print(p.pid,flush=True)'
-        report=run_bounded([sys.executable,'-c',script],cwd=self.root,output_dir=self.root/'children',timeout_seconds=2)
+        script='import subprocess,sys; p=subprocess.Popen([sys.executable,"-c","import time; time.sleep(20)"],start_new_session=True); print(p.pid,flush=True)'
+        report=run_bounded([sys.executable,'-c',script],cwd=self.root,output_dir=self.root/'children',timeout_seconds=2,minimum_free_bytes=0)
         self.assertEqual(report['status'],'completed')
+        self.assertFalse(report['process_cleanup']['surviving_owned_pids'])
         child_pid=int((self.root/'children/stdout.jsonl').read_text())
         status=Path(f'/proc/{child_pid}/stat')
         if status.exists():
             self.assertEqual(status.read_text().rsplit(')',1)[1].split()[0],'Z')
+
+    @unittest.skipUnless(sys.platform=='linux','Linux process-tree RAM monitor')
+    def test_new_process_group_memory_is_counted_and_stopped(self) -> None:
+        child='import time; x=bytearray(80*1024*1024); time.sleep(20)'
+        parent='import subprocess,sys,time; subprocess.Popen([sys.executable,"-c",'+repr(child)+'],start_new_session=True); time.sleep(20)'
+        report=run_bounded([sys.executable,'-c',parent],cwd=self.root,output_dir=self.root/'memory',timeout_seconds=3,
+                           memory_limit_bytes=64*1024**2,limit_address_space=False,minimum_free_bytes=0)
+        self.assertEqual(report['status'],'memory_exceeded')
+        self.assertFalse(report['process_cleanup']['surviving_owned_pids'])
+
+    @unittest.skipUnless(sys.platform=='linux','Linux launch disk floor')
+    def test_disk_floor_rejects_before_spawn(self) -> None:
+        with self.assertRaises(BudgetExceeded):
+            run_bounded([sys.executable,'-c','pass'],cwd=self.root,output_dir=self.root/'disk',timeout_seconds=1,minimum_free_bytes=2**100)
+        self.assertFalse((self.root/'disk').exists())
 
 
 if __name__ == '__main__':
