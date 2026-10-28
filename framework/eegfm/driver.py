@@ -87,6 +87,8 @@ class Adapter:
         failed: any other unsuccessful session; counted towards the stall limit.
         """
         errors, summary = [stderr[-4000:]], {}
+        if timed_out:
+            return False, "transient", {"reason": "session timeout"}
         if self.name == "claude":
             try:
                 result = json.loads(stdout.strip().splitlines()[-1])
@@ -99,17 +101,30 @@ class Adapter:
             except (ValueError, IndexError):
                 errors.append(stdout[-2000:])
         elif self.name == "codex":
-            failed = [line for line in stdout.splitlines() if '"turn.failed"' in line or '"type":"error"' in line]
+            events, malformed = [], 0
+            for line in stdout.splitlines():
+                if not line.strip():
+                    continue
+                try:
+                    event = json.loads(line)
+                    if not isinstance(event, dict):
+                        raise ValueError("Codex event must be an object")
+                    events.append(event)
+                except ValueError:
+                    malformed += 1
+            failed = [event for event in events if event.get("type") in {"turn.failed", "error"}]
             summary["failed_events"] = len(failed)
+            summary["malformed_events"] = malformed
+            summary["completed_turns"] = sum(event.get("type") == "turn.completed" for event in events)
             summary["last_event"] = stdout.strip().splitlines()[-1][-600:] if stdout.strip() else ""
-            if code == 0 and not failed:
+            if code == 0 and not failed and not malformed and summary["completed_turns"]:
                 return True, None, summary
-            errors.extend(failed[-5:])
+            errors.extend(json.dumps(event) for event in failed[-5:])
+            if malformed or not summary["completed_turns"]:
+                errors.append("Malformed or incomplete Codex event stream")
         elif code == 0:
             return True, None, summary
         text = " " + "\n".join(errors).lower()
-        if timed_out:
-            return False, "transient", {**summary, "reason": "session timeout"}
         if any(word in text for word in FATAL):
             return False, "fatal", {**summary, "reason": "authentication"}
         if any(word in text for word in TRANSIENT):
