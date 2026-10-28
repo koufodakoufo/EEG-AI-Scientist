@@ -1,51 +1,17 @@
-# Project environment — canonical interpreter
+# Current environment
 
-Canonical interpreter: `.venv\Scripts\python.exe` (project-local uv environment).
+正式本地入口：`X:\projects\EEG-AI-Scientist`；源码：`framework/`。
 
-- Base Python: 3.12.4 (CPython; uv venv home `C:\Users\14090\anaconda3`).
-- Dependencies: resolved from `pyproject.toml` + `uv.lock` by `uv sync --extra dev`.
-- Do not use the Windows `python` on PATH for this project: on this machine it is
-  `C:\Python314\python.exe` and has none of the project dependencies.
-- VS Code is pointed at `.venv\Scripts\python.exe` by `.vscode/settings.json`.
-- Terminal/test commands should use the venv explicitly (below), not bare `python`.
+当前完整运行环境在nccserver0：
 
-## Verified commands
+- 用户：`duandh`；主机名：`nccserv0`。
+- 工作区：`/data/duandh/eegfm-stage-a-20261028`。
+- 加载：`source /data/duandh/eegfm-stage-a-20261028/environment.sh`。
+- 源码：`/data/duandh/eegfm-stage-a-20261028/source/eeg-fm-research`。
+- Python：工作区下`venv/bin/python`，3.10.12；PyYAML6.0.3、pytest9.2.0、pip26.2.2。
+- Codex：工作区下`bin/codex`，0.165.0；独立`CODEX_HOME`在`codex-home/`。
+- 验证：12项离线测试通过；本人登录和真实模型短调用待完成。
 
-```powershell
-cd X:\projects\EEG-AI-Scientist
+操作顺序见`docs/environment-20261028/README.zh-CN.md`。Windows可编辑源码与通过SSH操作；没有承诺Linux框架在Windows原生可运行。
 
-# one-time environment sync
-uv sync --extra dev
-
-# versions actually used
-.\.venv\Scripts\python.exe -c "import sys,numpy,sklearn,pydantic,httpx,pytest; print(sys.executable); print(numpy.__version__, sklearn.__version__, pydantic.__version__, httpx.__version__, pytest.__version__)"
-
-# tests
-.\.venv\Scripts\python.exe -m pytest -q
-
-# type check: no scientist.py errors remain; the command still follows imports
-# and reports unrelated legacy findings in storage.py / experiments.py.
-C:\Users\14090\anaconda3\python.exe -m mypy src\eeg_scientist\scientist.py
-
-# CLI
-.\.venv\Scripts\python.exe -m eeg_scientist.cli emotion-study status
-```
-
-## Declared versus installed
-
-`pyproject.toml` declares `numpy>=2.0`, `scikit-learn>=1.5`, `pydantic>=2.9`,
-`httpx>=0.27`, and dev extras `pytest>=8.3`. The venv satisfies these. The base
-Anaconda interpreter does **not** (it has older versions), which is why it is
-not the project environment.
-
-`mypy` is not a runtime dependency and was not added to `pyproject.toml`
-because its download timed out during environment setup. The type check in this
-handoff used the already-installed `mypy 1.10.0` from the base Anaconda
-environment; the project runtime and tests use the venv. If a later environment
-has network access, add `mypy` as an explicit dev tool rather than relying on
-the base environment.
-
-## Scope
-
-This unifies the project environment; it does not change the Windows system
-Python, the user's global shell profile, or the base Anaconda installation.
+原根`.venv`及VS Code Python配置已封存于`archive/legacy-harness-20261028/`。旧虚拟环境含原绝对路径，迁移后不应直接运行；需要复现旧工程时按恢复包重建原布局和环境。

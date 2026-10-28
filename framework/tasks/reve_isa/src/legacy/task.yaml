@@ -1,0 +1,631 @@
+task_id: reve_isa_hparam_recovery_20261019
+research_question: Does one common validation/training-evidence-selected H2 hyperparameter
+  candidate improve six-dataset FT validation relative to H1, and achieve positive
+  locked FT test deltas versus fresh official REVE R0 on all six historical targets?
+research_prompt: '# H2 原迭代的故障恢复（2026-10-19）
+
+
+  本节覆盖下文中重复的接入说明。用户已授权的仍是同一个新增 H2 调参迭代；前部署 `reve_isa_hparam_20261018` 在 Scientist→Engineer
+  接口暂停，0 个 GPU 作业、0 个科研轮次。禁止重复计算已完成轮次或把本次恢复称为第三个候选。
+
+
+  - 原始科学决策已形成：只把 posttrain_lr 从 1e-5 降至 5e-6，其余四项不变。优先继承该有证据的方案，不因部署恢复重新发散搜索或增加候选。Scientist
+  可复核并正式提交同一方案。
+
+  - 先读 `/mnt/cfs-omni/wzf/auto research/docs/research/iterations/reve_isa_hparam_recovery_20261019/evidence/selected_scientist_proposal.json`；这是前次
+  Scientist 的真实结果，包含三种思路的对比、选择理由和完整参数，非根会话编造方案。
+
+  - 上述已审查的 prepared 包已完成工程接入、独立 Reviewer 和 CPU 校验；直接复制包并重新绑定本次 run ID/brief/deadline，更新
+  candidate_plan.json 以落实这份 Scientist 决策。不要退回 example，不重写 loader/loss/评价器，不重新索取已齐备证据。已在
+  source 内的 hparam_contract.py 验证真实 changed_parameters。保留独立 bootstrap Reviewer 和现有校验。
+
+  - 前次合法提案只声明 posttrain_lr 为变化项，旧控制器错误要求把四项不变参数也列为变化。运行补丁接受唯一的已授权参数子集，同时仍校验全部五参数及上下界。本任务不扩大科学范围。
+
+  - 原 48 次 Agent 调用已使用 6 次，本次上限 42；此前 bootstrap 修复 2 次必须保留记录。GPU/实验提交均为 0，沿用未用的物理任务上限
+  48 和 campaign 上限 4。
+
+  - 本次提供新的有限 12 小时执行窗口，由新 broker 配置记录，不能延长旧 run 冻结 deadline。单作业仍最多 12 小时，预计全 GPU 链路约
+  6 小时；实际 ETA 依 canary。
+
+  - 流程与科学验收范围仍为一个完整候选：R0、六目标40epochs、72候选validation、锁定后144个test、结果解读与有限收尾。
+
+
+  ---
+
+
+  # REVE × ISA：基于上一轮证据的调参迭代
+
+
+  ## 授权与本次范围
+
+
+  2026-10-18 用户明确要求：“接下来可以以这个为基础。目前这个目标没有达到……接下来可以通过调参的方法来迭代，去再完整地执行一个闭环。”本任务已授权 Codex
+  SDK 模型调用、腾讯 TiONE GPU 提交、任务代码补全、独立审查和有界故障修复。无需再次向用户询问是否开始、是否调参或是否接受负结果。
+
+
+  运行 ID：`reve_isa_hparam_recovery_20261019`。新增且仅新增一个有效科研迭代；Scientist 依据已有训练和 validation
+  证据选定一套全数据集共用的参数，完成六目标全量后训练、下游验证、锁定和最终测试，分析后收尾。R0、smoke、失败和修复不计有效迭代。不要扩展为无界网格搜索或额外消融。
+
+
+  这是整个研究的第二个候选，报告对外称为“调参候选 / H2”；新 run 的控制器局部计数仍是 round=1、round_limit=1，代码中的 R1 标签表示本
+  run 的候选，不表示重跑上一轮原参数。保留明确的跨 run 映射。
+
+
+  ## 已知事实和可用证据
+
+
+  上一轮实际是官方 REVE-base 的 full encoder + 全 token flatten + L2 normalize + stimulus-paired
+  InfoNCE，没有 EA32、pooling 或 projector。已完成六目标、各 40 epochs、72 个候选 validation 单元。验证集的六集等权
+  FT 平均较 R0 下降约 0.571 个百分点，2/6 数据集上升；因此本轮有不依赖 test 的改进动机。
+
+
+  首选阅读以下经过提取、保留来源哈希的验证/训练证据，不要将旧最终 test 表作为调参输入：
+
+
+  - `/mnt/cfs-omni/wzf/auto research/docs/research/iterations/reve_isa_hparam_recovery_20261019/evidence/previous_validation_summary.json`
+
+  - `/mnt/cfs-omni/wzf/auto research/docs/research/iterations/reve_isa_hparam_20261018/evidence/previous_validation_full.json`
+
+  - `/mnt/cfs-omni/wzf/auto research/docs/research/iterations/reve_isa_hparam_recovery_20261019/evidence/prior_snapshot.json`
+
+
+  完整 validation 原件 SHA-256：`e2e5bfe06eb43ac650711ea9b8a7395d9e4f31fbbb8b0a7b5e3f74dc721b5f1d`。摘要没有替代原件的权威性。原件
+  test_evaluations=0；参数选择应引用该原件或其有来源的摘要。
+
+
+  沿用已经真实完成实验的源码快照，勿退回旧 example 包：
+
+
+  `/mnt/cfs-omni/wzf/auto research/logs/research_controller/reve_isa_hparam_20261018/runs/reve_isa_hparam_20261018/bootstrap/review_4/source`
+
+
+  本次接入包快照 hash：`cd04eb945e0b77b0a1cc13ad0b29048101268b90c4da697e93b424ab93cff14c`。先复制为本
+  run 的 bootstrap workspace，再进行必要接入改动；保持原快照和旧 run 不变。数据路径、release 身份、官方权重和被试 split
+  从该包的 data_contract.py、release_reference.json、official_model.py、split_manifest.json核验，不猜测重建。
+
+
+  历史 test 结果此前已经展示给用户，本轮属于同一历史划分上的探索性后续研究。即使本轮只用 validation 选参数，也不能声称获得了从未被查看过的独立确认性
+  test。
+
+
+  ## 固定项与调参范围
+
+
+  固定六个 target：SEED、SEEDIV、SEED_V、SEED_VII、FACED、DEAP。各 target 留出，其他五个 source 的 all-sample
+  参与后训练；每个 target 从同一官方权重独立初始化，不能从上一轮 ISA checkpoint 继续训练冒充纯调参比较。
+
+
+  保留 200 Hz、10 秒、60ch、NoClip/no-zscore、SEED session-fix、历史六个被试划分 seeds 42–47，原标签与预处理。固定
+  REVE 全 token flatten/L2、同刺激跨被试配对 InfoNCE、full encoder、batch64/source、每 anchor 62
+  个负样本、五个 source 的独立损失等权平均、40 epochs 和最后 epoch 后训练 checkpoint。不加入 EA32、投影头、情绪标签 SupCon、跨
+  source 负样本或附加 loss。
+
+
+  允许参数范围沿用此前契约：
+
+
+  | 参数 | 上一轮实际值 | 本轮允许范围 |
+
+  |---|---:|---:|
+
+  | posttrain_lr | 1e-5 | 1e-6 ～ 2e-4 |
+
+  | temperature | 0.1 | 0.03 ～ 0.3 |
+
+  | posttrain_weight_decay | 1e-4 | 0 ～ 1e-2 |
+
+  | warmup_epochs | 3 | 整数 0 ～ 8 |
+
+  | gradient_clip | 1.0 | 0.5 ～ 5.0 |
+
+
+  由 Scientist 比较少量候选参数思路，依据 validation 与 loss/梯度记录选定一套共同参数；至少实质改变一个参数，优先只改变一至两个有依据的参数，未改参数仍完整填写。不能无证据断言下降由某个超参导致；将解释写为待检验假设。此次只执行一个共同候选，不按数据集分别调参，不追加
+  sweep，不将吞吐 smoke 的 loss 当作选参成绩。
+
+
+  下游 LP/FT 结构、优化器、学习率、训练上限、early stop、checkpoint selection、指标与六次划分完全沿用已核验协议：LP 冻结
+  encoder + train-only 特征标准化 + Linear；FT full encoder + LayerNorm/256/128 MLP。不得通过调整下游头或减少
+  epochs/folds 来制造本轮提升。
+
+
+  ## 工程接入要求
+
+
+  Bootstrap Engineer 复用完整已修复包；仅作新 run 绑定、调参授权及证据传递所需修改。Reviewer 应逐项确认：
+
+
+  1. configure_launch.py 配置新 run、1 个有效轮次、新 brief、截止时间和提交预算后，检查它是否重新写入旧“faithful R1
+  / temperature 必须 0.1 / 旧目标”文本。按本 brief 同步更新 task.yaml、readiness、protocol、candidate_plan
+  和相应校验，不能出现新任务允许调参但 stages.check_r1 仍禁止温度变化的矛盾。
+
+  2. 一轮接入后的候选需要引用上述真实历史 validation hash，写清旧参数、新参数、假设和结果相反时的解释。Scientist 负责最终参数决策；Bootstrap
+  不把未决定的超参写成已经跑过。
+
+  3. 参数约束可保留原参数接口；新增的研究代码可编辑范围尽量限于 candidate_plan.json，纯调参不修改 ISA 表示、采样或 loss。工程故障仍由
+  BugFix → Reviewer → Executor 处理。
+
+  4. 使用本 run 新的 artifacts 输出。默认重建本 run 的 R0，保持与当前包的评估身份一致；不要用旧 JSON 伪造本 run 已完成 baseline。复用原始数据和只读官方权重；不要重新预处理数据。避免为复用跨
+  run checkpoint 额外设计复杂接入而延误这一轮。
+
+  5. 把 previous_validation_summary.json 和原始 validation 来源 hash 纳入任务包。最终报告增加与上一轮 ISA
+  的逐集 LP/FT validation 差值、等权均值和提升数；这个派生比较不覆盖原始分数。旧完整 test 报告不进入方法选择。
+
+  6. 最终报告将科学结果与运行情况分开。尽量从本 run receipts/epochs/telemetry 输出任务 ID、失败及恢复、资源与耗时摘要，以可读引用保留明细。不能因为未证明“整个
+  Harness 永远可靠”或缺少额外机制消融，否认已经完成的有效负结果、卡住收尾或要求用户再次批准。
+
+  7. 在真实 GPU 提交前完成现有 CPU 包校验、源码审查和正式路径数值/吞吐 canary；不能重复运行已足够的检查而不提交任务。继承 source_parallel.py
+  的 BF16 线程修复和现有 RAM staging/审计修复。
+
+
+  ## 闭环与验收
+
+
+  固定流程：需求/历史 validation → Scientist 参数假设 → Engineer 必要接入与候选计划 → Reviewer/可信校验 → Executor
+  资源和 ETA 检查 → TiONE canary 与全量任务 → 72 单元候选 validation → 锁定共同方案 → R0 与新候选共 144 个 test
+  单元 → Scientist 结果解释 → 有限 Reviewer 收尾。
+
+
+  一轮流程完成标准：上述实际证据全部产生，给出逐集 R0/新候选对照和上一轮 ISA validation 对照，记录正负结果及下一步建议。无需本会话持续等待或手工触发分析。完成后停止，不自动开展第三个候选。
+
+
+  性能判断分三层，不能混用：
+
+
+  - 相对上一轮的进步：共同候选六集等权 FT validation 均值高于上一轮 ISA，并列出 LP 与逐集变化。
+
+  - 相对原始 REVE 的整体收益：锁定候选的六集等权 FT test 差值为正；同时报告有多少数据集为正。
+
+  - 原研究最终目标：六个数据集 FT test 差值全部为正。只恢复均值或只改善 FACED 不代表此目标达成。
+
+
+  以上均为描述性指标；不要求为了宣称显著性额外做消融。若调参仍下降，报告有效负结果，明确性能目标未达到；require_user_confirmation=false。失败作业、smoke、审查和历史结果引用都不能计为新增科研轮次。
+
+
+  ## 部署、资源与持续运行
+
+
+  运行代码：`/mnt/cfs-omni/wzf/auto research/releases/harness-recovery-20261017`，已含报告上下文归档修复；继续
+  codex_python、gpt-6.1-sol/xhigh、user_current，不换账号/后端。
+
+
+  可信新配置：
+
+
+  - `/mnt/cfs-omni/wzf/auto research/releases/harness-recovery-20261017/configs/reve_isa_hparam_recovery_20261019.yaml`
+
+  - `/mnt/cfs-omni/wzf/auto research/releases/harness-recovery-20261017/configs/reve_isa_hparam_recovery_20261019.broker.json`
+
+
+  从新 broker 配置读取截止时间，不复制旧 run 的截止时间。只用腾讯 TiONE，禁止在 notebook GPU 上训练。现有 worker 用 6
+  卡：后训练 5 个 source replica，下游最多 6 个 fold 进程；最多 6 个 worker 并行，活动上限 36 卡，单 worker 上限
+  6 卡。调度时依实际空闲资源排队，不假设资源已预留。最多 48 次物理提交（普通流程 36，含 canary；余量用于故障恢复），4 次 campaign 提交，42
+  次 Agent 调用（原预算 48，前次已使用 6），每实验最多 2 次 BugFix。
+
+
+  整轮参考上一轮约 6 小时的 GPU 链路，目标在资源可用时 12 小时左右完成，必须用真实 canary 更新 ETA；单 GPU worker 硬上限 12
+  小时，本次恢复部署硬上限 12 小时（包含工程准备与排队，使用新 broker 的实际 deadline）。Bootstrap 将 broker_contract.MAX_WORKER_SECONDS
+  及请求/任务说明统一为 43200；保留既有超过 12 小时先排查工程/策略的准入检查，不让 86400 秒旧默认值与新 broker 冲突。预计超过 24 小时必须重新检查
+  BF16、数据等待、并行及实验策略，不能直接放大超时。保持科学预算不缩水。
+
+
+  开启持久 Supervisor、TiONE Broker、Keeper，以及 900 秒 Inspector。已确认失败由 BugFix 修复、Reviewer
+  和 Executor 复核后重新提交；未知状态先对账。等待 GPU 不占模型回合。当前会话确认上线后交给 Harness，不能以人工持续代跑冒充自动闭环。
+
+
+  新进程 scratch 使用 `/omni-eeg-00/home/wzf/scratch/reve_isa_rsi/reve_isa_hparam_recovery_20261019`，启动前验证可写并设置
+  TMPDIR/TMP/TEMP。持久日志、指标和 checkpoint 留在本 run logs/artifacts。数据只读，不在 /tmp 或 /dev/shm
+  放大文件，不清理其他 run 的目录。
+
+  '
+research:
+  adapter: scheduler
+  source_root: .
+  source_files:
+  - MAINTENANCE_REVIEW.md
+  - analysis_contract.py
+  - archive_verification_r0_8.json
+  - artifact_io.py
+  - bootstrap_acquisition_report.json
+  - bootstrap_investigation.json
+  - brief.md
+  - broker_contract.py
+  - build_core_artifacts.py
+  - build_package.py
+  - candidate_inventory_h2.json
+  - candidate_inventory_h2_before_r0_3.json
+  - candidate_manifest.json
+  - candidate_plan.json
+  - cloud_smoke.py
+  - configure_launch.py
+  - contract_binding.json
+  - contract_checks_h2_r0_4.json
+  - contract_repair_h2_r0_4.json
+  - contract_validation_h2_r0_4.stderr
+  - contract_validation_h2_r0_4.stdout
+  - data_contract.py
+  - downstream.py
+  - engineering_report.json
+  - evaluation_contract.py
+  - fold_worker.py
+  - framework_reference/adapters.py
+  - framework_reference/finish.py
+  - framework_reference/orchestration.py
+  - framework_reference/supervisor.py
+  - framework_reference/task_loader.py
+  - gpu_diagnostics.py
+  - historical_brief.md
+  - historical_evidence_audit.json
+  - hparam_bootstrap_report.json
+  - hparam_contract.py
+  - hparam_reporting.py
+  - import_provenance.json
+  - isa_builder.py
+  - isa_loss.py
+  - isa_representation.py
+  - job_spec.json
+  - official_model.py
+  - official_source_imports_r0_8.json
+  - package_acquisition.json
+  - package_inventory.py
+  - packaging_checks_h2_r0_3.json
+  - packaging_diagnosis_r0_3.json
+  - packaging_investigation_h2_r0_2.json
+  - packaging_repair_h2_r0_3.json
+  - packaging_repair_r0_4.json
+  - packaging_validation_h2_r0_3.stderr
+  - packaging_validation_h2_r0_3.stdout
+  - posttrain.py
+  - preparation_commands.json
+  - preparation_commands_h2.json
+  - prepared_brief_20261018.md
+  - previous_source_manifest.json
+  - previous_validation_source.json
+  - previous_validation_summary.json
+  - protocol.md
+  - readiness.json
+  - recovery_candidate_inventory.json
+  - recovery_engineering_report.json
+  - recovery_execution_bounds.json
+  - recovery_historical_evidence_check.json
+  - recovery_import_audit.json
+  - recovery_preparation_commands.json
+  - recovery_prior_snapshot.json
+  - recovery_readiness_repair.json
+  - recovery_readiness_validation.json
+  - recovery_readiness_validation.stderr
+  - recovery_readiness_validation.stdout
+  - recovery_runtime_compatibility.json
+  - recovery_validation.stderr
+  - recovery_validation.stdout
+  - recovery_validation_report.json
+  - reference_core.py
+  - release_io.py
+  - release_reference.json
+  - remote_worker.py
+  - selected_scientist_proposal.json
+  - source_parallel.py
+  - source_provenance_r0_7.json
+  - split_manifest.json
+  - stages.py
+  - task.yaml
+  - test_hparam.py
+  - test_package.py
+  - throughput_plan.py
+  - validate.py
+  - validate_core.py
+  - validation.stderr
+  - validation.stdout
+  - validation_report.json
+  - validation_sources.json
+  - vendor/__init__.py
+  - vendor/reve/README.md
+  - vendor/reve/__init__.py
+  - vendor/reve/config.json
+  - vendor/reve/configuration_bank.py
+  - vendor/reve/configuration_reve.py
+  - vendor/reve/modeling_reve.py
+  - vendor/reve/position_bank.py
+  - vendor/reve/position_config.json
+  - verification_h2.json
+  protocol:
+    version: reve_stimulus_ISA_hparam_H2_recovery_worker12h_deployment12h_v1
+    brief_sha256: 8bf44b0a19f833c4b854fe6a2be144235c1da40440d1842fb469f36d3a459f9d
+    run_id: reve_isa_hparam_recovery_20261019
+    historical_reference: 20260816_Lance_10s_60ch_allsource_SEED_sessionfix_dense_CBramod_ISA
+    targets:
+    - SEED
+    - SEEDIV
+    - SEED_V
+    - SEED_VII
+    - FACED
+    - DEAP
+    releases:
+      SEED: SEED/derived/lance_mdjpt60_badch
+      SEEDIV: SEED-IV_10s_v1/derived/lance_mdjpt60_badch
+      SEED_V: SEED-V_10s_v1/derived/lance_mdjpt60_badch
+      SEED_VII: SEED-VII/derived/lance_mdjpt60_badch
+      FACED: FACED/derived/lance_mdjpt60_badch
+      DEAP: DEAP/derived/lance_mdjpt60_badch
+    data_shape:
+    - 60
+    - 2000
+    sampling_rate: 200
+    posttrain_split: all
+    seed_session_policy: per_subject_sort_three_date_sessions_then_map_1_2_3
+    split_manifest_sha256: 998bf1f2f31062aa241dea006d8daae8c89cde604a208110013e8872a9b90655
+    split_seeds:
+    - 42
+    - 43
+    - 44
+    - 45
+    - 46
+    - 47
+    split_type: historical_repeated_random_subject_partitions
+    initialization: strict_pinned_official_REVE_base_independently_per_target_per_round
+    input_policy: released_uV_NoClip_no_zscore
+    token_output:
+    - 60
+    - 11
+    - 512
+    special_tokens: 0
+    r1_representation: all_tokens_flatten_L2_normalize
+    objective: same_source_same_stimulus_different_subject_paired_InfoNCE_only
+    posttrain:
+      seed: 42
+      epochs: 40
+      batch_per_source: 64
+      negatives_per_anchor: 62
+      optimizer: Adam
+      betas:
+      - 0.9
+      - 0.999
+      eps: 1.0e-08
+      schedule: step_linear_warmup_then_cosine
+      steps_per_epoch: max_ceil_source_rows_div64
+      source_losses: five_separate_InfoNCE_losses_mean_each_update
+      parallelism: five_local_gpu_replicas_one_source_batch64_each_no_cross_source_negatives
+      checkpoint_selection: last_epoch_40
+      historical_H1_parameters:
+        posttrain_lr: 1.0e-05
+        temperature: 0.1
+        posttrain_weight_decay: 0.0001
+        warmup_epochs: 3
+        gradient_clip: 1.0
+      H2_parameters: All five numeric values must be finalized by Scientist in candidate_plan.json
+        and match scheduler-bound parameters; historical template defaults are not
+        an executable H2 decision.
+    evaluation:
+      version: reve_isa_validation_only_v1
+      input_policy: released_uV_NoClip_no_zscore
+      representation: official_tokens_flatten_337920
+      lp:
+        epochs: 100
+        lr: 0.001
+        optimizer: Adam
+        feature_standardization: train_only_ddof0_floor1e-6
+      ft:
+        epochs: 60
+        lr: 1.0e-05
+        optimizer: AdamW
+        head: LayerNorm_256_ReLU_dropout0.2_128_ReLU_dropout0.2_classes
+      batch_size: 128
+      weight_decay: 0.0001
+      optimizer_betas:
+      - 0.9
+      - 0.999
+      optimizer_eps: 1.0e-08
+      scheduler: none
+      early_stop_patience: 10
+      early_stop_min_delta: 0.01
+      early_stop_metric: relative_epoch_mean_training_CE_as_in_reference
+      checkpoint_selection: max_validation_sample_bAcc_first_epoch_on_tie
+      auto_lr_shrink: false
+      r0_calibration: No automatic sweep; failed numerical gate requires one separately
+        reviewed common repair
+      lp_head_seed: 42+fold
+      ft_head_encoder_seed: 42+fold
+      ft_batch_order_seed: 42+fold*997
+      rng_processes: one independently seeded process per fold
+      precision: encoder_BF16_autocast_head_FP32_loss_FP32
+      gradient_checkpointing: true
+      ft_gradient_clip: 1.0
+      gradient_accumulation: 1
+      metric_unit: sample_predictions_within_fold
+      summary_std_ddof: 0
+      test_policy: defer_all_test_calls_until_common_method_lock_after_all_requested_rounds_validation
+      bootstrap:
+        resamples: 5000
+        seed: 20260713
+        confidence: 0.95
+        interval: paired_fold_difference_percentile
+      final_selection: max_equal_dataset_mean_FT_validation_then_positive_gain_count_then_lower_posttrain_wall_time_then_lower_round
+    evaluation_hash: bc5d0477bde1f106c675b1556c75d55d236a1632b183ded70525a86a3201c308
+    r0: six_targets_72_validation_units_before_R1; once_durable_identity_checked;
+      zero_research_rounds
+    round_unit: six_LODO_targets_full_40_epoch_ISA_plus_6x2x6_validation_units
+    valid_rounds: 1
+    r2_policy: disabled_by_explicit_one_round_scope
+    test_policy: all_144_R0_through_R1_test_calls_after_all_requested_validation_and_common_method_lock
+    selection_policy: max_equal_dataset_mean_FT_validation_then_positive_gain_count_then_lower_posttrain_wall_time_then_lower_round
+    goal: locked_common_candidate_FT_test_mean_bAcc_delta_positive_on_each_of_six_datasets
+    negative_result: 1_valid_rounds_without_six_positive_FT_deltas_is_process_success_and_performance_failure
+    scope: exploratory_followup_on_historically_viewed_test_splits; no independent_confirmatory_test
+    resources:
+      broker_only: true
+      platform: TiONE
+      max_campaigns_in_flight: 1
+      workers_per_phase: 6
+      gpus_per_worker: 6
+      max_simultaneous_gpus: 36
+      max_worker_seconds: 43200
+      deadline: 1792443639.981201
+      normal_worker_submissions: 18
+      external_probe_submissions: 0
+      deployment_max_cloud_tasks: 48
+      attempt_budget_owned_by_controller: 4
+      no_resource_purchase: true
+      preflight_worker_submissions: 18
+      deployment_hard_limit_seconds: 43200
+      agent_call_limit: 42
+      scratch_root: /omni-eeg-00/home/wzf/scratch/reve_isa_rsi/reve_isa_hparam_recovery_20261019
+    brief_path: brief.md
+    candidate_parameters: The supplied Scientist selected LR 5e-6 only; candidate_plan.json
+      records all five values and actual changed_parameters. Later scheduler binding
+      must match the reviewed plan exactly.
+    cross_run_mapping:
+      run_id: reve_isa_hparam_recovery_20261019
+      controller_round: 1
+      round_limit: 1
+      candidate_label: H2
+      internal_label: R1
+      previous_run: reve_isa_recovery_20261017
+      previous_candidate: H1
+    previous_validation:
+      summary_path: previous_validation_summary.json
+      summary_sha256: b27b5813b254f5ba8fbaf9d08744aadda668d37bf373b2b5157c3a3562d2b210
+      original_sha256: e2e5bfe06eb43ac650711ea9b8a7395d9e4f31fbbb8b0a7b5e3f74dc721b5f1d
+      test_evaluations: 0
+    previous_source_snapshot: acc39335a877e8d19a1bb334be3e8d480c6103a50e7319d0a37a90f129c8cc65
+    recovery_lineage:
+      prior_preparation_run_id: reve_isa_hparam_20261018
+      prior_prepared_snapshot_hash: cd04eb945e0b77b0a1cc13ad0b29048101268b90c4da697e93b424ab93cff14c
+      prior_agent_calls_used: 6
+      prior_bootstrap_repairs: 2
+      prior_gpu_submissions: 0
+      prior_valid_research_rounds: 0
+      local_round: 1
+      cross_run_candidate: H2
+      not_a_third_candidate: true
+  parameter_bounds:
+    posttrain_lr:
+    - 1.0e-06
+    - 0.0002
+    temperature:
+    - 0.03
+    - 0.3
+    posttrain_weight_decay:
+    - 0.0
+    - 0.01
+    warmup_epochs:
+    - 0
+    - 8
+    gradient_clip:
+    - 0.5
+    - 5.0
+  allowed_variations:
+  - posttrain_lr
+  - temperature
+  - posttrain_weight_decay
+  - warmup_epochs
+  - gradient_clip
+  parameter_bindings:
+    posttrain_lr: submit.argv.13
+    temperature: submit.argv.15
+    posttrain_weight_decay: submit.argv.17
+    warmup_epochs: submit.argv.19
+    gradient_clip: submit.argv.21
+  job_spec_template: job_spec.json
+  report_path: analysis/report/report.json
+  report_schema:
+    type: object
+    required:
+    - execution_valid
+    - protocol_gate
+    - snapshot_hash
+    - protocol_hash
+    - test_evaluations
+    - validation_evaluations
+    - evidence_level
+    - research_round
+    - validation_summary
+    - per_fold_validation
+    - previous_ISA_validation_comparison
+    - cross_run_mapping
+    - performance_assessment
+    - runtime_summary
+    properties:
+      execution_valid:
+        const: true
+      protocol_gate:
+        type: object
+        required:
+        - passed
+        properties:
+          passed:
+            const: true
+      snapshot_hash:
+        type: string
+        pattern: ^[a-f0-9]{64}$
+      protocol_hash:
+        type: string
+        pattern: ^[a-f0-9]{64}$
+      test_evaluations:
+        enum:
+        - 0
+        - 144
+      validation_evaluations:
+        const: 72
+      research_round:
+        enum:
+        - 1
+      evidence_level:
+        enum:
+        - E1_directional
+        - E2_development
+      validation_summary:
+        type: object
+      per_fold_validation:
+        type: array
+        minItems: 72
+        maxItems: 72
+      previous_ISA_validation_comparison:
+        type: object
+      cross_run_mapping:
+        type: object
+      performance_assessment:
+        type: object
+      runtime_summary:
+        type: object
+  validation_command:
+  - python3
+  - -B
+  - validate.py
+  validation_timeout_seconds: 600
+  validation_read_files: []
+  allow_code_changes: true
+  editable_files:
+  - candidate_plan.json
+  expected_test_evaluations:
+    '1': 144
+  requirements:
+    min_valid_rounds: 1
+    max_review_rounds: 2
+    require_user_confirmation: false
+    required_directions: []
+    continue_conditions: []
+    redirect_conditions:
+    - On numerical/data/split/source/test-isolation mismatch perform a bounded separately
+      reviewed engineering repair; failures, R0 and smoke count zero research rounds.
+    finish_conditions:
+    - Complete 1 full 72-unit validation round(s), lock one common candidate using
+      validation only, then complete all 144 actual R0-through-R1 test evaluations.
+      Report H2-versus-H1 LP/FT validation changes, separate mean test gain from the
+      six-dataset test goal, and stop after this candidate including a valid negative
+      result. No extra research round is authorized.
+  orchestration:
+    execution_agent: true
+    bugfix_agent: true
+    max_bugfix_attempts: 2
+    failure_route: bugfix_then_review
+    health_check_interval_seconds: 900
+    max_parallel_workers: 6
+    parallel_groups:
+    - name: datasets
+      items:
+      - SEED
+      - SEEDIV
+      - SEED_V
+      - SEED_VII
+      - FACED
+      - DEAP
+      required: true

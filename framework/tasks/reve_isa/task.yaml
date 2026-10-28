@@ -1,0 +1,50 @@
+task_id: reve_isa
+title: Stimulus inter-subject alignment (ISA) post-training for REVE, six emotion datasets, LODO
+model: reve_base
+datasets: [SEED, SEEDIV, SEED_V, SEED_VII, FACED, DEAP]
+protocol: lodo_allsource_repeated_subject_split
+
+source:
+  root: src
+  include: ["*"]
+  exclude: ["**/__pycache__/*"]
+  # Agent may change these after the freeze (method code and configuration).
+  editable: [candidate_plan.json, isa_builder.py, isa_loss.py, isa_representation.py, posttrain.py, source_parallel.py]
+  # Hashed at `eegfm freeze`; any later change is refused.
+  frozen: [run_eval.py, data_contract.py, release_io.py, official_model.py, reference_core.py, downstream.py,
+           fold_worker.py, evaluation_contract.py, analysis_contract.py, artifact_io.py, split_manifest.json,
+           "vendor/*"]
+
+evaluation:
+  # One job per target dataset (LODO): post-train on the other five, then LP/FT on the target's six splits.
+  shards: [SEED, SEEDIV, SEED_V, SEED_VII, FACED, DEAP]
+  val_command: "python3 -B run_eval.py --phase val --target {shard} --out {out}"
+  test_command: "python3 -B run_eval.py --phase test --target {shard} --from {val_out} --out {out}"
+  # Setup attempts only: a short end-to-end pass (real data, real GPUs, few steps) to prove the chain.
+  smoke_command: "python3 -B run_eval.py --phase val --smoke --target {shard} --out {out}"
+  metric: ft_bacc          # validation FT balanced accuracy (mean of 6 splits), %; primary = mean over targets
+  direction: maximize
+  test:
+    max_candidates: 2      # R0 baseline and the final candidate
+
+compute:
+  backend: tione
+  gpus_per_job: 6
+  gpu_type: GPU-HCCPNV6
+  extra_cosfs_mounts:
+    - ["omni-eeg-1442740494/omni-eeg-01/cx/", "/mnt/omni-eeg-01/cx"]
+
+search:
+  min_valid_rounds: 2
+  max_attempts: 6          # iteration attempts after the baseline
+  max_debug_depth: 2
+  patience: 3
+  exploration_policy: static   # Dream-RSI policy replay disabled until enough history exists
+  gpu_hours_budget: 900
+
+research:
+  web_search: true
+  resurvey_after_stalled: 3
+
+review:
+  brief_requires_approval: true

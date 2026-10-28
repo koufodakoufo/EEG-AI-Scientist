@@ -1,0 +1,38 @@
+task_id: synthetic_demo
+title: Synthetic EEG-FM-shaped tuning task for validating the program end to end
+model: synthetic
+datasets: [dsA, dsB, dsC]
+protocol: synthetic_lodo
+
+source:
+  root: src
+  include: ["*"]
+  editable: [method.yaml]
+  frozen: [run_eval.py]
+
+evaluation:
+  shards: [dsA, dsB, dsC]
+  val_command: "python3 -B run_eval.py --phase val --target {shard} --out {out}"
+  test_command: "python3 -B run_eval.py --phase test --target {shard} --from {val_out} --out {out}"
+  metric: ft_bacc
+  direction: maximize
+  test:
+    max_candidates: 2
+
+compute:
+  backend: local
+
+search:
+  min_valid_rounds: 2
+  max_attempts: 4
+  max_debug_depth: 2
+  patience: 3
+  exploration_policy: static
+  gpu_hours_budget: 0
+
+research:
+  web_search: false
+  resurvey_after_stalled: 3
+
+review:
+  brief_requires_approval: true

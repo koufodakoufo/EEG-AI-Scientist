@@ -1,0 +1,2207 @@
+[
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\proxy-listener-verified.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\proxy-listener-verified.log",
+    "sha256": "fe92c9288b1c1f0e96b88d99014d8f4a825c50b2e5a5919b89284e23db042e6c"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\proxy-tunnel.pid",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\proxy-tunnel.pid",
+    "sha256": "fa05a664cdc73a39c50c28eec21c945538f673b512e009304c844dc0f88c46c1"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\proxy-tunnel.stderr.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\proxy-tunnel.stderr.log",
+    "sha256": "122fe5b07412700f17cc10f788d008f45925ff06641c2bb79e4b02ef9c48a49e"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\proxy-tunnel.stdout.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\proxy-tunnel.stdout.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\server-configure.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\server-configure.py",
+    "sha256": "372bf69c0a39ebf9c7ecc537473c0a138ef8681391da271017c839796cf6a779"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\server-create.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\server-create.log",
+    "sha256": "7e8eccc70fc59b561bfb948ff7c41faf6f93bc279585183b960312fd1175f5e1"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\server-create.sh",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\server-create.sh",
+    "sha256": "f8605c24a63e51b5a19ddbbf91b1f727b499bcd4196cc3dd5661f53a7207d4d0"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\server-final-inventory.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\server-final-inventory.log",
+    "sha256": "43ace55496faf9019dad0cc96ed37e20b0ed76e532ec4a797747085bec141dac"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\server-inspect.sh",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\server-inspect.sh",
+    "sha256": "45f8666d96f2f2c971779909459ad02738f893f5fe7ec6117d56c7fffbe31e38"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\server-install.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\server-install.log",
+    "sha256": "642355b84d21d849c1a4a9275cd64c0d57324804a8a724b2adf14a4e2c9d6f42"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\server-install.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\server-install.py",
+    "sha256": "6500ca0fa2d34e052986ebd31e2222538d2d9762cc8376bfb6bc52f926651266"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\server-inventory.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\server-inventory.json",
+    "sha256": "dc40c989bb4826524b4846a4e8671ae95da7bb96c111dcadab010c5344b97a6a"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\server-network.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\server-network.json",
+    "sha256": "81a790ca131460ad81f92a7f282ce13849843cad44dab819a29439f86528d387"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\server-network.sh",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\server-network.sh",
+    "sha256": "fb223ffdef6187258b468d3b02d4ed7feaedbd8af868f410dbc71346f9f73fc5"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\server-python.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\server-python.log",
+    "sha256": "5d0c7da115ab5fdc871dc9e08d26d2232fe5755d36a516736c2b05cf5bd800b7"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\server-python.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\server-python.py",
+    "sha256": "69f79372cfdb558c5ba107c9c2ae0e09a911c2633b798821ee497038f74e26ff"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\server-runtime-final.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\server-runtime-final.log",
+    "sha256": "60ef0026cd1298d8ebf15ebc21e9372a6828adcda0d2b098fa25dedc7fc77594"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\server-source.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\server-source.log",
+    "sha256": "4ac467ea43009be7309e66c3f5af0fc4fa16fe48774001643f19e01f842e2a5c"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\server-source.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\server-source.py",
+    "sha256": "9cade2d0e8eb3715db2f6049eb55fed2c0f1815e47c7a0f68365d6dc1bef0b81"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\server-tests.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\server-tests.log",
+    "sha256": "4f2ce505c33bf1af90503c5e2c66cb91d60ce4cf491764d25c25ecc6796c3dc2"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\server-tests.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\server-tests.py",
+    "sha256": "f88f8c9a4269dc97d54285989f363b18b2a27731f93504cb1cf5cc7e1379aeec"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\STATUS.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\STATUS.json",
+    "sha256": "726b5a0befb2293cc8f45481277d132fd206675ff87e24f3467a6797fdfecd85"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\branches.txt",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\branches.txt",
+    "sha256": "14522eaee8eb6ee16434c6553aeec45564f2b3b07e361079dc75072c66a5edba"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\bundle.verify.txt",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\bundle.verify.txt",
+    "sha256": "77b005fa4f6ea865d356fbe3fb79cfbbfabe9c45d67ab34eb9c0054e06763d55"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\check_restore.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\check_restore.py",
+    "sha256": "c92bfdcdf8b51abe0631d0c15e73b91ad05bce069576496da80475041839b9a1"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\create_snapshot.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\create_snapshot.py",
+    "sha256": "ff93589cc7bcc14ced6a276b152143154749432482526ebe11ed875dea1b86d4"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\display-copy-recovery.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\display-copy-recovery.json",
+    "sha256": "a7605a6fe15cd8410c4331207ef246d053185378c6069999d24d8746b7ab5366"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\final-checksums.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\final-checksums.json",
+    "sha256": "16ef60f0f50dafc849fe0256c3761ebb4f6febf36357fb94f3b3a49c38b6cf21"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\head.txt",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\head.txt",
+    "sha256": "affa07e430b1913c822d6a1e616d34677972d971d6af3c8c844a6127f9b8d58b"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\historical-hashes.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\historical-hashes.json",
+    "sha256": "997f6758841871ad95df65b001916047b6ab752e3b6b7e102031834e3869ad4a"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\history.bundle",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\history.bundle",
+    "sha256": "55826dc3d55ef8dfad7e286da27e05834f835d5f6e7abaa904add5158192943f"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\index.original",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\index.original",
+    "sha256": "1922ce329d38bb439062a4049a5dc67ed911bb08a92def255ef87193fa817183"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\manifest.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\manifest.json",
+    "sha256": "9c96fd75239991863e9cfe6d2fca1a1b161e0c54e9f611788b99619b8e98613a"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\migration-map-verification.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\migration-map-verification.json",
+    "sha256": "f20a5d0bc02dae1e4b10f05be7ad36c78e1f15459ca28dfa5b124d70403f923e"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\README.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\README.md",
+    "sha256": "a7d9459324d965d3357f979234d1494e85db26a5593ae85df5839ef3eda6cb90"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\recover_display_copies.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\recover_display_copies.py",
+    "sha256": "03592532f6b213fd38110c415c224ca1cab4c16976974541c4641d03e5ada0cd"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\restore-check-result.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\restore-check-result.json",
+    "sha256": "7507802d581f85347f07a859166d004b4f31eb827945e9cd7250d4d0904eb4d1"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\staged.patch",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\staged.patch",
+    "sha256": "03f6d26f35254f34cc62cf7e166772af00d60ebb68a0e512a87ebfa159b1cfc1"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\status.porcelain.z",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\status.porcelain.z",
+    "sha256": "14a78551f161700b35f50681a9bb6d9224d4d04568e9ca87a3c7d22d99fdad14"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\unstaged.patch",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\unstaged.patch",
+    "sha256": "c6521edb85141ca2f7fee6e3490bf7cf4503216ba79f4c3365c88f8b7b190cda"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\verification.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\verification.json",
+    "sha256": "8ac3174151915372c80d64da58f49b791b15c620ee73b0c394c1629ef4a41e04"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\working-tree.zip",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\working-tree.zip",
+    "sha256": "ad9f198f19c2a5fdc0bb501ae938c5d0e1ccd4d1c40b836bc75c8828d0d04b12"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\index-blobs\\dde7a041ee32a8837e5b58540fce5f9fc3636514",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\index-blobs\\dde7a041ee32a8837e5b58540fce5f9fc3636514",
+    "sha256": "9d5cd739dce16cb194f38ca6e53c58913b0eae47331be9ba30013aade3238cf9"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\recovered-originals\\01_representation.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\recovered-originals\\01_representation.md",
+    "sha256": "b6c5aba3b0c322da2451643d45e269e5874c65fa6c3cb235d7324f5cbade8119"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\recovered-originals\\02_emotion_baseline_01.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\recovered-originals\\02_emotion_baseline_01.md",
+    "sha256": "2bde001945a96c23ec41a534e6aafbbd311150ae97734e446a4f2395d00cd584"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\recovered-originals\\03_emotion_baseline_02_retry.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\recovered-originals\\03_emotion_baseline_02_retry.md",
+    "sha256": "eca85f2bfbf8b79cdab40dc23e6aa740637a6c9fb179533af7bd37242764a88d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\recovered-originals\\04_emotion_meta_02_retry.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\recovered-originals\\04_emotion_meta_02_retry.md",
+    "sha256": "a2c8b6ed17715371666500f75b089b226f9579a2c10f49fe910cd6413a0bee17"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\recovered-originals\\05_emotion_meta_01_retry2.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\recovered-originals\\05_emotion_meta_01_retry2.md",
+    "sha256": "908db8fd96f42a909ce40bf1d399431264943cf793404f4a0389a1a36ea1108f"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\recovered-originals\\06_meta_rule.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\recovered-originals\\06_meta_rule.md",
+    "sha256": "a217e3bfd14f1a5593d9c0299d79bf50b48e88feed1b72c22db83d9820d7b308"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\recovered-originals\\07_baseline_actual_input.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\recovered-originals\\07_baseline_actual_input.md",
+    "sha256": "8b2ac8c9d6d7dc0c234ec137667e59208abf8aee8738d292188bac415ab7d68c"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\local-archive\\recovered-originals\\08_meta_actual_input.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\local-archive\\recovered-originals\\08_meta_actual_input.md",
+    "sha256": "5342aae7abf6858b2144e71f6e5d7786852bcc2cf09e0bacfe72d450601e4cd8"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\source-provenance\\eeg-fm-research-snapshot-import.bundle",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\source-provenance\\eeg-fm-research-snapshot-import.bundle",
+    "sha256": "8efa1fe47724b55ce8cc6f705bf64922bcad21387e76992a7080feef0e29b1b8"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\source-provenance\\eeg-fm-research-source-snapshot-corrected.bundle",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\source-provenance\\eeg-fm-research-source-snapshot-corrected.bundle",
+    "sha256": "a0e2131f29ec3ae176887fe69c71149563b593de08aa5d3e366d52fcf0cc13fd"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\source-provenance\\extraction-verification.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\source-provenance\\extraction-verification.json",
+    "sha256": "ab621f034e8ff78966d3c2cfe65e95b638c0a118954cddac65cbcd532fcffcb6"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\source-provenance\\final-source-verification.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\source-provenance\\final-source-verification.json",
+    "sha256": "879badeaf7b2a3c2bb44a978662b0409566300e86123043e759f4abf3b527015"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\source-provenance\\git-import-verification.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\source-provenance\\git-import-verification.json",
+    "sha256": "771ab982a360baaf06516fd83311e015f5b1066dd280480b241817f80fb7047e"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\source-provenance\\README.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\source-provenance\\README.md",
+    "sha256": "393f1c883b0cd7bba13f3f8f540a0f21e4d1d01fbfba669e0a1a36129a7eed3a"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028\\source-provenance\\source-file-manifest.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\evidence\\source-provenance\\source-file-manifest.json",
+    "sha256": "53670ab8376d24abec712fbee98331dbf70dd1e8d65f8483cb61a71ac77c5110"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\.gitignore",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\.gitignore",
+    "sha256": "772f1c5436986b5954412df6ef7a13b099b3080070a55c2cd708d9125f5f7b44"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\AGENTS.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\AGENTS.md",
+    "sha256": "02bb4eaa9f904e5cda6e2b678d88c024c4c88e894865b2b63b3f0bac99d60b13"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\CLAUDE.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\CLAUDE.md",
+    "sha256": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\PROGRAM.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\PROGRAM.md",
+    "sha256": "141d1c36eb2510b8e99d6289a5399725311099f5e46a4f0d0a5dc2f4c64744ea"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\README.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\README.md",
+    "sha256": "3b709bcfece3354544cd2290b4a1820639e65cd494f89f410036bbb60e47b297"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\RUNBOOK_REVE_CODEX.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\RUNBOOK_REVE_CODEX.md",
+    "sha256": "f4a2a80e34c2095400b4df51f04e642df3b13c2abcf0265713c0b0a36428df27"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\bin\\eegfm",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\bin\\eegfm",
+    "sha256": "c86eab27142a17a2a5dcd38db30c9069b1c86c7c25b8169d66e41de12a6b22d9"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\eegfm\\__init__.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\eegfm\\__init__.py",
+    "sha256": "2bafc237be2dbafe4e154961bb9c7cb3a6902c2569e3d30ea7b931b77baec520"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\eegfm\\__main__.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\eegfm\\__main__.py",
+    "sha256": "13a1a5b340cdcfc1902b62be90e508c7c71886000d5bf087e7854aadf09fb35e"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\eegfm\\attempts.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\eegfm\\attempts.py",
+    "sha256": "f57c665e0af2768f39db769797b0be2bc28929b5f45a05c945f28693c96caaba"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\eegfm\\cli.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\eegfm\\cli.py",
+    "sha256": "ccd2aba4367149e49b0754df51606542e065944b7b2f5e982c23ccf7dd25d7a8"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\eegfm\\common.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\eegfm\\common.py",
+    "sha256": "5d683609ad87e6d220cc93b3cd4bbba23248a16a6309a2934af4bf67255b2fad"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\eegfm\\driver.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\eegfm\\driver.py",
+    "sha256": "58c5f4dc2b6fbabaf77a0294a286972ce4ce7632fbe6294053ec2b6b9182755d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\eegfm\\evaluation.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\eegfm\\evaluation.py",
+    "sha256": "b76e5e274f6477ec9bd02c9fbc6d2d3a76925f75ade0c8656cbce319ed561f8d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\eegfm\\jobs.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\eegfm\\jobs.py",
+    "sha256": "3b23047f203ddc049df03fda8b7ed89900bddd17d0d3d5be76b7bb4d12752597"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\eegfm\\memory.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\eegfm\\memory.py",
+    "sha256": "c1ffdb7fd81c89fdc20e148d6f1e2a84dfc69264e4830ed09aedd3f4640a3987"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\eegfm\\preflight.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\eegfm\\preflight.py",
+    "sha256": "88d751abc68f4692915f6ba1026ae9e186a4b6e720965a03756c8db3e7621667"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\eegfm\\state.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\eegfm\\state.py",
+    "sha256": "2dd2588cc637954737b3ac6d1699531aeb5522a17cd4c2ac51e074c0a119d6ea"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\FINAL_REPORT.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\FINAL_REPORT.md",
+    "sha256": "7c5a8eb59dfc10ebb12cadd781bd4f2a3a4737ccfb7dd9bd2bd3fd48bc032556"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\NOTES.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\NOTES.md",
+    "sha256": "4e52545864cb5612c093236e9f15fd765a278225aa6949a912b37554d3c833a2"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\RESEARCH_BRIEF.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\RESEARCH_BRIEF.md",
+    "sha256": "6086fa3a5e311d81e6fec38da5662474c872ee4561e39fd5e6e0e0907e407c5d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\STATE.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\STATE.json",
+    "sha256": "9bda4565bb496de4ad95cd30af3224bf55e9fc8c650e317c6459d5c9b89d17f7"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A1\\attempt.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A1\\attempt.json",
+    "sha256": "be3e0445e227445304f135c9ea0cec8b6e483c2abc43eb494eb815096f3e49a1"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A1\\code\\method.yaml",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A1\\code\\method.yaml",
+    "sha256": "77ab66715559857d66db0fe88014832b55daf3e1fb77c396ba3dd22eec129573"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A1\\code\\run_eval.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A1\\code\\run_eval.py",
+    "sha256": "bda33e6a6f9d760a2fe26c445ae8b62a775df8c1190f9bc296694368d14c0ec7"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A1\\eval\\error.txt",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A1\\eval\\error.txt",
+    "sha256": "bb6f8d70f46533774bde7164685f02b13f68839304988229ced7da6741c97b2b"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A1\\proposal.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A1\\proposal.md",
+    "sha256": "b06cc3c62dc7aec52a493d447c10d5113d4a7e3d1f33a466450751b8044dafdb"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A2\\attempt.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A2\\attempt.json",
+    "sha256": "8866d44d26a8cdcd1830ca1805fc89ca2b5b8cf5e331990068156d7ad65f677d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A2\\code\\method.yaml",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A2\\code\\method.yaml",
+    "sha256": "77ab66715559857d66db0fe88014832b55daf3e1fb77c396ba3dd22eec129573"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A2\\code\\run_eval.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A2\\code\\run_eval.py",
+    "sha256": "bda33e6a6f9d760a2fe26c445ae8b62a775df8c1190f9bc296694368d14c0ec7"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A2\\eval\\raw_val\\dsA\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A2\\eval\\raw_val\\dsA\\metrics.json",
+    "sha256": "bb67c321fce6923556985002fe589af1c9dda67b33a315e8f62dc8201952af20"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A2\\eval\\raw_val\\dsA\\selected.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A2\\eval\\raw_val\\dsA\\selected.json",
+    "sha256": "e53dbb4e3db517fa215b326146033f2c224039cada51939e5e42e45b3d76af70"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A2\\eval\\raw_val\\dsB\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A2\\eval\\raw_val\\dsB\\metrics.json",
+    "sha256": "833fef915da36983edbd098b1bebac2bf87dd8f98541c08c9e004034651d608b"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A2\\eval\\raw_val\\dsB\\selected.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A2\\eval\\raw_val\\dsB\\selected.json",
+    "sha256": "e53dbb4e3db517fa215b326146033f2c224039cada51939e5e42e45b3d76af70"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A2\\eval\\raw_val\\dsC\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A2\\eval\\raw_val\\dsC\\metrics.json",
+    "sha256": "d8a136643d1c260a91f2f025d5d3f240d2794354ad82810079ff9eae9920cd08"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A2\\eval\\raw_val\\dsC\\selected.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A2\\eval\\raw_val\\dsC\\selected.json",
+    "sha256": "e53dbb4e3db517fa215b326146033f2c224039cada51939e5e42e45b3d76af70"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A2\\eval\\score.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A2\\eval\\score.json",
+    "sha256": "ccd4e3245f39354454a23737a4bfc30ae8ef85a293b6dab174735b9760858711"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A2\\proposal.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A2\\proposal.md",
+    "sha256": "60d1f37812b0ab5b47eae5e1558b56c955a9c59cf1faa5c2b726964dc321ceb0"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A3\\attempt.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A3\\attempt.json",
+    "sha256": "35bfbf8025a8fea0f29c20ddcf3ab8d29196ffcc209913ccd7b95c8d3184ed56"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A3\\code\\method.yaml",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A3\\code\\method.yaml",
+    "sha256": "77ab66715559857d66db0fe88014832b55daf3e1fb77c396ba3dd22eec129573"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A3\\code\\run_eval.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A3\\code\\run_eval.py",
+    "sha256": "bda33e6a6f9d760a2fe26c445ae8b62a775df8c1190f9bc296694368d14c0ec7"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A3\\eval\\raw_val\\dsA\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A3\\eval\\raw_val\\dsA\\metrics.json",
+    "sha256": "bb67c321fce6923556985002fe589af1c9dda67b33a315e8f62dc8201952af20"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A3\\eval\\raw_val\\dsA\\selected.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A3\\eval\\raw_val\\dsA\\selected.json",
+    "sha256": "e53dbb4e3db517fa215b326146033f2c224039cada51939e5e42e45b3d76af70"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A3\\eval\\raw_val\\dsB\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A3\\eval\\raw_val\\dsB\\metrics.json",
+    "sha256": "833fef915da36983edbd098b1bebac2bf87dd8f98541c08c9e004034651d608b"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A3\\eval\\raw_val\\dsB\\selected.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A3\\eval\\raw_val\\dsB\\selected.json",
+    "sha256": "e53dbb4e3db517fa215b326146033f2c224039cada51939e5e42e45b3d76af70"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A3\\eval\\raw_val\\dsC\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A3\\eval\\raw_val\\dsC\\metrics.json",
+    "sha256": "d8a136643d1c260a91f2f025d5d3f240d2794354ad82810079ff9eae9920cd08"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A3\\eval\\raw_val\\dsC\\selected.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A3\\eval\\raw_val\\dsC\\selected.json",
+    "sha256": "e53dbb4e3db517fa215b326146033f2c224039cada51939e5e42e45b3d76af70"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A3\\eval\\score.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A3\\eval\\score.json",
+    "sha256": "ccd4e3245f39354454a23737a4bfc30ae8ef85a293b6dab174735b9760858711"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A3\\proposal.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A3\\proposal.md",
+    "sha256": "04b3d60df72d35eaa621b5575140cba27cf0061ce4674fb75c4e9bd6ef7d1dec"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A4\\attempt.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A4\\attempt.json",
+    "sha256": "6c16577ec1444b630b69864b71f1e1a1d3104bff98256a8b2ddcfdcc0a71d6a8"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A4\\code\\method.yaml",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A4\\code\\method.yaml",
+    "sha256": "672e05cf7a9159e885edd86567709e69033962ba9b55bf4941eff914f9c9e4da"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A4\\code\\run_eval.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A4\\code\\run_eval.py",
+    "sha256": "bda33e6a6f9d760a2fe26c445ae8b62a775df8c1190f9bc296694368d14c0ec7"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A4\\eval\\raw_val\\dsA\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A4\\eval\\raw_val\\dsA\\metrics.json",
+    "sha256": "ca44470b5ba0fd5b24a921a04fa961cb891c3add27c29c6549d9906eb31abf76"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A4\\eval\\raw_val\\dsA\\selected.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A4\\eval\\raw_val\\dsA\\selected.json",
+    "sha256": "583dd9b84db3bd87275f045f55daa38f40a4bac6ca943f21df29e475af037e10"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A4\\eval\\raw_val\\dsB\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A4\\eval\\raw_val\\dsB\\metrics.json",
+    "sha256": "16ef4f8a2c965622c0760cc14ef894b3fa811934938769df09f253d8cdc039c2"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A4\\eval\\raw_val\\dsB\\selected.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A4\\eval\\raw_val\\dsB\\selected.json",
+    "sha256": "583dd9b84db3bd87275f045f55daa38f40a4bac6ca943f21df29e475af037e10"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A4\\eval\\raw_val\\dsC\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A4\\eval\\raw_val\\dsC\\metrics.json",
+    "sha256": "127cb2254f15f03756c01e626fbb6c805b6d19fe9ad66be938ed8c332dd4a0c1"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A4\\eval\\raw_val\\dsC\\selected.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A4\\eval\\raw_val\\dsC\\selected.json",
+    "sha256": "583dd9b84db3bd87275f045f55daa38f40a4bac6ca943f21df29e475af037e10"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A4\\eval\\score.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A4\\eval\\score.json",
+    "sha256": "4bce10608bff2fe316426e30f0aa5d0d5cbd3c22bb5c12a73a0fdf3e9a75c4d4"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A4\\proposal.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A4\\proposal.md",
+    "sha256": "765f8ea9cf624651e280bb062f6df24c75976942e227e47c4723f739cb94ce71"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A5\\attempt.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A5\\attempt.json",
+    "sha256": "b9d63a9d4819531722ad046d17a74b1fa4e119627c6a312dde841271aa99f74d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A5\\code\\method.yaml",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A5\\code\\method.yaml",
+    "sha256": "7512eefbdedf161f9800ec5792d883d7ae68bcd91de986b987e0d2e92d2908ae"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A5\\code\\run_eval.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A5\\code\\run_eval.py",
+    "sha256": "bda33e6a6f9d760a2fe26c445ae8b62a775df8c1190f9bc296694368d14c0ec7"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A5\\eval\\raw_val\\dsA\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A5\\eval\\raw_val\\dsA\\metrics.json",
+    "sha256": "413f582599264c4aceb1a4d79267eecf32e3f726d8f254564e7aa85734fe1239"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A5\\eval\\raw_val\\dsA\\selected.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A5\\eval\\raw_val\\dsA\\selected.json",
+    "sha256": "61db5dbb71841c30f242f7bbb0e893d788423bc4df070ae9e983150ad2e81900"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A5\\eval\\raw_val\\dsB\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A5\\eval\\raw_val\\dsB\\metrics.json",
+    "sha256": "c36a28a3bfe30a82e1f770f74377f89388ebd6405c636a14d6db4c97ff494d54"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A5\\eval\\raw_val\\dsB\\selected.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A5\\eval\\raw_val\\dsB\\selected.json",
+    "sha256": "61db5dbb71841c30f242f7bbb0e893d788423bc4df070ae9e983150ad2e81900"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A5\\eval\\raw_val\\dsC\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A5\\eval\\raw_val\\dsC\\metrics.json",
+    "sha256": "190a72bcaa22d65653618278bdcee0ea9055a5c2857fe1169cfc7df4fb733b13"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A5\\eval\\raw_val\\dsC\\selected.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A5\\eval\\raw_val\\dsC\\selected.json",
+    "sha256": "61db5dbb71841c30f242f7bbb0e893d788423bc4df070ae9e983150ad2e81900"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A5\\eval\\score.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A5\\eval\\score.json",
+    "sha256": "2b43d2e92c26cb8ddb9cb008c6e76b7c6d28663cc9171b91db132a4d1e853e55"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A5\\proposal.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A5\\proposal.md",
+    "sha256": "ed5043f75f8b39119d66013344bcb125a8483894f0eae0fd1040d993b3ae96d4"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A6\\attempt.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A6\\attempt.json",
+    "sha256": "eb8bc784a4c5fa4e81fc700348268d7c54296c6b157b1e8dc08203b8257e3c0d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A6\\code\\method.yaml",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A6\\code\\method.yaml",
+    "sha256": "f6625d7782b964fbbf982ad029c328e10c97f255f830257ef02d82fcadb217d0"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A6\\code\\run_eval.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A6\\code\\run_eval.py",
+    "sha256": "bda33e6a6f9d760a2fe26c445ae8b62a775df8c1190f9bc296694368d14c0ec7"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A6\\eval\\raw_val\\dsA\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A6\\eval\\raw_val\\dsA\\metrics.json",
+    "sha256": "588d9987ed4deae52de011e42f8c4daad64d4c457b58cb6a7b4b1f20cee06493"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A6\\eval\\raw_val\\dsA\\selected.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A6\\eval\\raw_val\\dsA\\selected.json",
+    "sha256": "70a98a341848c826e64e2cff6d938243881eeffbb33f5cac77e9f3120b83436e"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A6\\eval\\raw_val\\dsB\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A6\\eval\\raw_val\\dsB\\metrics.json",
+    "sha256": "0c14595671b5dcbd16b42e6ec012da0aca1da32cbec7acfded92fbf1c211daad"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A6\\eval\\raw_val\\dsB\\selected.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A6\\eval\\raw_val\\dsB\\selected.json",
+    "sha256": "70a98a341848c826e64e2cff6d938243881eeffbb33f5cac77e9f3120b83436e"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A6\\eval\\raw_val\\dsC\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A6\\eval\\raw_val\\dsC\\metrics.json",
+    "sha256": "c3d536ce9c2bfee53589b70248f7ce98e2d49841ffa731177c72fb587bc74dd4"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A6\\eval\\raw_val\\dsC\\selected.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A6\\eval\\raw_val\\dsC\\selected.json",
+    "sha256": "70a98a341848c826e64e2cff6d938243881eeffbb33f5cac77e9f3120b83436e"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A6\\eval\\score.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A6\\eval\\score.json",
+    "sha256": "eeefd442b414a49ea6fd6c6cc6593b8af5b66b869ee50e33e2c211b9e4039d65"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A6\\proposal.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A6\\proposal.md",
+    "sha256": "021d67f9d041d97a12f711cef261c434043055a933e8636634c4c75a5e01e175"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A7\\attempt.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A7\\attempt.json",
+    "sha256": "5ee961d68409816b5d096fa9873b19ebc76c051fede1059a094567ac35dbdb63"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A7\\code\\method.yaml",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A7\\code\\method.yaml",
+    "sha256": "c0ef5322f0dfc2f970b3154ef85a2aeba055d3cc2a42acb1ee1171d5000d7dbb"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A7\\code\\run_eval.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A7\\code\\run_eval.py",
+    "sha256": "bda33e6a6f9d760a2fe26c445ae8b62a775df8c1190f9bc296694368d14c0ec7"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A7\\eval\\raw_val\\dsA\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A7\\eval\\raw_val\\dsA\\metrics.json",
+    "sha256": "b5032c8747bbe9b77d941b62547dfe89eb62113c24d7e069a126be1afd7a69a0"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A7\\eval\\raw_val\\dsA\\selected.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A7\\eval\\raw_val\\dsA\\selected.json",
+    "sha256": "fdd78e7b0aa0b574442af2486fe70cbb27944936c21abffd33af3cca52e02d4b"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A7\\eval\\raw_val\\dsB\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A7\\eval\\raw_val\\dsB\\metrics.json",
+    "sha256": "e4f6ec81917c0aea71e5093702bb47c4dce1c427b9e72fd09d75a45efe1d4e50"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A7\\eval\\raw_val\\dsB\\selected.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A7\\eval\\raw_val\\dsB\\selected.json",
+    "sha256": "fdd78e7b0aa0b574442af2486fe70cbb27944936c21abffd33af3cca52e02d4b"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A7\\eval\\raw_val\\dsC\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A7\\eval\\raw_val\\dsC\\metrics.json",
+    "sha256": "5b7b86c1ad138661e226ed36ea028224f9a94fe67bc0cc48512887bade1348b5"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A7\\eval\\raw_val\\dsC\\selected.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A7\\eval\\raw_val\\dsC\\selected.json",
+    "sha256": "fdd78e7b0aa0b574442af2486fe70cbb27944936c21abffd33af3cca52e02d4b"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A7\\eval\\score.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A7\\eval\\score.json",
+    "sha256": "f4dc08c5e1af2f74a1198101ec3c18b28f27d62cb0ee1747cf3d3af99bfbd350"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\A7\\proposal.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\A7\\proposal.md",
+    "sha256": "acd2eee5633a4755fd7b14a0f5e91796a341779007f4428e8ecb16dee9a5a1bc"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\attempts\\INDEX.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\attempts\\INDEX.md",
+    "sha256": "94f22202f6e0a15d7b969e471fe9396211520167cf00bfb9b59f5f97bbe15608"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\audit.jsonl",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\audit.jsonl",
+    "sha256": "2dc80c83e789428849ae05e6654c52ad4cb2551c7db3172a6aa1ac4235a8ed9c"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\driver.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\driver.json",
+    "sha256": "19c3fb8f1cf846f87e2fbe0d38a52d74002ce340833e1264542dd5bb4d36cb43"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\driver.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\driver.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\events.jsonl",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\events.jsonl",
+    "sha256": "aed4c08230b1a7fd7751d979cf8f54fcf8991419cbfba47087058674e70fa5a0"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\final_test.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\final_test.json",
+    "sha256": "3dd9d0cae3345147728b3cde11d7eff1adf0a9be9fc1f3822066505d22d517ed"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\freeze.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\freeze.json",
+    "sha256": "d1fec31b876db1a5ca0eb9403a8ca1fc1a09722c4bd75b1189feca64ab405b28"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a1-val-dsa-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a1-val-dsa-1.exit",
+    "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a1-val-dsa-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a1-val-dsa-1.json",
+    "sha256": "f700641944020a275dd4a81a5c9a40a1d23da0cefd40d96f2a6f0e82871d501c"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a1-val-dsa-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a1-val-dsa-1.log",
+    "sha256": "5570f6faee4b3119c12ed477a3966c84d55dd24b04ca055b567aaa8688098bdc"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a1-val-dsb-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a1-val-dsb-1.exit",
+    "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a1-val-dsb-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a1-val-dsb-1.json",
+    "sha256": "6958138e6260f4119865974bd9da0296c2de62c313cd651e6f1ba46b2ce6c934"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a1-val-dsb-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a1-val-dsb-1.log",
+    "sha256": "2ef68e8d5a7c9ca9f5bdb1f3353e7a0d65c9586c89274395f9b5b018af223cdf"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a1-val-dsc-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a1-val-dsc-1.exit",
+    "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a1-val-dsc-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a1-val-dsc-1.json",
+    "sha256": "6a44a409ba81ebb2c20a8ac7320cc770f1915be73bc0425bb552c764c68ed35e"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a1-val-dsc-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a1-val-dsc-1.log",
+    "sha256": "053bc733bc9b2b6510ef93c49608ac0d868a356738cc6188ad2e48489889cdc9"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a2-val-dsa-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a2-val-dsa-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a2-val-dsa-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a2-val-dsa-1.json",
+    "sha256": "1a761898ea2fa44ba3455d7576554ad43eb6b184b041b48d41341f93eb551364"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a2-val-dsa-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a2-val-dsa-1.log",
+    "sha256": "0d0bc8a981738b45747159d82650b17fe7dff26546538c922fb6ad7ae935b828"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a2-val-dsb-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a2-val-dsb-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a2-val-dsb-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a2-val-dsb-1.json",
+    "sha256": "27f955b039902a67ed0e0ea79f99a780ed8bd28caa472cac5f9cddc1c7eab542"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a2-val-dsb-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a2-val-dsb-1.log",
+    "sha256": "76e016d1b4166f6b4068c5ba29a4780f98f2d8ed627b6dcadc75105c658513f5"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a2-val-dsc-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a2-val-dsc-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a2-val-dsc-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a2-val-dsc-1.json",
+    "sha256": "f4308cd8ab948b1ca73cafefa00c6fb8abd5481ced2be4aabba17b042570884e"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a2-val-dsc-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a2-val-dsc-1.log",
+    "sha256": "79239d64e392b5ca6d58889906d69e8ef4df3c6db4656fc07414e00b38e8dbed"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-test-dsa-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-test-dsa-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-test-dsa-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-test-dsa-1.json",
+    "sha256": "e6fbf07e898fd41b685fc7cbc6129201ff2e1fc3763b34a276450dc7660ba8f2"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-test-dsa-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-test-dsa-1.log",
+    "sha256": "7ca38200f9c9b18009fe1504bc42f27b99cfb45a90fe7e14b0995b09c7e3c5b0"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-test-dsb-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-test-dsb-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-test-dsb-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-test-dsb-1.json",
+    "sha256": "e99e3ed91d3a428f192c1f1b27a19f9c1138dc59df7afda7e40cdadf2d6bb756"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-test-dsb-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-test-dsb-1.log",
+    "sha256": "2df0e7977eef82a757f2b76709b52b05119c7a9001b7859b309e4dfdc15e20c1"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-test-dsc-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-test-dsc-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-test-dsc-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-test-dsc-1.json",
+    "sha256": "06c199cbf062a943cfa13184a982a65a3c8bdf5cd02063fb51e99d6810b06d13"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-test-dsc-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-test-dsc-1.log",
+    "sha256": "6b78210420af0be1d87e011a8aebf30304efc5a59f8bc10eebf2eb24bad74c18"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-val-dsa-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-val-dsa-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-val-dsa-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-val-dsa-1.json",
+    "sha256": "ca021e30219716bf1ba019eeacb4e84806f3974c2da8d3fcbea41071e2727c7d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-val-dsa-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-val-dsa-1.log",
+    "sha256": "0d0bc8a981738b45747159d82650b17fe7dff26546538c922fb6ad7ae935b828"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-val-dsb-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-val-dsb-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-val-dsb-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-val-dsb-1.json",
+    "sha256": "3bdfcdce8af64b1c487e61cbae5977a9304bd32051e5ebe08cc74c404179a60b"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-val-dsb-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-val-dsb-1.log",
+    "sha256": "76e016d1b4166f6b4068c5ba29a4780f98f2d8ed627b6dcadc75105c658513f5"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-val-dsc-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-val-dsc-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-val-dsc-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-val-dsc-1.json",
+    "sha256": "27484dc1bccdc20fc15f94ee160f17967e1120031796673c915631e49f197f9c"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-val-dsc-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a3-val-dsc-1.log",
+    "sha256": "79239d64e392b5ca6d58889906d69e8ef4df3c6db4656fc07414e00b38e8dbed"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a4-val-dsa-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a4-val-dsa-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a4-val-dsa-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a4-val-dsa-1.json",
+    "sha256": "7c61ace870237ac61dc43b1bfc72f0b52fce70e04cf0aace99db348c28327577"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a4-val-dsa-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a4-val-dsa-1.log",
+    "sha256": "dd655c1c46d147a88a6149d64876f977548426104b5b6aa8e3eb3dcd26082c90"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a4-val-dsb-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a4-val-dsb-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a4-val-dsb-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a4-val-dsb-1.json",
+    "sha256": "1f47af3c575f21c13f4bf7981428b98c7038f800d62b4d36b7e049e1c398f857"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a4-val-dsb-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a4-val-dsb-1.log",
+    "sha256": "605967924d79d811535ce2141213bb33dc7c3e2e34698b317cd3d2c237487fab"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a4-val-dsc-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a4-val-dsc-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a4-val-dsc-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a4-val-dsc-1.json",
+    "sha256": "757966385dfecea59848670a515de8e02b1b3c0f2000ac580bd9720bda2c4b68"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a4-val-dsc-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a4-val-dsc-1.log",
+    "sha256": "8757e19a592687ce9b1b5c52b1a1d96bdf7b6b036c59ad09ef5e4fb3557bb0cf"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a5-val-dsa-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a5-val-dsa-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a5-val-dsa-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a5-val-dsa-1.json",
+    "sha256": "cb7033bc04a742369477dd0e36f1c8be86ad74afbb840b671ebd7f1ddd66f1c0"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a5-val-dsa-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a5-val-dsa-1.log",
+    "sha256": "7390707251335c5b4f21aa5d4be7d22b84547dbb2c5b12871aef5c1389c94c7d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a5-val-dsb-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a5-val-dsb-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a5-val-dsb-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a5-val-dsb-1.json",
+    "sha256": "a45a97d689aa5738cd503f0b19a669b06c310ef24fec20baf5b06a657f74f08d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a5-val-dsb-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a5-val-dsb-1.log",
+    "sha256": "7e9ae7ba89f7d615545cac7ae0d1e7a0c1498c7432b3bb393a12c8b26b70965d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a5-val-dsc-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a5-val-dsc-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a5-val-dsc-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a5-val-dsc-1.json",
+    "sha256": "e2ba214fb6d1d8960bf9a9941fbf418ad42be685953bd16121fe01145e068f4c"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a5-val-dsc-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a5-val-dsc-1.log",
+    "sha256": "44f7e9079562b3395807e05d6500277f9516145859f970baaefb203cdfe8f533"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a6-val-dsa-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a6-val-dsa-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a6-val-dsa-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a6-val-dsa-1.json",
+    "sha256": "c18e73aef49eeab591399e4b680e627de9630dc179abf5cfae1be2c14d2e1a60"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a6-val-dsa-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a6-val-dsa-1.log",
+    "sha256": "74195c409beb9ef0248579d203882b95187c11d2024ac330ddf8a1bea6399c29"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a6-val-dsb-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a6-val-dsb-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a6-val-dsb-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a6-val-dsb-1.json",
+    "sha256": "9ff7db883c5959929377b9013176228d72a6078c69363f511d3447c3f415c138"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a6-val-dsb-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a6-val-dsb-1.log",
+    "sha256": "9e3cfb4adce112e98f5b0abe134c8188b5c2fe9fe1b92626535a299cd856ef41"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a6-val-dsc-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a6-val-dsc-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a6-val-dsc-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a6-val-dsc-1.json",
+    "sha256": "505a734eae4481244e1f8c4122dfdebd72114f2056427656cf879f173320b9c2"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a6-val-dsc-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a6-val-dsc-1.log",
+    "sha256": "2c253c28ce307d79bda6000e6202a647395f3f101bbd106182fe7837cca1593c"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-test-dsa-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-test-dsa-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-test-dsa-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-test-dsa-1.json",
+    "sha256": "5731b07761ee9fdd619c2edf24acba3e7d8733a0f7e05cb77a3296e851f69b8b"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-test-dsa-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-test-dsa-1.log",
+    "sha256": "d0062fe20a51787449d055f63f05c5a0be12789145228c358d17a713ac5e2894"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-test-dsb-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-test-dsb-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-test-dsb-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-test-dsb-1.json",
+    "sha256": "9cdf79495e1c182f49e27ac83b4520760f6260445c33dd94773a4baa279fef29"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-test-dsb-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-test-dsb-1.log",
+    "sha256": "1b67695f9639f9f0c196358df374cfdd8f3757313d0fab41e4eee68fb0a21783"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-test-dsc-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-test-dsc-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-test-dsc-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-test-dsc-1.json",
+    "sha256": "d335e25a533c60b1913313dcc09075ca295165ee3d05bb0545eeb034f60d1ec5"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-test-dsc-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-test-dsc-1.log",
+    "sha256": "c638dd4efda905cea71e737e2720f2f5d56e4a6c1355a37a08a536fdd64089a5"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-val-dsa-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-val-dsa-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-val-dsa-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-val-dsa-1.json",
+    "sha256": "1938a9f7595f2ef0d6629e221569e347ad90764d39ea215d58e0ca34d052aba2"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-val-dsa-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-val-dsa-1.log",
+    "sha256": "ed045d6a1eaf04fccf8b51ac5e40f0d4082a0421c713b6dd1c8ea50baf46691b"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-val-dsb-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-val-dsb-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-val-dsb-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-val-dsb-1.json",
+    "sha256": "e7eb666eb4e7b5b2bf4980e50d8b5b80ce24b9ee23ba6a2cffbe1ebafae7fbc7"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-val-dsb-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-val-dsb-1.log",
+    "sha256": "60f62a9cade6eab530010308069c92a2bcf7afb20c014c7d4b16c8a9a5788b4f"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-val-dsc-1.exit",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-val-dsc-1.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-val-dsc-1.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-val-dsc-1.json",
+    "sha256": "68108b65edbcdd46b9d704eabfe226e2a8c2cf1d6d8e454b37bf2d008914a815"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-val-dsc-1.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\jobs\\demo-claude-001-a7-val-dsc-1.log",
+    "sha256": "d905426ef715b98f65f08d2c80ef2e705185608b4814cfbd8ad1ea00905be510"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\locks.jsonl",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\locks.jsonl",
+    "sha256": "82993621754dea145b60c1dc0fa48c8e7e27313d4b79ca32c74882cd52936786"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\run.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\run.json",
+    "sha256": "3581309cb03190b140a0425299d15cccb9bab4adf9e9067a23d2b192a2e821f7"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\sealed\\A3\\dsA\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\sealed\\A3\\dsA\\metrics.json",
+    "sha256": "b399957f2f8a2bf6be82f1f75696dc1c80008d6ba7775e9dec4b49e7ac70bf7d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\sealed\\A3\\dsB\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\sealed\\A3\\dsB\\metrics.json",
+    "sha256": "aa2aa4bf7de66f3c62f6807265b08eadaed11c81eb2725c7f7a9ef3a002e79f5"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\sealed\\A3\\dsC\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\sealed\\A3\\dsC\\metrics.json",
+    "sha256": "6998c352ec875395e5d8694aea4892ace06374b80ea7cc1b9d55eb566ceb5af6"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\sealed\\A7\\dsA\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\sealed\\A7\\dsA\\metrics.json",
+    "sha256": "08fd367a537a22c461293bf39a70fabfe5cd955f018c3f877f830985c743c55d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\sealed\\A7\\dsB\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\sealed\\A7\\dsB\\metrics.json",
+    "sha256": "4789be4b09ccdeaf19b40abec9cda798dc6de24d68fd21c435019d52a21da9e0"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\sealed\\A7\\dsC\\metrics.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\sealed\\A7\\dsC\\metrics.json",
+    "sha256": "fd295b02fff2e21a3c6aef3d979be7fadb2f8cfb440907366c70503873db58f5"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\sealed\\README.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\sealed\\README.md",
+    "sha256": "73f368a048456f0779cd7a70a68a4c769bb32a7dacb6e486dbcb995d0d09860a"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\sessions.jsonl",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\sessions.jsonl",
+    "sha256": "e99ad129508e3b67b0e66b7882cccda07aaba541f7a25b28fb6fb6083eea38a5"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\sessions\\session_001.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\sessions\\session_001.log",
+    "sha256": "b9ff631c7b6e7963bf0e5bd3a5d5d07db111cbd2ded14e01f4404d7c3c18f5e1"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\sessions\\session_002.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\sessions\\session_002.log",
+    "sha256": "d763aa4c995c5c53e93ddc377e01d08189b9b928c819b6f5e260bf79a37454aa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\sessions\\session_003.log",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\sessions\\session_003.log",
+    "sha256": "804506bf1c449ccecf4961e0d7b90280b278715ff6afb3be7622e061768cb80d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\workspace\\method.yaml",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\workspace\\method.yaml",
+    "sha256": "c0ef5322f0dfc2f970b3154ef85a2aeba055d3cc2a42acb1ee1171d5000d7dbb"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\examples\\demo_claude_001\\workspace\\run_eval.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\examples\\demo_claude_001\\workspace\\run_eval.py",
+    "sha256": "bda33e6a6f9d760a2fe26c445ae8b62a775df8c1190f9bc296694368d14c0ec7"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\knowledge\\INDEX.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\knowledge\\INDEX.md",
+    "sha256": "bc26d1ec915b552770084366bf50c2623b937351d4edae68e728943fa04df6a6"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\knowledge\\SOURCES.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\knowledge\\SOURCES.md",
+    "sha256": "a61c0e64208b75b31f131d81da105e739e94e76e8ae913dd1e18a091a544313d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\knowledge\\datasets.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\knowledge\\datasets.md",
+    "sha256": "c9b055b44391ba3fe493dcdf6817b0937e769799a4fe09e4887ddec0d7e88365"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\knowledge\\evidence\\reve_isa_H1_validation_summary.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\knowledge\\evidence\\reve_isa_H1_validation_summary.json",
+    "sha256": "b27b5813b254f5ba8fbaf9d08744aadda668d37bf373b2b5157c3a3562d2b210"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\knowledge\\infrastructure.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\knowledge\\infrastructure.md",
+    "sha256": "c236007c5cd126b72b6ca59ed7787ddf34eee02434a7c657adc65fa4762c0267"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\knowledge\\models.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\knowledge\\models.md",
+    "sha256": "e261e6fe0e1f676cc30e29698ab1e0ef19c3d87542ac741a82e0638ea4e737e5"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\knowledge\\prior_results.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\knowledge\\prior_results.md",
+    "sha256": "d5fcae93dfb8a9fba141ff0aea52b974b5002add89072d7f615e755288e64b12"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\knowledge\\protocols.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\knowledge\\protocols.md",
+    "sha256": "7612487881f1617209382009fb213393e97e73c313a825c8e8b1b7c7ce5c640d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\knowledge\\research_methods.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\knowledge\\research_methods.md",
+    "sha256": "dd01bae6e55b8088ecd11b1947f97976a71031437f3261112fc890b6140d158a"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\memory\\INDEX.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\memory\\INDEX.md",
+    "sha256": "868926fc028e9e10f679eadb5eb6fd3544767a166b22a9249cc6fac132df1f27"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\memory\\items\\S-20261021T144750-001.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\memory\\items\\S-20261021T144750-001.md",
+    "sha256": "1a695a4ca961d940b3d16885f7242e4ea1d21a7a7eb4faf7654c30417ec0ddd7"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\memory\\items\\S-20261021T144751-002.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\memory\\items\\S-20261021T144751-002.md",
+    "sha256": "d339d2da4be4fc7fec5857495454ebb563f6fd5944ea9aa31572d271ab0df60f"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\memory\\items\\S-20261021T144752-003.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\memory\\items\\S-20261021T144752-003.md",
+    "sha256": "986a52b39824101ef8f6abdf0f87446cacfda19589c6d5a6fdc1284cc5cf16b0"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\memory\\items\\S-20261021T144752-004.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\memory\\items\\S-20261021T144752-004.md",
+    "sha256": "a3ba6411fe50b3063169a1d7b285973c493fe801d06f0d28e9eb7844cdef18ec"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\memory\\items\\S-20261021T144752-005.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\memory\\items\\S-20261021T144752-005.md",
+    "sha256": "e1c2328032b2a649ff8f20e9adcd263ab8b79086d1afe6cb842d7dd5e18aa49c"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\memory\\items\\S-20261021T144753-006.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\memory\\items\\S-20261021T144753-006.md",
+    "sha256": "5c8ca86ef7f6f0cb30969608375e5cc14e162e504b29b1705127893aec04fa27"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\memory\\items\\S-20261021T144754-007.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\memory\\items\\S-20261021T144754-007.md",
+    "sha256": "3bcd48ed6d09fdff621f5d70f9ae467106504ec360ee1b69c912ac3c8d0080fd"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\registry\\datasets.yaml",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\registry\\datasets.yaml",
+    "sha256": "b9ac21f73e6d5e73f584a2c26f0d94b2fad0284696eebfe7be905faede82b55f"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\registry\\models.yaml",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\registry\\models.yaml",
+    "sha256": "61abfece555da4b247412ad13efb3760d0116552aa212730d459fc1036823393"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\registry\\protocols.yaml",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\registry\\protocols.yaml",
+    "sha256": "941e1231414dde730010b780a07d44566b0d58ae672e027c7f1c2396a19ca6c6"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\runs\\.gitkeep",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\runs\\.gitkeep",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\TASK.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\TASK.md",
+    "sha256": "5a8001da6fb7a248b3ee1268f29de84d903e58fb05a1dafe1b439c33940f4341"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\memory\\INDEX.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\memory\\INDEX.md",
+    "sha256": "4f0c3e32ae6ebcea122f1375b2c7809475361e059b1755bd7914d9eb1766b8cc"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\memory\\items\\T-20261021T144754-001.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\memory\\items\\T-20261021T144754-001.md",
+    "sha256": "9ece73823f59abfa6d339fbf1d17b84558d6d583fc47965c1554106b4bffb459"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\memory\\items\\T-20261021T144755-002.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\memory\\items\\T-20261021T144755-002.md",
+    "sha256": "e24d8b70c60fb1d23e13b765ad638a56d068b2c201d9d394b0f779c0cf71b52d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\memory\\items\\T-20261021T144756-003.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\memory\\items\\T-20261021T144756-003.md",
+    "sha256": "f0b15eb3482820ea0a36f5d67027c1ba9ba2ea8ea8c78e015f709a11fa6e98f6"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\analysis_contract.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\analysis_contract.py",
+    "sha256": "f9ada37c2fb7307ecaf74e15d190d48293a4db3e07eecb13f47ba2bb86896d99"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\artifact_io.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\artifact_io.py",
+    "sha256": "a833ba1ac22fa1032e3456cb7e649f3cec226ffdc8192423e40455b7f0dba6df"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\candidate_plan.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\candidate_plan.json",
+    "sha256": "f1e3b24e3ed239702d18faee100900924dcbfd0d052ba67a635076d81aa39b79"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\data_contract.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\data_contract.py",
+    "sha256": "40bb83ab81de49be9b0985238dbe7a34198f4ee827e154df23f44206a10d3649"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\downstream.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\downstream.py",
+    "sha256": "283164fb4061241602978be5f8f7b53a48a5fb6b720b683f9676c2057f5a890d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\evaluation_contract.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\evaluation_contract.py",
+    "sha256": "186dc456d04505491df488270dc49a3e0b21b9541157ec2e98ee00fe16ca71bc"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\fold_worker.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\fold_worker.py",
+    "sha256": "0b0f226ff4b17936a716b197cba004743c38265ae12590d86e233db9af893456"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\gpu_diagnostics.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\gpu_diagnostics.py",
+    "sha256": "faa8f645a969f6b100c7e91ff63bea0a0048273ce4704f6bed091179e19a5a0f"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\isa_builder.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\isa_builder.py",
+    "sha256": "e9d1e10575ea7a5935c853cb02ba046730baa16cecc8e53662b8a58f5010cd20"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\isa_loss.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\isa_loss.py",
+    "sha256": "5ec1531fa9eb8ad760f0df4d8919b33b6a40c548ba1aa12f6fa3c849269794b3"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\isa_representation.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\isa_representation.py",
+    "sha256": "23a8f95153c204cb13e184bc003ee95096662a3caf26bdff0a9bea0ddbe6ca86"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\legacy\\README.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\legacy\\README.md",
+    "sha256": "39a99ce670043d6f8422570475baf49a06ec45a689792d4acd1ed107c642b875"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\legacy\\broker_contract.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\legacy\\broker_contract.py",
+    "sha256": "a5dc5024ee2d50f40dc04e238b4d65d7d7add2f25cb54d56501aea087f03f503"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\legacy\\cloud_smoke.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\legacy\\cloud_smoke.py",
+    "sha256": "77e8418e60763525f52730afe2df792c96824f1f5764d6de14c27ad32e4c0e30"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\legacy\\historical_brief.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\legacy\\historical_brief.md",
+    "sha256": "a73700445e7eb26969b1dfdba127f2b521c985744cd9ee6542633fce5a8dfdb5"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\legacy\\hparam_contract.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\legacy\\hparam_contract.py",
+    "sha256": "4a8a4ac276ac7ae167e2f1d6c6bcb2e064e84f60b1abc395562b66b08f5b84f8"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\legacy\\hparam_reporting.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\legacy\\hparam_reporting.py",
+    "sha256": "90db3557f04b83079a292313529a965659dce7d5be0acb018bb23d9b08dfbb99"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\legacy\\job_spec.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\legacy\\job_spec.json",
+    "sha256": "e22bd4eea19d2099ec3be49b50e46f134f03da8f6356ec266839d943aa97bc16"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\legacy\\protocol.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\legacy\\protocol.md",
+    "sha256": "d1a11d96cf3855184e23c8b4d0b70e94a53aebc75033a97bbd86b6fbe2a17517"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\legacy\\remote_worker.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\legacy\\remote_worker.py",
+    "sha256": "123583e3b9b723ec777dac01034ead55902532906a9de50eade8d16d3861fa46"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\legacy\\stages.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\legacy\\stages.py",
+    "sha256": "2eee38daac50b49d6ee582aeaded7d436b819a9c8c1fe93ff3d4d2c34ed0766d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\legacy\\task.yaml",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\legacy\\task.yaml",
+    "sha256": "3653547cdae3ab38d492956f5ef9581878180fa4bb06f28f7514ff64b610f059"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\legacy\\test_package.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\legacy\\test_package.py",
+    "sha256": "0e5b37fae8b8db81731ed1438368f7027412748b38042ed0caad1d032e81357a"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\legacy\\throughput_plan.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\legacy\\throughput_plan.py",
+    "sha256": "0b14847a097d154920a3d7a0ae4cebdee4a7eb1f7da2599ad60e8ac86c942136"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\legacy\\validate.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\legacy\\validate.py",
+    "sha256": "b4ec2b727622470dcbbec8caa2a547f0ee872bac0f2d7c470ad908d7544f65fa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\legacy\\validate_core.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\legacy\\validate_core.py",
+    "sha256": "d0d922d188144ac7726186dad0d53f0cec6fde013a9196925b52956e77ce194b"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\official_model.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\official_model.py",
+    "sha256": "c8c0c8a3e3741917d27b49c3f699d84429b560fa69d8dd23f8d1f2e3058d856d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\posttrain.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\posttrain.py",
+    "sha256": "3f52f109d793ca3b76b24a3f018f3e14d71be2fbd4e4b75779162b9c573c2f43"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\reference_core.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\reference_core.py",
+    "sha256": "4ca9df79baa0d23ec3217c38ed26c53ffec4977291b17cd84e2de48197704ec7"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\release_io.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\release_io.py",
+    "sha256": "dbde3749cd971824229ae5db151dbb623f37880dbcf4b2712a7c55a52a50001e"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\release_reference.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\release_reference.json",
+    "sha256": "ee70c8c8a444b9e0a4ba006623004218d1b7e7650facebe17330e7207cca4c7d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\source_parallel.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\source_parallel.py",
+    "sha256": "5fb75db7fc3823e543e11b2ab61aedf6ffb39a0388e71c2f62c3af44c0e0ea53"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\split_manifest.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\split_manifest.json",
+    "sha256": "998bf1f2f31062aa241dea006d8daae8c89cde604a208110013e8872a9b90655"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\vendor\\__init__.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\vendor\\__init__.py",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\vendor\\reve\\README.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\vendor\\reve\\README.md",
+    "sha256": "0555caf36c67c6362a7616e7840740682d576fdc1efc5791837a6a0ec54babe2"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\vendor\\reve\\__init__.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\vendor\\reve\\__init__.py",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\vendor\\reve\\config.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\vendor\\reve\\config.json",
+    "sha256": "5b74a19202d1aaa5d1814b26b720e4184cd0047f28a672834d390318eed05945"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\vendor\\reve\\configuration_bank.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\vendor\\reve\\configuration_bank.py",
+    "sha256": "148ac1c41478be7bfbcd1575d68fcf6d75076da5dfdf9f682e6742612cc88f73"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\vendor\\reve\\configuration_reve.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\vendor\\reve\\configuration_reve.py",
+    "sha256": "8abbf691a2de914dccb692aa42b987d20815b52dc0642b0db1fd216df4ccbbfb"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\vendor\\reve\\modeling_reve.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\vendor\\reve\\modeling_reve.py",
+    "sha256": "207a9c51218d806ab317eabf4eb6d3234eabe887f48e541ef5580c4b9b45359f"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\vendor\\reve\\position_bank.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\vendor\\reve\\position_bank.py",
+    "sha256": "26ad5d55fb667da7c80bcc8e8512eb35bca33054a3b3e2bcafe4775543aa1cd0"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\src\\vendor\\reve\\position_config.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\src\\vendor\\reve\\position_config.json",
+    "sha256": "8e89acf4d27cf1d24815add8df771e6cf138b68846e60796db57e36f1ec8d6f8"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\reve_isa\\task.yaml",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\reve_isa\\task.yaml",
+    "sha256": "2f82903ad845d76277c5d254c7a8e5aa4188a12821444c7bced3edf4583dba1d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\synthetic_demo\\RESEARCH_BRIEF.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\synthetic_demo\\RESEARCH_BRIEF.md",
+    "sha256": "eb41780b4ebc7eef9892e7a22f3006a5143e699289a864ce5e2296de1d57097c"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\synthetic_demo\\TASK.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\synthetic_demo\\TASK.md",
+    "sha256": "57aad788dba5460933e00ea8c1bb9f8325bfbf7ce4b2d455862fafe2f80e6c68"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\synthetic_demo\\memory\\INDEX.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\synthetic_demo\\memory\\INDEX.md",
+    "sha256": "e19a8b5676b9b854822d5f484da1f014bb537e67cbfe07898565d5a5d1275a13"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\synthetic_demo\\memory\\items\\T-20261021T155758-001.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\synthetic_demo\\memory\\items\\T-20261021T155758-001.md",
+    "sha256": "1ac74c5f79293301c75861b2d75396acf741bdf5dc2f2d3f9a50ec63afe37a89"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\synthetic_demo\\memory\\items\\T-20261021T161357-002.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\synthetic_demo\\memory\\items\\T-20261021T161357-002.md",
+    "sha256": "10127a498099649d98fc335fc66682fa0b895faedea2ff060e0a70fb4ef8bb9d"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\synthetic_demo\\memory\\items\\T-20261021T161420-003.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\synthetic_demo\\memory\\items\\T-20261021T161420-003.md",
+    "sha256": "f97deeb47b7930a3eb4056aca274b7f339dcbdee840c508d493aad8aeca230ee"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\synthetic_demo\\memory\\items\\T-20261021T161504-004.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\synthetic_demo\\memory\\items\\T-20261021T161504-004.md",
+    "sha256": "542cd3f1fbab85b0a5139f0d4b1c0f575d96e18c0dc4d62978ff001405c216fa"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\synthetic_demo\\src\\method.yaml",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\synthetic_demo\\src\\method.yaml",
+    "sha256": "77ab66715559857d66db0fe88014832b55daf3e1fb77c396ba3dd22eec129573"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\synthetic_demo\\src\\run_eval.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\synthetic_demo\\src\\run_eval.py",
+    "sha256": "bda33e6a6f9d760a2fe26c445ae8b62a775df8c1190f9bc296694368d14c0ec7"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tasks\\synthetic_demo\\task.yaml",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tasks\\synthetic_demo\\task.yaml",
+    "sha256": "19946fc0f90a16748bd3bb1d41588a4635990d3760c6782e7dad0cdc6f72e627"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\templates\\FINAL_REPORT.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\templates\\FINAL_REPORT.md",
+    "sha256": "37802c2ce2eebb5b3cad844b3eea2c3371351ffd33bc8db15fe75e333cfb27ef"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\templates\\RESEARCH_BRIEF.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\templates\\RESEARCH_BRIEF.md",
+    "sha256": "780fdbc412133131157b67ddd46ff7a5a6943d6b63ce56cec4903867aa79e097"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\templates\\memory_item.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\templates\\memory_item.md",
+    "sha256": "9e6af823f50b8cba8bd2f541b3c31c68f3fef98374fe631757f6d781bea32f37"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\templates\\proposal.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\templates\\proposal.md",
+    "sha256": "86be778c945a10d3079fcfaaf56a1de246671af35bf57a0240eb20c5dbf271da"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tests\\fake_agent.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tests\\fake_agent.py",
+    "sha256": "3d5a144d2605048ca4e348fd6c6d08036b93936f7dfd7b0ac830ce43ae9ff759"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\eeg-fm-research\\tests\\test_program.py",
+    "target": "X:\\projects\\EEG-AI-Scientist\\framework\\tests\\test_program.py",
+    "sha256": "696cd8adf5976ea8bff5062818bcfa289491c635a6402124ba211dcb189d9e45"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\.venv",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\legacy-harness-20261028\\.venv"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\.vscode",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\legacy-harness-20261028\\.vscode"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\audit_20261022",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\legacy-harness-20261028\\audit_20261022"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\configs",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\legacy-harness-20261028\\configs"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\docs",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\legacy-harness-20261028\\docs"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\src",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\legacy-harness-20261028\\src"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\studies",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\legacy-harness-20261028\\studies"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\tests",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\legacy-harness-20261028\\tests"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\.python-version",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\legacy-harness-20261028\\.python-version"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\ENVIRONMENT.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\legacy-harness-20261028\\ENVIRONMENT.md"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\HANDOFF.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\legacy-harness-20261028\\HANDOFF.md"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\pyproject.toml",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\legacy-harness-20261028\\pyproject.toml"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\pyrightconfig.json",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\legacy-harness-20261028\\pyrightconfig.json"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\README.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\legacy-harness-20261028\\README.md"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\uv.lock",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\legacy-harness-20261028\\uv.lock"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\group-meeting",
+    "target": "X:\\projects\\EEG-AI-Scientist\\materials\\meetings"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\ref",
+    "target": "X:\\projects\\EEG-AI-Scientist\\materials\\references"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\火山引擎资源利用与规范惯例规定_page_printed.pdf",
+    "target": "X:\\projects\\EEG-AI-Scientist\\materials\\infrastructure\\火山引擎资源利用与规范惯例规定_page_printed.pdf"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\EEG_FM_Codex_Handoff_2026-10-28.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\docs\\handoffs\\EEG_FM_Codex_Handoff_2026-10-28.md"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\EEG_AI_Scientist_Review_20261022.zip",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\review-packages\\EEG_AI_Scientist_Review_20261022.zip"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\eeg-fm-research_20261022_e6f6e50",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\sources\\wzf-20261022\\eeg-fm-research_20261022_e6f6e50"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\eeg-fm-research_20261022_e6f6e50.tar",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\sources\\wzf-20261022\\eeg-fm-research_20261022_e6f6e50.tar"
+  },
+  {
+    "action": "same_volume_move",
+    "source": "X:\\projects\\EEG-AI-Scientist\\eeg-fm-research_20261022_e6f6e50.tar.gz",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\sources\\wzf-20261022\\eeg-fm-research_20261022_e6f6e50.tar.gz"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\docs\\environment-20261028\\README.zh-CN.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\docs\\environment-20261028\\README.zh-CN.md",
+    "sha256": "3de8448bdb1ae105bf70f1a76f5773f10aa428035572d3df0badbd1fc343af6a"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\docs\\superpowers\\plans\\2026-10-28-environment-handoff.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\historical-plans\\plans\\2026-10-28-environment-handoff.md",
+    "sha256": "83592f97ad967f19988d6cd5dea4f6da73c8b458f7394ea1a72f03d0836829bb"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\scripts\\Connect-NccServer0.ps1",
+    "target": "X:\\projects\\EEG-AI-Scientist\\scripts\\Connect-NccServer0.ps1",
+    "sha256": "488fe5ca84dd6ba5317d26e7b0fb2324b8d42f972520444afdcd457bdd3fecc4"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\scripts\\Start-NccServer0Proxy.ps1",
+    "target": "X:\\projects\\EEG-AI-Scientist\\scripts\\Start-NccServer0Proxy.ps1",
+    "sha256": "c49a7f4d7b57a673d8edca3fd832d9511c95f34afa2c086069775076f6c9c477"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\scripts\\Stop-NccServer0Proxy.ps1",
+    "target": "X:\\projects\\EEG-AI-Scientist\\scripts\\Stop-NccServer0Proxy.ps1",
+    "sha256": "a2f3788be0644ecccbf947113aba5cd13dcbc59104755736d64c85eca0f92078"
+  },
+  {
+    "action": "copy_verified",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces\\AGENTS.md",
+    "target": "X:\\projects\\EEG-AI-Scientist\\archive\\setup-20261028\\retired-c-workspaces-AGENTS.md",
+    "sha256": "bd7e15680f9f420c8ffc3cce7115bfdc45c00b609d8a26bdec9f21ee817ee67b"
+  },
+  {
+    "action": "retire_verified_task_created_C_copy",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\reports\\environment-20261028",
+    "target": "Preserved in X project; Git histories preserved as verified bundles"
+  },
+  {
+    "action": "retire_verified_task_created_C_copy",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\workspaces",
+    "target": "Preserved in X project; Git histories preserved as verified bundles"
+  },
+  {
+    "action": "retire_verified_task_created_C_copy",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\docs",
+    "target": "Preserved in X project; Git histories preserved as verified bundles"
+  },
+  {
+    "action": "retire_verified_task_created_C_copy",
+    "source": "C:\\Users\\14090\\Documents\\ChatGPT\\EEG-FM-RSI\\scripts",
+    "target": "Preserved in X project; Git histories preserved as verified bundles"
+  }
+]

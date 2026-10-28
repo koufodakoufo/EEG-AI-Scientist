@@ -1,0 +1,4 @@
+# Preserve supplied source bytes across Windows and Linux checkouts.
+/framework/** -text
+/scripts/*.py text eol=lf
+/scripts/*.ps1 text eol=crlf

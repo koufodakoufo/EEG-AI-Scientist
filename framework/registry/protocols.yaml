@@ -1,0 +1,21 @@
+# Evaluation protocols. A task references one by name and may only narrow it.
+protocols:
+  lodo_allsource_repeated_subject_split:
+    summary: >-
+      Leave-one-dataset-out post-training: for each target dataset, start from the
+      official weights and post-train on all samples of the other source datasets
+      (posttrain_split=all); the target never enters post-training. Downstream on the
+      target uses six repeated random subject splits (split seeds 42-47), each with
+      mutually exclusive train/val/test subjects. Not a test-exclusive K-fold.
+    splits_manifest: "/mnt/cfs-omni/wzf/auto research/logs/research_controller/reve_isa_hparam_recovery_20261019/runs/reve_isa_hparam_recovery_20261019/snapshots/round_1_base_0/source/split_manifest.json"
+    downstream:
+      LP: {encoder: frozen, head: linear, pooling: flatten, max_epochs: 100, lr: 1.0e-3}
+      FT: {encoder: trainable, head: mlp, pooling: flatten, max_epochs: 60, lr: 1.0e-5}
+      common: {batch_size: 128, weight_decay: 1.0e-4, early_stop_patience: 10, min_delta: 0.01, select_epoch_on: validation}
+    metrics:
+      primary: balanced accuracy over pooled per-fold sample predictions, mean over 6 splits
+      secondary: [macro-F1, LP, per-fold, convergence, compute]
+      uncertainty: "paired fold bootstrap, 5000 resamples, seed 20260713 (describes split stability; splits share subjects)"
+    known_limits:
+      - "The six splits reuse subjects; intervals are not independent-population confidence intervals."
+      - "Cross-SEED-family subject/stimulus independence is not proven."

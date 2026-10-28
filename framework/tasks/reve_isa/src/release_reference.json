@@ -1,0 +1,476 @@
+{
+  "SEED/derived/lance_mdjpt60_badch": {
+    "conversion_audit": {
+      "value": {
+        "audit_arrays": [
+          "bad_channel_mask",
+          "bad_channel_reason_bits",
+          "canonical_bad_channel_mask",
+          "channel_counts",
+          "channel_mask",
+          "detected_bad_channel_mask",
+          "direct_source_indices",
+          "interpolated_channel_mask",
+          "interpolation_failed_mask",
+          "interpolation_neighbor_indices",
+          "interpolation_neighbor_weights",
+          "label_values",
+          "montage_projected_mask",
+          "projected_source_indices",
+          "projection_plan_ids",
+          "target_depends_on_repaired_source"
+        ],
+        "conversion_schema": "mdjpt60_zarr_to_lance_v1",
+        "dataset": "SEED_mdjpt60_badch",
+        "duplicate_audit_sha256": "54811cb10c8f0b68736b4ef00438bb9c90d8f861312f0b620e07e5ee9da5409b",
+        "duplicate_policy": "audit_only_preserve_all_rows",
+        "errors": [],
+        "label_vocab_sha256": "212c677097cb97e8fd6fe53a2c4889a89b66a193549f1bf87cebae3c25e663d3",
+        "lance_path": "/mnt/omni-eeg-01/downstream_preprocess/wzf_dataset/SEED/derived/lance_mdjpt60_badch/downstream_seed_mdjpt60_badch.lance",
+        "preprocess_config_hash": "0b0450f86a207f141c696cd1f408dff9d6894c4dfbd04522c00bff00c355bb36",
+        "projection_companions_sha256": "99f40982738c68c4eaac98fdcff9e89df765c675c01e4ced9de770efd7e4e5d1",
+        "protocol": "rawv2_basic_lance_25_v1",
+        "row_policy": "preserve_all",
+        "rows": 14895,
+        "sample_index_sha256": "896bed358f9d713ce6aa83afbc70b41d129c5bb43b72aaea91262dc3ede457f6",
+        "schema": "rawv2_basic_conversion_audit_v1",
+        "signal_flatten_order": "C-major (C,T).reshape(-1)",
+        "signal_sample_sha256": {
+          "0": "5884b7a1482513556c9ec3e8ec8a6344e94c52f17a5893e5912a668c9b608a26",
+          "14894": "6a4d6f071951162417473a4231ffed85b7dd7ae65eaf969c2d835c95dfbb53b1",
+          "7447": "d163c1171da4cc9c259abc3bde946bf30c111426e0198b5659b8d962f2a73f8e"
+        },
+        "signal_shape": [
+          60,
+          2000
+        ],
+        "source_signal_aggregate_sha256": "c7da77e978c9708b37858158d9486b0a34f9f17144368f9fb3220a6c0b8c2063",
+        "source_zarr": "/mnt/omni-eeg-01/downstream_preprocess/wzf_dataset/SEED/derived/mdjpt60_badch/SEED.zarr",
+        "source_zarr_tree_sha256": "d12be00d5d62a765131967f8f40f6e535b49035a665b2dda011466baf16eda91",
+        "zarr_row_audit_sha256": "40813d63d3d6ade4614d834931c9fb244121a042888759d9506dba772205a10b"
+      },
+      "source": {
+        "original_path": "/mnt/omni-eeg-01/downstream_preprocess/wzf_dataset/SEED/derived/lance_mdjpt60_badch/conversion_audit.json",
+        "original_sha256": "48de8e99bb4f4f75d8869082989a2506fc733be9a302ec910de05e2eb1e4f665",
+        "original_size_bytes": 2194,
+        "path": "/mnt/cfs-omni/wzf/auto research/logs/research_controller/reve_isa_tione_20261008/runs/reve_isa_tione_20261008/intake/evidence/5e10b333e29057d9.json",
+        "representation": "full_text",
+        "sha256": "48de8e99bb4f4f75d8869082989a2506fc733be9a302ec910de05e2eb1e4f665"
+      }
+    },
+    "label_vocab": {
+      "value": {
+        "id_to_name": {
+          "0": "negative",
+          "1": "neutral",
+          "2": "positive"
+        }
+      },
+      "source": {
+        "original_path": "/mnt/omni-eeg-01/downstream_preprocess/wzf_dataset/SEED/derived/lance_mdjpt60_badch/label_vocab.json",
+        "original_sha256": "212c677097cb97e8fd6fe53a2c4889a89b66a193549f1bf87cebae3c25e663d3",
+        "original_size_bytes": 87,
+        "path": "/mnt/cfs-omni/wzf/auto research/logs/research_controller/reve_isa_tione_20261008/runs/reve_isa_tione_20261008/intake/evidence/b3037605244d1cdd.json",
+        "representation": "full_text",
+        "sha256": "212c677097cb97e8fd6fe53a2c4889a89b66a193549f1bf87cebae3c25e663d3"
+      }
+    }
+  },
+  "SEED-IV_10s_v1/derived/lance_mdjpt60_badch": {
+    "conversion_audit": {
+      "value": {
+        "audit_arrays": [
+          "bad_channel_mask",
+          "bad_channel_reason_bits",
+          "canonical_bad_channel_mask",
+          "channel_counts",
+          "channel_mask",
+          "detected_bad_channel_mask",
+          "direct_source_indices",
+          "interpolated_channel_mask",
+          "interpolation_failed_mask",
+          "interpolation_neighbor_indices",
+          "interpolation_neighbor_weights",
+          "label_values",
+          "montage_projected_mask",
+          "projected_source_indices",
+          "projection_plan_ids",
+          "target_depends_on_repaired_source"
+        ],
+        "conversion_schema": "mdjpt60_zarr_to_lance_v1",
+        "dataset": "SEED-IV_mdjpt60_badch",
+        "duplicate_audit_sha256": "886e31b536554f389517c6f9c3bf1e5e73b232152e00ad95b230611db3946d48",
+        "duplicate_policy": "audit_only_preserve_all_rows",
+        "errors": [],
+        "label_vocab_sha256": "e050109218d0ac2341128a2b57cc11903dd236eb269393a9855094a45d65c398",
+        "lance_path": "/mnt/cfs-omni/wzf/scratch/emotion_zarr/seed10s_v1_20260815/full/SEED-IV/derived/lance_mdjpt60_badch/downstream_seed-iv_mdjpt60_badch.lance",
+        "preprocess_config_hash": "42812e287f61ff07b9fbc82ab044b168c3e8112967a864e90e6afd29d2e5293f",
+        "projection_companions_sha256": "9544c4caeeb09fb8064f27cd7860d2fe979e0d5c15ede73caa26e51c3396513e",
+        "protocol": "rawv2_basic_lance_25_v1",
+        "row_policy": "preserve_all",
+        "rows": 14655,
+        "sample_index_sha256": "2604968cf0a6861ae4e12aa31e8bd3f5be63fb7b011d0fc9da1967bc08beb8ec",
+        "schema": "rawv2_basic_conversion_audit_v1",
+        "signal_flatten_order": "C-major (C,T).reshape(-1)",
+        "signal_sample_sha256": {
+          "0": "35eed41c0fef764e83cadb0a976acc3f2c3c0aadf2fba8ba0e4b3e5421320e5c",
+          "14654": "906580e0d2986e33ef98ec5a3714d0778c12b4f33e9b658d29048ff775a76be9",
+          "7327": "cbb44b317439454cdf25a01028570b220d01571252b432669402f0c4e2aa908a"
+        },
+        "signal_shape": [
+          60,
+          2000
+        ],
+        "source_signal_aggregate_sha256": "1ccbb497edaa00051b4bb5a5e1262fcf658ed625d7fd479a2fdef9a22f2ea17f",
+        "source_zarr": "/mnt/cfs-omni/wzf/scratch/emotion_zarr/seed10s_v1_20260815/full/SEED-IV/derived/mdjpt60_badch/SEED-IV.zarr",
+        "source_zarr_tree_sha256": "52f99bac40c89988b469eb390b86ede45c28cb073d2759229f0fac3d73cadcf2",
+        "zarr_row_audit_sha256": "06e85d5c9506d34408547ce80f70876a216906e84ca84b7f84290fd4312cc181"
+      },
+      "source": {
+        "original_path": "/mnt/omni-eeg-01/downstream_preprocess/wzf_dataset/SEED-IV_10s_v1/derived/lance_mdjpt60_badch/conversion_audit.json",
+        "original_sha256": "f1bddd75dc248b692f967ed67550694693e05024b7df61a1fd0f7bd924680a0a",
+        "original_size_bytes": 2235,
+        "path": "/mnt/cfs-omni/wzf/auto research/logs/research_controller/reve_isa_tione_20261008/runs/reve_isa_tione_20261008/intake/evidence/c913a16a832deee7.json",
+        "representation": "full_text",
+        "sha256": "f1bddd75dc248b692f967ed67550694693e05024b7df61a1fd0f7bd924680a0a"
+      }
+    },
+    "label_vocab": {
+      "value": {
+        "id_to_name": {
+          "0": "neutral",
+          "1": "sad",
+          "2": "fear",
+          "3": "happy"
+        }
+      },
+      "source": {
+        "original_path": "/mnt/omni-eeg-01/downstream_preprocess/wzf_dataset/SEED-IV_10s_v1/derived/lance_mdjpt60_badch/label_vocab.json",
+        "original_sha256": "e050109218d0ac2341128a2b57cc11903dd236eb269393a9855094a45d65c398",
+        "original_size_bytes": 96,
+        "path": "/mnt/cfs-omni/wzf/auto research/logs/research_controller/reve_isa_tione_20261008/runs/reve_isa_tione_20261008/intake/evidence/451cc65cb56cf1d3.json",
+        "representation": "full_text",
+        "sha256": "e050109218d0ac2341128a2b57cc11903dd236eb269393a9855094a45d65c398"
+      }
+    }
+  },
+  "SEED-V_10s_v1/derived/lance_mdjpt60_badch": {
+    "conversion_audit": {
+      "value": {
+        "audit_arrays": [
+          "bad_channel_mask",
+          "bad_channel_reason_bits",
+          "canonical_bad_channel_mask",
+          "channel_counts",
+          "channel_mask",
+          "detected_bad_channel_mask",
+          "direct_source_indices",
+          "interpolated_channel_mask",
+          "interpolation_failed_mask",
+          "interpolation_neighbor_indices",
+          "interpolation_neighbor_weights",
+          "label_values",
+          "montage_projected_mask",
+          "projected_source_indices",
+          "projection_plan_ids",
+          "target_depends_on_repaired_source"
+        ],
+        "conversion_schema": "mdjpt60_zarr_to_lance_v1",
+        "dataset": "SEED-V_mdjpt60_badch",
+        "duplicate_audit_sha256": "dc57b1251981ea560260e7ff6d38e457819a94f98c0775d72735f37c47d5ff57",
+        "duplicate_policy": "audit_only_preserve_all_rows",
+        "errors": [],
+        "label_vocab_sha256": "69457ced2fec7226640c8f74649d0558407f0529e65735c59471d7769b983ef8",
+        "lance_path": "/mnt/cfs-omni/wzf/scratch/emotion_zarr/seed10s_v1_20260815/full/SEED-V/derived/lance_mdjpt60_badch/downstream_seed-v_mdjpt60_badch.lance",
+        "preprocess_config_hash": "429885eb52a7155d681e7c2a986b96e34c093652a220be7d678b34e2fcb14488",
+        "projection_companions_sha256": "10367a6408e2e4f5b82fc24604581544741eecd3724bf5750e1eb3531b37bcd3",
+        "protocol": "rawv2_basic_lance_25_v1",
+        "row_policy": "preserve_all",
+        "rows": 11424,
+        "sample_index_sha256": "e45bbfc51a12d489324844c27df5fb993597691a92a42e716bf111d617338193",
+        "schema": "rawv2_basic_conversion_audit_v1",
+        "signal_flatten_order": "C-major (C,T).reshape(-1)",
+        "signal_sample_sha256": {
+          "0": "0ce98f6f564ceab6e0e1f5156a3272b43a3379eb0ac733a3c69896c67d4f9999",
+          "11423": "c0a910b33286e5a67c14819a4cadd701fdebba6db67c7d902a71977b3da1f8c0",
+          "5712": "004170c8f544929b5746ae1d7095b2e35c9d7aeb5eaedef309c0247f922609a6"
+        },
+        "signal_shape": [
+          60,
+          2000
+        ],
+        "source_signal_aggregate_sha256": "84ed9bae9aea1d466d6c16a56044b24445994a0ca8688c296fc2cf34ffabf5f8",
+        "source_zarr": "/mnt/cfs-omni/wzf/scratch/emotion_zarr/seed10s_v1_20260815/full/SEED-V/derived/mdjpt60_badch/SEED-V.zarr",
+        "source_zarr_tree_sha256": "0e9eb43a10a7e0fb707411a0f78701096be0c09644c0ca762ae56dc712469c23",
+        "zarr_row_audit_sha256": "97e9f4a98f3c1e8d14de55e46985078538a8e9f6891bb10aafa4d834089e6cdc"
+      },
+      "source": {
+        "original_path": "/mnt/omni-eeg-01/downstream_preprocess/wzf_dataset/SEED-V_10s_v1/derived/lance_mdjpt60_badch/conversion_audit.json",
+        "original_sha256": "1e4fdd22d0af8bc99e947171cc16ad8ed05a281ac1aba6fcd9ebff5cd8d9b73a",
+        "original_size_bytes": 2230,
+        "path": "/mnt/cfs-omni/wzf/auto research/logs/research_controller/reve_isa_tione_20261008/runs/reve_isa_tione_20261008/intake/evidence/14ecaa620d5213a2.json",
+        "representation": "full_text",
+        "sha256": "1e4fdd22d0af8bc99e947171cc16ad8ed05a281ac1aba6fcd9ebff5cd8d9b73a"
+      }
+    },
+    "label_vocab": {
+      "value": {
+        "id_to_name": {
+          "0": "disgust",
+          "1": "fear",
+          "2": "sad",
+          "3": "neutral",
+          "4": "happy"
+        }
+      },
+      "source": {
+        "original_path": "/mnt/omni-eeg-01/downstream_preprocess/wzf_dataset/SEED-V_10s_v1/derived/lance_mdjpt60_badch/label_vocab.json",
+        "original_sha256": "69457ced2fec7226640c8f74649d0558407f0529e65735c59471d7769b983ef8",
+        "original_size_bytes": 116,
+        "path": "/mnt/cfs-omni/wzf/auto research/logs/research_controller/reve_isa_tione_20261008/runs/reve_isa_tione_20261008/intake/evidence/a92807b9ce575230.json",
+        "representation": "full_text",
+        "sha256": "69457ced2fec7226640c8f74649d0558407f0529e65735c59471d7769b983ef8"
+      }
+    }
+  },
+  "SEED-VII/derived/lance_mdjpt60_badch": {
+    "conversion_audit": {
+      "value": {
+        "audit_arrays": [
+          "bad_channel_mask",
+          "bad_channel_reason_bits",
+          "canonical_bad_channel_mask",
+          "channel_counts",
+          "channel_mask",
+          "detected_bad_channel_mask",
+          "direct_source_indices",
+          "interpolated_channel_mask",
+          "interpolation_failed_mask",
+          "interpolation_neighbor_indices",
+          "interpolation_neighbor_weights",
+          "label_values",
+          "montage_projected_mask",
+          "projected_source_indices",
+          "projection_plan_ids",
+          "target_depends_on_repaired_source"
+        ],
+        "conversion_schema": "mdjpt60_zarr_to_lance_v1",
+        "dataset": "SEED-VII_mdjpt60_badch",
+        "duplicate_audit_sha256": "21e4ab2e570c13f38e94bda214ee25cfff577863840f0a9694d03a1784d2aac1",
+        "duplicate_policy": "audit_only_preserve_all_rows",
+        "errors": [],
+        "label_vocab_sha256": "aa7f91207bdf0a87e020fb73b54c6c8c0aeccb3a1bef8f65d95308402cf2d868",
+        "lance_path": "/mnt/omni-eeg-01/downstream_preprocess/wzf_dataset/SEED-VII/derived/lance_mdjpt60_badch/downstream_seed-vii_mdjpt60_badch.lance",
+        "preprocess_config_hash": "bbdaacddf85887b5722431f085483b2a9cbedd782408bc12dfd39b17fac23b0c",
+        "projection_companions_sha256": "793b433c6a8ddc3033a3e2e5330a9a277856dbb7fd3e6acacbcf21d820bb5711",
+        "protocol": "rawv2_basic_lance_25_v1",
+        "row_policy": "preserve_all",
+        "rows": 27340,
+        "sample_index_sha256": "db0658ccea9c5462328c5f4c866c6756a71eb541ca673835acb6c870f93ecd2f",
+        "schema": "rawv2_basic_conversion_audit_v1",
+        "signal_flatten_order": "C-major (C,T).reshape(-1)",
+        "signal_sample_sha256": {
+          "0": "ae8fed8cd34d2dff3ca24a3572d16ae6da21254ae01ac7f93485a88d0f7a3e82",
+          "13670": "223153a1fc20d4054dd06ced9760955182c02920c1b7c118a739e087ba7d7379",
+          "27339": "b5b0cd318e7d0dc5537cae2d5be86b7a709fbd9e344cfc933b518166dff4a19d"
+        },
+        "signal_shape": [
+          60,
+          2000
+        ],
+        "source_signal_aggregate_sha256": "815315eeb38e203490382c3ed6423377fc02b524e6706b64c7427aa350e5258f",
+        "source_zarr": "/mnt/omni-eeg-01/downstream_preprocess/wzf_dataset/SEED-VII/derived/mdjpt60_badch/SEED-VII.zarr",
+        "source_zarr_tree_sha256": "dd37b42dd1af11ee07dc896ed5839342f09d819c2fbed821b58b0fde02964028",
+        "zarr_row_audit_sha256": "b35b4b9d0c7aefef28f3b1b9199d2a19dabea525123aa5d4cb77ae07f620839b"
+      },
+      "source": {
+        "original_path": "/mnt/omni-eeg-01/downstream_preprocess/wzf_dataset/SEED-VII/derived/lance_mdjpt60_badch/conversion_audit.json",
+        "original_sha256": "162f55729d2443cb37dac790a237ae22e9fcce7babfee7d292f4d3f4a16c2a28",
+        "original_size_bytes": 2215,
+        "path": "/mnt/cfs-omni/wzf/auto research/logs/research_controller/reve_isa_tione_20261008/runs/reve_isa_tione_20261008/intake/evidence/a04c1ad4f2fbc0e8.json",
+        "representation": "full_text",
+        "sha256": "162f55729d2443cb37dac790a237ae22e9fcce7babfee7d292f4d3f4a16c2a28"
+      }
+    },
+    "label_vocab": {
+      "value": {
+        "id_to_name": {
+          "0": "disgust",
+          "1": "fear",
+          "2": "sad",
+          "3": "neutral",
+          "4": "happy",
+          "5": "anger",
+          "6": "surprise"
+        }
+      },
+      "source": {
+        "original_path": "/mnt/omni-eeg-01/downstream_preprocess/wzf_dataset/SEED-VII/derived/lance_mdjpt60_badch/label_vocab.json",
+        "original_sha256": "aa7f91207bdf0a87e020fb73b54c6c8c0aeccb3a1bef8f65d95308402cf2d868",
+        "original_size_bytes": 155,
+        "path": "/mnt/cfs-omni/wzf/auto research/logs/research_controller/reve_isa_tione_20261008/runs/reve_isa_tione_20261008/intake/evidence/e783d2aecda2e04d.json",
+        "representation": "full_text",
+        "sha256": "aa7f91207bdf0a87e020fb73b54c6c8c0aeccb3a1bef8f65d95308402cf2d868"
+      }
+    }
+  },
+  "FACED/derived/lance_mdjpt60_badch": {
+    "conversion_audit": {
+      "value": {
+        "audit_arrays": [
+          "bad_channel_mask",
+          "bad_channel_reason_bits",
+          "canonical_bad_channel_mask",
+          "channel_counts",
+          "channel_mask",
+          "detected_bad_channel_mask",
+          "direct_source_indices",
+          "interpolated_channel_mask",
+          "interpolation_failed_mask",
+          "interpolation_neighbor_indices",
+          "interpolation_neighbor_weights",
+          "label_values",
+          "montage_projected_mask",
+          "projected_source_indices",
+          "projection_plan_ids",
+          "target_depends_on_repaired_source"
+        ],
+        "conversion_schema": "mdjpt60_zarr_to_lance_v1",
+        "dataset": "FACED_mdjpt60_badch",
+        "duplicate_audit_sha256": "9d30eddf95f116f6fa8de504299ecd5e5f057f8080920bc81b6d2dc19aef00d1",
+        "duplicate_policy": "audit_only_preserve_all_rows",
+        "errors": [],
+        "label_vocab_sha256": "c7b3dcb5303c97d366c2202e1bd16e8a15f2350106401f28e587fc3a14be7fb9",
+        "lance_path": "/mnt/cfs-omni/wzf/scratch/emotion_zarr/faced_corrected_20260814/canonical_root/FACED/derived/lance_mdjpt60_badch/downstream_faced_mdjpt60_badch.lance",
+        "preprocess_config_hash": "bb253dc594df127b3e2780b6ee1d452a627a07d1cd25d835bfa1c90421db20d4",
+        "projection_companions_sha256": "39ec5fa8375d437d720c49e8b7acb632d36ad4da43d1d6ff62fb288a5d0090b5",
+        "protocol": "rawv2_basic_lance_25_v1",
+        "row_policy": "preserve_all",
+        "rows": 10332,
+        "sample_index_sha256": "5c3d8868357834c5e0c6b948899ab9ac0a3bdb5803cc0d75bd237b01f778b086",
+        "schema": "rawv2_basic_conversion_audit_v1",
+        "signal_flatten_order": "C-major (C,T).reshape(-1)",
+        "signal_sample_sha256": {
+          "0": "65be883acc42396f35743f1cc107f38aa48ec2e1263a512e2469fb1d2a0541f0",
+          "10331": "7f024b4144ab4cf9a4a1e109e6d5f6f5cfec31dc6f7e198f4340198f5dd52681",
+          "5166": "01ab94f0edbfa573b38fe7df1ce1394daa391f39c79497489b2da4ddade27fcc"
+        },
+        "signal_shape": [
+          60,
+          2000
+        ],
+        "source_signal_aggregate_sha256": "9a4fceb13b24ec4f123318e628a0fa77859762abfe64bee260bee0aa730eec5c",
+        "source_zarr": "/mnt/cfs-omni/wzf/scratch/emotion_zarr/faced_corrected_20260814/canonical_root/FACED/derived/mdjpt60_badch/FACED.zarr",
+        "source_zarr_tree_sha256": "bc5972e94a38651d903acf967aa61324e41c955d8ff3845795b04ecd0adf8eaf",
+        "zarr_row_audit_sha256": "0aeac822bffbcbfe0938972e0a8d27d6ab7024ce25d87baf62739ec73d399ad7"
+      },
+      "source": {
+        "original_path": "/mnt/omni-eeg-01/downstream_preprocess/wzf_dataset/FACED/derived/lance_mdjpt60_badch/conversion_audit.json",
+        "original_sha256": "8938dba6021f95f8a93013bb4b942bc15328beaaa64da57e2504d7ef760dda6b",
+        "original_size_bytes": 2255,
+        "path": "/mnt/cfs-omni/wzf/auto research/logs/research_controller/reve_isa_tione_20261008/runs/reve_isa_tione_20261008/intake/evidence/0917053d741a4eeb.json",
+        "representation": "full_text",
+        "sha256": "8938dba6021f95f8a93013bb4b942bc15328beaaa64da57e2504d7ef760dda6b"
+      }
+    },
+    "label_vocab": {
+      "value": {
+        "id_to_name": {
+          "0": "anger",
+          "1": "disgust",
+          "2": "fear",
+          "3": "sadness",
+          "4": "neutral",
+          "5": "amusement",
+          "6": "inspiration",
+          "7": "joy",
+          "8": "tenderness"
+        }
+      },
+      "source": {
+        "original_path": "/mnt/omni-eeg-01/downstream_preprocess/wzf_dataset/FACED/derived/lance_mdjpt60_badch/label_vocab.json",
+        "original_sha256": "c7b3dcb5303c97d366c2202e1bd16e8a15f2350106401f28e587fc3a14be7fb9",
+        "original_size_bytes": 205,
+        "path": "/mnt/cfs-omni/wzf/auto research/logs/research_controller/reve_isa_tione_20261008/runs/reve_isa_tione_20261008/intake/evidence/9ef62c007edb2f20.json",
+        "representation": "full_text",
+        "sha256": "c7b3dcb5303c97d366c2202e1bd16e8a15f2350106401f28e587fc3a14be7fb9"
+      }
+    }
+  },
+  "DEAP/derived/lance_mdjpt60_badch": {
+    "conversion_audit": {
+      "value": {
+        "audit_arrays": [
+          "bad_channel_mask",
+          "bad_channel_reason_bits",
+          "canonical_bad_channel_mask",
+          "channel_counts",
+          "channel_mask",
+          "detected_bad_channel_mask",
+          "direct_source_indices",
+          "interpolated_channel_mask",
+          "interpolation_failed_mask",
+          "interpolation_neighbor_indices",
+          "interpolation_neighbor_weights",
+          "label_values",
+          "montage_projected_mask",
+          "projected_source_indices",
+          "projection_plan_ids",
+          "target_depends_on_repaired_source"
+        ],
+        "conversion_schema": "mdjpt60_zarr_to_lance_v1",
+        "dataset": "DEAP_mdjpt60_badch",
+        "duplicate_audit_sha256": "2391424043f29259f9ba6f3638b70eda49f1564ec1fcfd5c37b2b49eccf41991",
+        "duplicate_policy": "audit_only_preserve_all_rows",
+        "errors": [],
+        "label_vocab_sha256": "6839402351019d43d8cac5427563ce08ca4450172f5954ada71056a0293e93be",
+        "lance_path": "/mnt/omni-eeg-01/downstream_preprocess/wzf_dataset/DEAP/derived/lance_mdjpt60_badch/downstream_deap_mdjpt60_badch.lance",
+        "preprocess_config_hash": "9c717058bc2fb0d4b72905ae861a0671e31e8662165177c9b5b02b60f7ea111a",
+        "projection_companions_sha256": "c7f3aaf8a05e7eb804aa0f683583def113f3dcd694c7855485b07ee6e1e326a1",
+        "protocol": "rawv2_basic_lance_25_v1",
+        "row_policy": "preserve_all",
+        "rows": 7680,
+        "sample_index_sha256": "48624f6354e188340d5940250a3f75e11621600883c2f2472fcfbd446979cbb1",
+        "schema": "rawv2_basic_conversion_audit_v1",
+        "signal_flatten_order": "C-major (C,T).reshape(-1)",
+        "signal_sample_sha256": {
+          "0": "6e76d72048c2675ff42fdadceeb41be070fa338de2fa3825a7e05159ea94f395",
+          "3840": "dc2b68bef5aae78b8f1e427c424513f0c8658c1c2c2ffaf40f36fc000fb9b327",
+          "7679": "5e39afa9ab2540527a8a09f308fda32b7cc0ac37798a9e52610f399ff3833b48"
+        },
+        "signal_shape": [
+          60,
+          2000
+        ],
+        "source_signal_aggregate_sha256": "5ef593c5aeada690442235b533ba1feb8124b0dd444d773045805b924138e09c",
+        "source_zarr": "/mnt/omni-eeg-01/downstream_preprocess/wzf_dataset/DEAP/derived/mdjpt60_badch/DEAP.zarr",
+        "source_zarr_tree_sha256": "d2afb1a451498989663d33e77101eb70bbfea2a05a95a5df39dd99949b2e0cd0",
+        "zarr_row_audit_sha256": "b7e727613713b4057525323eae6dfa92f0cf4660f45764faef0c47f4847519e9"
+      },
+      "source": {
+        "original_path": "/mnt/omni-eeg-01/downstream_preprocess/wzf_dataset/DEAP/derived/lance_mdjpt60_badch/conversion_audit.json",
+        "original_sha256": "cfaec3f2dcb0e1ca0494ab21d1c38d77b001b1073703eb79feadc53e0949b97d",
+        "original_size_bytes": 2192,
+        "path": "/mnt/cfs-omni/wzf/auto research/logs/research_controller/reve_isa_tione_20261008/runs/reve_isa_tione_20261008/intake/evidence/1008b95ccbfc97fd.json",
+        "representation": "full_text",
+        "sha256": "cfaec3f2dcb0e1ca0494ab21d1c38d77b001b1073703eb79feadc53e0949b97d"
+      }
+    },
+    "label_vocab": {
+      "value": {
+        "id_to_name": {
+          "0": "low_valence",
+          "1": "high_valence"
+        }
+      },
+      "source": {
+        "original_path": "/mnt/omni-eeg-01/downstream_preprocess/wzf_dataset/DEAP/derived/lance_mdjpt60_badch/label_vocab.json",
+        "original_sha256": "6839402351019d43d8cac5427563ce08ca4450172f5954ada71056a0293e93be",
+        "original_size_bytes": 74,
+        "path": "/mnt/cfs-omni/wzf/auto research/logs/research_controller/reve_isa_tione_20261008/runs/reve_isa_tione_20261008/intake/evidence/fdc3b16440acd8bc.json",
+        "representation": "full_text",
+        "sha256": "6839402351019d43d8cac5427563ce08ca4450172f5954ada71056a0293e93be"
+      }
+    }
+  }
+}

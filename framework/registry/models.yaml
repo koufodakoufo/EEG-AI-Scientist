@@ -1,0 +1,14 @@
+# EEG foundation models available locally. Only entries with verified paths
+# are listed; add others (LaBraM, EEGPT, BIOT, ...) after their weights and
+# loaders have been verified in a task setup.
+models:
+  reve_base:
+    weights: /mnt/omni-eeg-01/cx/EEG_FM/baseline/REVE/weights/reve-base
+    positions: /mnt/omni-eeg-01/cx/EEG_FM/baseline/REVE/weights/reve-positions
+    readme: /mnt/omni-eeg-01/cx/EEG_FM/baseline/REVE/weights/README.md
+    notes: "Official REVE-base. Verify the actual loader, config, token axis, special tokens and channel-position resources before use; never fall back to random init."
+  reve_large:
+    weights: /mnt/omni-eeg-01/cx/EEG_FM/baseline/REVE/weights/reve-large
+    notes: "Not yet used by any task."
+  cbramod:
+    notes: "Used in the historical ISA reference (2026-08-16, /mnt/cfs-omni/wzf/cross paradigm/60ch_again). Locate and verify weights before use."

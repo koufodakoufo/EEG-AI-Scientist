@@ -1,0 +1,13 @@
+# EEG datasets known to this program. Facts below were checked on 2026-10-21
+# against the release directories and the REVE x ISA task brief; verify again
+# in each task's setup (PROGRAM.md section 3) and record differences as memory.
+root: /mnt/omni-eeg-01/downstream_preprocess/wzf_dataset
+format: lance, 200 Hz, 10 s windows, 60 mdJPT channels, shape (N, 60, 2000), bad-channel handled, NoClip
+source_doc: "/mnt/cfs-omni/wzf/auto research/docs/research/REVE_ISA_RSI_TASK_BRIEF.md (section 3)"
+datasets:
+  SEED:     {release: SEED/derived/lance_mdjpt60_badch,          samples: 14895, subjects: 15,  classes: 3, fold_train_val_subjects: [4, 4],   paradigm: emotion, family: SEED,  notes: "session ids remapped per subject by date to 1/2/3"}
+  SEEDIV:   {release: SEED-IV_10s_v1/derived/lance_mdjpt60_badch, samples: 14655, subjects: 15,  classes: 4, fold_train_val_subjects: [4, 4],   paradigm: emotion, family: SEED}
+  SEED_V:   {release: SEED-V_10s_v1/derived/lance_mdjpt60_badch,  samples: 11424, subjects: 16,  classes: 5, fold_train_val_subjects: [4, 4],   paradigm: emotion, family: SEED}
+  SEED_VII: {release: SEED-VII/derived/lance_mdjpt60_badch,       samples: 27340, subjects: 20,  classes: 7, fold_train_val_subjects: [5, 5],   paradigm: emotion, family: SEED}
+  FACED:    {release: FACED/derived/lance_mdjpt60_badch,          samples: 10332, subjects: 123, classes: 9, fold_train_val_subjects: [31, 31], paradigm: emotion}
+  DEAP:     {release: DEAP/derived/lance_mdjpt60_badch,           samples: 7680,  subjects: 32,  classes: 2, fold_train_val_subjects: [8, 8],   paradigm: emotion, notes: "binary label dimension and threshold must be read from the release, not assumed"}

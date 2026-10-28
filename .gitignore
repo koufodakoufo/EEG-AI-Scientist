@@ -79,4 +79,16 @@ artifacts/*.zip
 review_only/
 *.log
 
+# 2026-10-28 workspace reorganization: keep private/runtime artifacts local.
+/.local/
+/materials/
+/archive/setup-20261028/evidence/
+/archive/legacy-harness-20261028/.venv/
+
+# Original distributions and supplied run/participant artifacts stay local.
+/archive/sources/
+/archive/review-packages/
+/framework/examples/demo_claude_001/
+/framework/tasks/reve_isa/src/split_manifest.json
+
 

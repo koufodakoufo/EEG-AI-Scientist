@@ -1,0 +1,33 @@
+MM .gitignore
+ M HANDOFF.md
+ M README.md
+ M docs/COMMAND_REFERENCE.md
+ M docs/architecture.md
+ M src/eeg_scientist/anthropic_api.py
+ M src/eeg_scientist/backends.py
+ M src/eeg_scientist/deepseek_api.py
+ M src/eeg_scientist/gemini_api.py
+ M src/eeg_scientist/research.py
+ M src/eeg_scientist/review_io.py
+ M src/eeg_scientist/run_manifest.py
+ M src/eeg_scientist/study_cli.py
+ M src/eeg_scientist/study_runtime.py
+ M src/eeg_scientist/study_spec.py
+ M studies/README.md
+?? EEG_AI_Scientist_Review_20261022.zip
+?? EEG_FM_Codex_Handoff_2026-10-28.md
+?? archive/experiments/emotion_20261021/CORRECTION_20261022.md
+?? archive/reorganization-20261028/
+?? audit_20261022/
+?? docs/CORRECTION_20261022_META_INJECTION.md
+?? docs/VERIFICATION_20261022.md
+?? eeg-fm-research_20261022_e6f6e50.tar
+?? eeg-fm-research_20261022_e6f6e50.tar.gz
+?? eeg-fm-research_20261022_e6f6e50/
+?? src/eeg_scientist/paths.py
+?? tests/test_adapter_roundtrip.py
+?? tests/test_finish_contract.py
+?? tests/test_input_provenance.py
+?? tests/test_review_roundtrip.py
+?? tests/test_study_controls.py
+?? "\347\201\253\345\261\261\345\274\225\346\223\216\350\265\204\346\272\220\345\210\251\347\224\250\344\270\216\350\247\204\350\214\203\346\203\257\344\276\213\350\247\204\345\256\232_page_printed.pdf"

@@ -1,0 +1,104 @@
+{
+  "cwd": ".",
+  "estimated_seconds": 21600,
+  "check_interval_seconds": 60,
+  "prepare": {
+    "argv": [
+      "python3",
+      "-B",
+      "stages.py",
+      "prepare",
+      "--output",
+      "{prepare_output_dir}",
+      "--artifacts",
+      "{research_artifacts_dir}",
+      "--research-round",
+      "{research_round}",
+      "--research-round-limit",
+      "{research_round_limit}"
+    ],
+    "timeout_seconds": 600
+  },
+  "review": {
+    "argv": [
+      "python3",
+      "-B",
+      "stages.py",
+      "review",
+      "--output",
+      "{review_output_dir}",
+      "--artifacts",
+      "{research_artifacts_dir}",
+      "--research-round",
+      "{research_round}",
+      "--research-round-limit",
+      "{research_round_limit}"
+    ],
+    "timeout_seconds": 600
+  },
+  "submit": {
+    "argv": [
+      "python3",
+      "-B",
+      "stages.py",
+      "submit",
+      "--output",
+      "{submit_output_dir}",
+      "--artifacts",
+      "{research_artifacts_dir}",
+      "--research-round",
+      "{research_round}",
+      "--research-round-limit",
+      "{research_round_limit}",
+      "--posttrain-lr",
+      "5e-06",
+      "--temperature",
+      "0.1",
+      "--posttrain-weight-decay",
+      "0.0001",
+      "--warmup-epochs",
+      "3",
+      "--gradient-clip",
+      "1.0"
+    ],
+    "timeout_seconds": 1800
+  },
+  "analysis": {
+    "argv": [
+      "python3",
+      "-B",
+      "stages.py",
+      "analysis",
+      "--output",
+      "{analysis_output_dir}",
+      "--artifacts",
+      "{research_artifacts_dir}",
+      "--research-round",
+      "{research_round}",
+      "--research-round-limit",
+      "{research_round_limit}",
+      "--run-dir",
+      "{run_dir}"
+    ],
+    "timeout_seconds": 1800
+  },
+  "run": {
+    "argv": [
+      "python3",
+      "-B",
+      "stages.py",
+      "run",
+      "--run-dir",
+      "{run_dir}",
+      "--submit-output",
+      "{submit_output_dir}",
+      "--artifacts",
+      "{research_artifacts_dir}",
+      "--research-round",
+      "{research_round}",
+      "--research-round-limit",
+      "{research_round_limit}"
+    ],
+    "timeout_seconds": 43200
+  }
+}

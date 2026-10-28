@@ -1,0 +1,4 @@
+# Editable method configuration for the synthetic demo.
+posttrain_lr_log10: -5.0     # log10 of the post-training learning rate, allowed [-6, -3.7]
+temperature: 0.1             # allowed [0.03, 0.3]
+warmup_epochs: 3             # integer, allowed [0, 8]

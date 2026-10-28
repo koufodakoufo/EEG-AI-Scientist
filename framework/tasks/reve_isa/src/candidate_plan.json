@@ -1,0 +1,11 @@
+{
+  "condition": "R1",
+  "note": "Editable method configuration. condition R0 = official REVE-base without post-training (baseline); R1 = stimulus ISA post-training with the parameters below. These values are the H1 faithful-migration settings from the 2026-10-17 run (knowledge/prior_results.md); the agent may change them within TASK.md bounds.",
+  "parameters": {
+    "posttrain_lr": 1e-05,
+    "temperature": 0.1,
+    "posttrain_weight_decay": 0.0001,
+    "warmup_epochs": 3,
+    "gradient_clip": 1.0
+  }
+}

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Stable entry point for agents and humans: bin/eegfm <group> <command> ...
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PY="${EEGFM_PYTHON:-python3}"
+exec env PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}" "$PY" -B -m eegfm "$@"
