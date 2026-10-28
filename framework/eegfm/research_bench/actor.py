@@ -76,6 +76,7 @@ image_generation = false
 view_image = false
 artifact = false
 code_mode = false
+code_mode_host = false
 daemon_auto_start = false
 '''
 
