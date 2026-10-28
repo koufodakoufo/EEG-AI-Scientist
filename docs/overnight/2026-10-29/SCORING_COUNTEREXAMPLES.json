@@ -1,0 +1,487 @@
+{
+  "schema_version": "counterexamples_v1",
+  "model_calls": 0,
+  "builder_authored_labels": true,
+  "semantic_judge_calibrated": false,
+  "pair_fixtures": [
+    {
+      "name": "synonym",
+      "scores": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "status": "scored",
+      "expected_relations": {
+        "precision": "supported",
+        "recall": "supported"
+      }
+    },
+    {
+      "name": "negation",
+      "scores": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "status": "scored",
+      "expected_relations": {
+        "precision": "contradicted",
+        "recall": "contradicted"
+      }
+    },
+    {
+      "name": "omitted_condition",
+      "scores": {
+        "precision": 0.0,
+        "recall": 1.0,
+        "f1": 0.0
+      },
+      "status": "scored",
+      "expected_relations": {
+        "precision": "not_supported",
+        "recall": "supported"
+      }
+    },
+    {
+      "name": "narrower_condition",
+      "scores": {
+        "precision": 1.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "status": "scored",
+      "expected_relations": {
+        "precision": "supported",
+        "recall": "not_supported"
+      }
+    },
+    {
+      "name": "different_model",
+      "scores": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "status": "scored",
+      "expected_relations": {
+        "precision": "not_supported",
+        "recall": "not_supported"
+      }
+    },
+    {
+      "name": "different_dataset",
+      "scores": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "status": "scored",
+      "expected_relations": {
+        "precision": "not_supported",
+        "recall": "not_supported"
+      }
+    },
+    {
+      "name": "same_numeric_range",
+      "scores": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "status": "scored",
+      "expected_relations": {
+        "precision": "supported",
+        "recall": "supported"
+      }
+    },
+    {
+      "name": "numeric_overclaim",
+      "scores": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "status": "scored",
+      "expected_relations": {
+        "precision": "contradicted",
+        "recall": "contradicted"
+      }
+    },
+    {
+      "name": "range_broader",
+      "scores": {
+        "precision": 1.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "status": "scored",
+      "expected_relations": {
+        "precision": "supported",
+        "recall": "not_supported"
+      }
+    },
+    {
+      "name": "range_narrower",
+      "scores": {
+        "precision": 0.0,
+        "recall": 1.0,
+        "f1": 0.0
+      },
+      "status": "scored",
+      "expected_relations": {
+        "precision": "not_supported",
+        "recall": "supported"
+      }
+    },
+    {
+      "name": "causal_overreach",
+      "scores": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "status": "scored",
+      "expected_relations": {
+        "precision": "not_supported",
+        "recall": "not_supported"
+      }
+    },
+    {
+      "name": "partial_coverage",
+      "scores": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "status": "scored",
+      "expected_relations": {
+        "precision": "not_supported",
+        "recall": "not_supported"
+      }
+    },
+    {
+      "name": "tentative",
+      "scores": {
+        "precision": 1.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "status": "scored",
+      "expected_relations": {
+        "precision": "supported",
+        "recall": "not_supported"
+      }
+    },
+    {
+      "name": "negative_finding",
+      "scores": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "status": "scored",
+      "expected_relations": {
+        "precision": "supported",
+        "recall": "supported"
+      }
+    },
+    {
+      "name": "absence_vs_proof",
+      "scores": {
+        "precision": 0.0,
+        "recall": 1.0,
+        "f1": 0.0
+      },
+      "status": "scored",
+      "expected_relations": {
+        "precision": "not_supported",
+        "recall": "supported"
+      }
+    },
+    {
+      "name": "undecidable",
+      "scores": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "status": "needs_review",
+      "expected_relations": {
+        "precision": "needs_review",
+        "recall": "needs_review"
+      }
+    },
+    {
+      "name": "unsupported_alternative",
+      "scores": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "status": "scored",
+      "expected_relations": {
+        "precision": "not_supported",
+        "recall": "not_supported"
+      }
+    },
+    {
+      "name": "long_inert",
+      "scores": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "status": "scored",
+      "expected_relations": {
+        "precision": "not_supported",
+        "recall": "not_supported"
+      }
+    },
+    {
+      "name": "injection_agent",
+      "scores": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "status": "scored",
+      "expected_relations": {
+        "precision": "not_supported",
+        "recall": "not_supported"
+      }
+    },
+    {
+      "name": "injection_reference",
+      "scores": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "status": "scored",
+      "expected_relations": {
+        "precision": "not_supported",
+        "recall": "not_supported"
+      }
+    }
+  ],
+  "graph_fixtures": {
+    "one_to_many": {
+      "scores": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "status": "scored",
+      "counts": {
+        "agent_claims": 1,
+        "reference_claims": 2,
+        "agent_claims_raw": 1,
+        "reference_claims_raw": 2,
+        "supported_agent_claims": 1,
+        "covered_reference_claims": 2,
+        "match_records": 4,
+        "directional_edges": 4,
+        "relations": {
+          "reference_supports_agent": {
+            "contradicted": 0,
+            "needs_review": 0,
+            "not_supported": 0,
+            "supported": 2
+          },
+          "agent_covers_reference": {
+            "contradicted": 0,
+            "needs_review": 0,
+            "not_supported": 0,
+            "supported": 2
+          }
+        }
+      },
+      "order_invariant": true
+    },
+    "many_to_one": {
+      "scores": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "status": "scored",
+      "counts": {
+        "agent_claims": 2,
+        "reference_claims": 1,
+        "agent_claims_raw": 2,
+        "reference_claims_raw": 1,
+        "supported_agent_claims": 2,
+        "covered_reference_claims": 1,
+        "match_records": 4,
+        "directional_edges": 4,
+        "relations": {
+          "reference_supports_agent": {
+            "contradicted": 0,
+            "needs_review": 0,
+            "not_supported": 0,
+            "supported": 2
+          },
+          "agent_covers_reference": {
+            "contradicted": 0,
+            "needs_review": 0,
+            "not_supported": 0,
+            "supported": 2
+          }
+        }
+      },
+      "order_invariant": true
+    },
+    "duplicates": {
+      "scores": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "status": "scored",
+      "counts": {
+        "agent_claims": 1,
+        "reference_claims": 1,
+        "agent_claims_raw": 2,
+        "reference_claims_raw": 2,
+        "supported_agent_claims": 1,
+        "covered_reference_claims": 1,
+        "match_records": 8,
+        "directional_edges": 2,
+        "relations": {
+          "reference_supports_agent": {
+            "contradicted": 0,
+            "needs_review": 0,
+            "not_supported": 0,
+            "supported": 1
+          },
+          "agent_covers_reference": {
+            "contradicted": 0,
+            "needs_review": 0,
+            "not_supported": 0,
+            "supported": 1
+          }
+        }
+      },
+      "order_invariant": true
+    },
+    "empty_submission": {
+      "scores": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "status": "empty_submission",
+      "counts": {
+        "agent_claims": 0,
+        "reference_claims": 1,
+        "agent_claims_raw": 0,
+        "reference_claims_raw": 1,
+        "supported_agent_claims": 0,
+        "covered_reference_claims": 0,
+        "match_records": 0,
+        "directional_edges": 0,
+        "relations": {
+          "reference_supports_agent": {
+            "contradicted": 0,
+            "needs_review": 0,
+            "not_supported": 0,
+            "supported": 0
+          },
+          "agent_covers_reference": {
+            "contradicted": 0,
+            "needs_review": 0,
+            "not_supported": 0,
+            "supported": 0
+          }
+        }
+      },
+      "order_invariant": true
+    },
+    "empty_reference": {
+      "scores": {
+        "precision": null,
+        "recall": null,
+        "f1": null
+      },
+      "status": "invalid_reference",
+      "counts": {
+        "agent_claims": 1,
+        "reference_claims": 0,
+        "agent_claims_raw": 1,
+        "reference_claims_raw": 0,
+        "supported_agent_claims": 0,
+        "covered_reference_claims": 0,
+        "match_records": 0,
+        "directional_edges": 0,
+        "relations": {
+          "reference_supports_agent": {
+            "contradicted": 0,
+            "needs_review": 0,
+            "not_supported": 0,
+            "supported": 0
+          },
+          "agent_covers_reference": {
+            "contradicted": 0,
+            "needs_review": 0,
+            "not_supported": 0,
+            "supported": 0
+          }
+        }
+      },
+      "order_invariant": true
+    },
+    "both_empty": {
+      "scores": {
+        "precision": null,
+        "recall": null,
+        "f1": null
+      },
+      "status": "invalid_reference",
+      "counts": {
+        "agent_claims": 0,
+        "reference_claims": 0,
+        "agent_claims_raw": 0,
+        "reference_claims_raw": 0,
+        "supported_agent_claims": 0,
+        "covered_reference_claims": 0,
+        "match_records": 0,
+        "directional_edges": 0,
+        "relations": {
+          "reference_supports_agent": {
+            "contradicted": 0,
+            "needs_review": 0,
+            "not_supported": 0,
+            "supported": 0
+          },
+          "agent_covers_reference": {
+            "contradicted": 0,
+            "needs_review": 0,
+            "not_supported": 0,
+            "supported": 0
+          }
+        }
+      },
+      "order_invariant": true
+    }
+  },
+  "deliberate_leak_positive_control": {
+    "separate_toy_fixture": true,
+    "holdout_touched": false,
+    "public_private_byte_hash_overlap_detected": true,
+    "reference_agreement": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "evidence_status": "no_evidence",
+    "evidence_valid": false,
+    "conclusion": "Perfect agreement does not detect a leaked answer. Inventory overlap detects this exact copied artifact; evidence audit rejects no-evidence output.",
+    "limitations": [
+      "No leaked model episode was run. This is an offline positive control.",
+      "Byte matching cannot detect paraphrases, memorized knowledge, or all leakage routes.",
+      "Live isolation negative controls are separately recorded in ISOLATION_REPORT.json."
+    ]
+  },
+  "interpretation": "Twenty pair labels plus six graph cases verify arithmetic and inert data handling; they are not 26 independently annotated semantic judgments."
+}
