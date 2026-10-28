@@ -155,6 +155,15 @@ class BudgetTests(unittest.TestCase):
             run_bounded([sys.executable,'-c','pass'],cwd=self.root,output_dir=self.root/'disk',timeout_seconds=1,minimum_free_bytes=2**100)
         self.assertFalse((self.root/'disk').exists())
 
+    @unittest.skipUnless(sys.platform=='linux','Linux affinity enforcement')
+    def test_child_cannot_widen_own_cpu_affinity(self) -> None:
+        script='import os,json\ntry:\n os.sched_setaffinity(0,set(range(os.cpu_count()))); denied=False\nexcept PermissionError:\n denied=True\nprint(json.dumps({"denied":denied,"cpus":list(os.sched_getaffinity(0))}))'
+        report=run_bounded([sys.executable,'-c',script],cwd=self.root,output_dir=self.root/'cpu',timeout_seconds=2,minimum_free_bytes=0)
+        result=json.loads((self.root/'cpu/stdout.jsonl').read_text())
+        self.assertTrue(result['denied'])
+        self.assertLessEqual(len(result['cpus']),4)
+        self.assertEqual(report['status'],'completed')
+
 
 if __name__ == '__main__':
     unittest.main()

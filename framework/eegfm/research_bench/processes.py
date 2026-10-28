@@ -1,11 +1,42 @@
 """Linux owned-descendant accounting, including children that create new PGIDs."""
 from __future__ import annotations
 import ctypes
+import ctypes.util
+import errno
 import os
 from pathlib import Path
 import signal
 import time
 from typing import Any
+
+
+def affinity_lock() -> Any:
+    """Return a child-only seccomp installer preventing affinity widening.
+
+    Prepare ctypes signatures before fork. The caller first sets the approved
+    affinity, then installs this inherited, non-removable syscall restriction.
+    libseccomp rejects incompatible syscall architectures by default.
+    """
+    library=ctypes.util.find_library('seccomp')
+    if library is None: raise RuntimeError('libseccomp is required to enforce CPU affinity')
+    seccomp=ctypes.CDLL(library,use_errno=True)
+    seccomp.seccomp_init.argtypes=[ctypes.c_uint32]; seccomp.seccomp_init.restype=ctypes.c_void_p
+    seccomp.seccomp_syscall_resolve_name.argtypes=[ctypes.c_char_p]; seccomp.seccomp_syscall_resolve_name.restype=ctypes.c_int
+    seccomp.seccomp_rule_add.argtypes=[ctypes.c_void_p,ctypes.c_uint32,ctypes.c_int,ctypes.c_uint]
+    seccomp.seccomp_load.argtypes=[ctypes.c_void_p]; seccomp.seccomp_load.restype=ctypes.c_int
+    seccomp.seccomp_release.argtypes=[ctypes.c_void_p]
+    syscall=seccomp.seccomp_syscall_resolve_name(b'sched_setaffinity')
+    if syscall<0: raise RuntimeError('Cannot resolve CPU affinity syscall')
+    def install() -> None:
+        context=seccomp.seccomp_init(0x7fff0000)  # SCMP_ACT_ALLOW
+        if not context: raise RuntimeError('Cannot initialize affinity seccomp')
+        try:
+            if seccomp.seccomp_rule_add(context,0x00050000|errno.EPERM,syscall,0)!=0:
+                raise RuntimeError('Cannot constrain CPU affinity')
+            if seccomp.seccomp_load(context)!=0:
+                raise RuntimeError('Cannot install inherited affinity seccomp')
+        finally: seccomp.seccomp_release(context)
+    return install
 
 
 def process_info(pid: int) -> dict[str, int | str] | None:

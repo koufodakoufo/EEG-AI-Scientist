@@ -155,10 +155,12 @@ def run_bounded(argv: Sequence[str], *, cwd: Path, output_dir: Path, timeout_sec
         raise BudgetExceeded('Owned storage scope already exceeds cap')
     output_dir.mkdir(parents=True, mode=0o700)
     import resource
-    from .processes import OwnedProcessTree
+    from .processes import OwnedProcessTree,affinity_lock
     available = sorted(os.sched_getaffinity(0))[:threads]
+    lock_affinity=affinity_lock()
     def limit_child() -> None:
         os.sched_setaffinity(0, available)
+        lock_affinity()
         if limit_address_space:
             resource.setrlimit(resource.RLIMIT_AS, (memory_limit_bytes, memory_limit_bytes))
         resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
@@ -172,7 +174,7 @@ def run_bounded(argv: Sequence[str], *, cwd: Path, output_dir: Path, timeout_sec
                               'storage_scope':str(scope),'storage_limit_bytes':storage_limit_bytes,
                               'storage_poll_seconds':1.0,'per_file_limit_bytes':512*1024**2,
                               'address_space_limited':limit_address_space,'rss_poll_seconds':0.1,
-                              'peak_tree_rss_bytes':0}
+                              'peak_tree_rss_bytes':0,'affinity_widening':'denied_by_inherited_seccomp'}
     write_atomic(output_dir / 'status.json', record)
     process: subprocess.Popen[bytes] | None = None
     tree = OwnedProcessTree()
