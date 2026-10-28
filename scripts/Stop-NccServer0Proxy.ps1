@@ -21,7 +21,8 @@ try {
         $process = Get-Process -Id ([int]$state.pid) -ErrorAction SilentlyContinue
         if ($process) {
             try {
-                if ($process.StartTime.ToUniversalTime().ToString('o') -ne [string]$state.startTime) { throw 'Recorded process creation time does not match; refusing to stop it.' }
+                # Compare instants without DateTime-to-string formatting or precision loss.
+                if ($process.StartTime.ToUniversalTime().Ticks -ne ([DateTime]$state.startTime).ToUniversalTime().Ticks) { throw 'Recorded process creation time does not match; refusing to stop it.' }
                 if (-not $process.HasExited) { $process.Kill(); $process.WaitForExit() }
             } finally { $process.Dispose() }
         }

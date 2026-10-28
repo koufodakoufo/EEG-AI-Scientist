@@ -56,7 +56,8 @@ function Get-OwnedTunnelProcess {
         $candidate.CommandLine -notmatch '127\.0\.0\.1:0:127\.0\.0\.1:10808' -or
         $candidate.CommandLine -notmatch '(?:^|[\s"])nccserver0(?:[\s"]|$)') { return $null }
     try { $process = Get-Process -Id ([int]$Recorded.pid) -ErrorAction Stop } catch { return $null }
-    if ($process.StartTime.ToUniversalTime().ToString('o') -ne [string]$Recorded.startTime) { $process.Dispose(); return $null }
+    # PowerShell 7 may deserialize ISO JSON dates into DateTime; string casts lose precision.
+    if ($process.StartTime.ToUniversalTime().Ticks -ne ([DateTime]$Recorded.startTime).ToUniversalTime().Ticks) { $process.Dispose(); return $null }
     return $process
 }
 
