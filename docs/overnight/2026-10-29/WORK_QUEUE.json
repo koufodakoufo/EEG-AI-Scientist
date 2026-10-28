@@ -1,110 +1,115 @@
 [
   {
     "started_at": "2026-10-29T00:29:40+08:00",
-    "next_action": "Restore owned proxy and bounded model smoke",
+    "next_action": "Model control verified by M10 and M11",
     "blocked_reason": null,
-    "evidence": [
-      "PLAN.md"
-    ],
     "deadline_at": "2026-10-29T01:05:00+08:00",
-    "status": "running",
+    "status": "passed",
     "depends_on": [],
     "id": "P0",
-    "owner": "builder"
+    "owner": "builder",
+    "evidence_paths": [
+      "ISOLATION_REPORT.json",
+      "BUDGET.json"
+    ]
   },
   {
     "started_at": null,
-    "next_action": "Run added CLI and disk fault tests on Linux; independent replay collector",
+    "next_action": "69 Linux tests pass; preserve original framework smoke",
     "blocked_reason": null,
-    "evidence": [
-      "commit:c8787d2",
-      "server/research-bench-tests-first.log"
-    ],
     "deadline_at": "2026-10-29T02:05:00+08:00",
-    "status": "running",
+    "status": "passed",
     "depends_on": [],
     "id": "P1",
-    "owner": "builder"
+    "owner": "builder",
+    "evidence_paths": [
+      "commit:67321a8",
+      "server/research-bench-tests-fifth.log",
+      "server/legacy-smoke-report.json"
+    ]
   },
   {
     "started_at": "2026-10-29T00:41:00+08:00",
-    "next_action": "Keep both cases sealed before enrollment; freeze symmetric semantic extraction protocol",
+    "next_action": "Both public cases and symmetric reference extraction sealed before first Actor",
     "blocked_reason": null,
-    "evidence": [
-      "METHOD_NOTE.md",
-      ".local/overnight-20261029/private/EXPORT_FREEZE.json"
-    ],
     "deadline_at": "2026-10-29T01:06:00+08:00",
     "status": "passed",
     "depends_on": [],
     "id": "P2",
-    "owner": "M01"
+    "owner": "M01",
+    "evidence_paths": [
+      ".local/overnight-20261029/private/reference-v2/FREEZE.json",
+      "METHOD_NOTE.md"
+    ]
   },
   {
     "started_at": null,
-    "next_action": "M06 offline runtime review then fresh live canary",
-    "blocked_reason": "Live host missing; tool exclusion not yet verified",
-    "evidence": [
-      "ISOLATION_REPORT.json"
-    ],
+    "next_action": "Live boundary passed; preserve limitations",
+    "blocked_reason": null,
     "deadline_at": "2026-10-29T02:30:00+08:00",
-    "status": "running",
+    "status": "passed",
     "depends_on": [
       "P0"
     ],
     "id": "P3",
-    "owner": "builder"
+    "owner": "builder",
+    "evidence_paths": [
+      "ISOLATION_REPORT.json",
+      "ACTOR_LAUNCHER.md"
+    ]
   },
   {
     "started_at": null,
-    "next_action": "Frozen dev episode then isolated skill distillation",
+    "next_action": "M12 fresh dev Actor active; collect/replay, extract, judge, then fresh Distiller",
     "blocked_reason": null,
-    "evidence": [],
     "deadline_at": null,
-    "status": "pending",
+    "status": "running",
     "depends_on": [
       "P1",
       "P2",
       "P3"
     ],
     "id": "P4",
-    "owner": "fresh_actor_then_distiller"
+    "owner": "fresh_actor_then_distiller",
+    "evidence_paths": [
+      "BUDGET.json"
+    ]
   },
   {
     "started_at": null,
     "next_action": "Matched holdout baseline and treatment",
     "blocked_reason": null,
-    "evidence": [],
     "deadline_at": null,
     "status": "pending",
     "depends_on": [
       "P4"
     ],
     "id": "P5",
-    "owner": "fresh_actors"
+    "owner": "fresh_actors",
+    "evidence_paths": []
   },
   {
     "started_at": null,
     "next_action": "Reliability faults and high-value research queue",
     "blocked_reason": null,
-    "evidence": [],
     "deadline_at": "2026-10-29T07:59:40+08:00",
     "status": "pending",
     "depends_on": [
       "P1"
     ],
     "id": "P6",
-    "owner": "builder"
+    "owner": "builder",
+    "evidence_paths": []
   },
   {
     "started_at": null,
     "next_action": "Verify, commit and morning summary",
     "blocked_reason": null,
-    "evidence": [],
     "deadline_at": "2026-10-29T08:29:40+08:00",
     "status": "pending",
     "depends_on": [],
     "id": "P7",
-    "owner": "builder"
+    "owner": "builder",
+    "evidence_paths": []
   }
 ]

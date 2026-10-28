@@ -157,7 +157,8 @@ def actor_argv(metadata: dict[str, Any], prompt: str, output_file: Path) -> list
 
 
 def launch_actor(metadata: dict[str, Any], prompt: str, *, output_dir: Path, timeout_seconds: int,
-                 bwrap_dir: Path, proxy_url: str, role: str, isolation_report: dict[str, Any] | None = None) -> dict[str, Any]:
+                 bwrap_dir: Path, proxy_url: str, role: str, isolation_report: dict[str, Any] | None = None,
+                 prompt_via_stdin: bool = False) -> dict[str, Any]:
     if role not in {'preflight', 'isolation_canary', 'diagnostic', 'actor', 'distiller', 'judge'}:
         raise ValueError('Unknown model role')
     if digest_file(Path(metadata['control_home'])/'actor.config.toml')!=metadata['profile_sha256']:
@@ -173,10 +174,16 @@ def launch_actor(metadata: dict[str, Any], prompt: str, *, output_dir: Path, tim
            'CODEX_HOME': metadata['control_home'], 'LANG': 'C.UTF-8',
            'HTTP_PROXY': proxy_url, 'HTTPS_PROXY': proxy_url, 'http_proxy': proxy_url, 'https_proxy': proxy_url,
            'NO_PROXY': '127.0.0.1,localhost', 'no_proxy': '127.0.0.1,localhost'}
-    argv = actor_argv(metadata, prompt, output_dir / 'final.txt')
+    input_path=None
+    if prompt_via_stdin:
+        input_path=Path(metadata['control_home'])/'prompt.txt'
+        with input_path.open('x',encoding='utf-8') as handle: handle.write(prompt)
+        os.chmod(input_path,0o600)
+    argv = actor_argv(metadata, '-' if prompt_via_stdin else prompt, output_dir / 'final.txt')
     report = run_bounded(argv, cwd=Path(metadata['case']), output_dir=output_dir, timeout_seconds=timeout_seconds, env=env,
-                         limit_address_space=False,storage_limit_bytes=64*1024**2)
+                         limit_address_space=False,storage_limit_bytes=64*1024**2,stdin_path=input_path)
     report.update(role=role, profile_sha256=metadata['profile_sha256'], context=metadata['context'])
+    report.update(prompt_transport='stdin' if prompt_via_stdin else 'argv',prompt_sha256=hashlib.sha256(prompt.encode()).hexdigest())
     write_atomic(output_dir / 'status.json', report)
     return report
 

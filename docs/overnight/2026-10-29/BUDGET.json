@@ -141,10 +141,11 @@
     {
       "id": "M12",
       "role": "development_actor",
-      "status": "reserved",
+      "status": "running",
       "reserved_at": "2026-10-28T18:08:29.250862+00:00",
       "timeout_seconds": 900,
-      "cost_usd": "unknown"
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-28T18:09:12.957383+00:00"
     }
   ]
 }

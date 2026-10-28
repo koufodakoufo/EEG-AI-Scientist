@@ -120,6 +120,14 @@ class BudgetTests(unittest.TestCase):
                             output_dir=self.root/'storage',timeout_seconds=3,storage_scope=scope,storage_limit_bytes=1024,minimum_free_bytes=0)
         self.assertEqual(storage['status'],'storage_exceeded')
 
+    @unittest.skipUnless(sys.platform=='linux','Linux bounded stdin transport')
+    def test_stdin_large_prompt_is_not_argv(self) -> None:
+        source=self.root/'input.txt'; source.write_text('prompt-data-'*20000)
+        result=run_bounded([sys.executable,'-c','import sys; print(len(sys.stdin.read()))'],cwd=self.root,
+                           output_dir=self.root/'stdin-run',timeout_seconds=2,minimum_free_bytes=0,stdin_path=source)
+        self.assertEqual(result['status'],'completed')
+        self.assertEqual((self.root/'stdin-run/stdout.jsonl').read_text().strip(),'240000')
+
     @unittest.skipUnless(sys.platform=='linux','Linux launcher enforcement test')
     def test_hard_timeout_and_affinity(self) -> None:
         report=run_bounded([sys.executable,'-c','import time; time.sleep(20)'],cwd=self.root,output_dir=self.root/'run',timeout_seconds=0.4,minimum_free_bytes=0)

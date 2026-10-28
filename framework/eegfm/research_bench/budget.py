@@ -132,7 +132,8 @@ def run_bounded(argv: Sequence[str], *, cwd: Path, output_dir: Path, timeout_sec
                 env: Mapping[str, str] | None = None, memory_limit_bytes: int = 12 * 1024**3,
                 threads: int = 4, stdout_limit_bytes: int = 64 * 1024**2,
                 storage_scope: Path | None = None, storage_limit_bytes: int = 10 * 1024**3,
-                minimum_free_bytes: int = 20 * 1024**3, limit_address_space: bool = True) -> dict[str, Any]:
+                minimum_free_bytes: int = 20 * 1024**3, limit_address_space: bool = True,
+                stdin_path: Path | None = None) -> dict[str, Any]:
     """Linux only: affinity, address-space cap, aggregate group RSS, wall clock.
 
     A subreaper tracks and terminates owned descendants even across new process
@@ -179,9 +180,9 @@ def run_bounded(argv: Sequence[str], *, cwd: Path, output_dir: Path, timeout_sec
     process: subprocess.Popen[bytes] | None = None
     tree = OwnedProcessTree()
     try:
-        with (output_dir / 'stdout.jsonl').open('wb') as stdout, (output_dir / 'stderr.log').open('wb') as stderr:
+        with (output_dir / 'stdout.jsonl').open('wb') as stdout, (output_dir / 'stderr.log').open('wb') as stderr, (stdin_path or Path(os.devnull)).open('rb') as input_stream:
             process = subprocess.Popen(list(argv), cwd=cwd, env=child_env, stdout=stdout, stderr=stderr,
-                                       stdin=subprocess.DEVNULL, start_new_session=True, preexec_fn=limit_child)
+                                       stdin=input_stream, start_new_session=True, preexec_fn=limit_child)
             tree.attach(process.pid)
             record.update(status='running', pid=process.pid)
             write_atomic(output_dir / 'status.json', record)
