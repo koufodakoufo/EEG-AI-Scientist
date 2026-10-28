@@ -90,8 +90,9 @@ def replay_submission(*,frozen_output: Path,public: Path,replay_case: Path,contr
         destination=replay_case/'output'/safe_relative(name); destination.parent.mkdir(parents=True,exist_ok=True)
         shutil.copyfile(path,destination)
         seeded.append(name)
-    for name in ('PLAN.md','LOCKED_ANALYSIS.json'):
-        if (frozen_output/name).exists():
+    declared_outputs={name for command in commands for name in command['artifacts']}
+    for name in ('PLAN.md','LOCKED_ANALYSIS.json','COMMANDS.json'):
+        if name not in declared_outputs and (frozen_output/name).exists():
             source=checked_file(frozen_output,name)
             shutil.copyfile(source,replay_case/'output'/name); seeded.append(name)
     runtime=control_home.parent/(control_home.name+'-runtime'); runtime.mkdir(mode=0o700)

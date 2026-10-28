@@ -80,9 +80,12 @@ def main() -> None:
         criteria={k:original['scoring_policy'][k] for k in ('claim_criteria','alternative_findings','bootstrap_scope','no_fixed_method_requirement','relations','score_rules','directions','deduplication')}
         reference_claims=read(PRIVATE/f'reference-v2/{group}.json')['claims']
         reference_text=(PRIVATE/f'task-build/{group}_private/REFERENCE_REPORT.md').read_text(encoding='utf-8')
-        evaluations=[]
+        evaluations=[]; empty=[]
         for doc in filtered['documents']:
             source=next(d for d in sources if d['document_id']==doc['document_id'])
+            if not doc['claims']:
+                empty.append(doc['document_id'])
+                continue
             evaluations.append({'evaluation_id':doc['document_id'],'reference_report':reference_text,
                 'submission_report':source['text'],'reference_claims':reference_claims,'agent_claims':doc['claims'],
                 'criteria':criteria})
@@ -90,6 +93,7 @@ def main() -> None:
         if digest_file(job/'source/PROTOCOL.md')!=current['scoring_policy']['judge_protocol_sha256']:
             raise ValueError('Judge prompt differs from sealed version')
         write_atomic(job/'mapping.json',{'group':group,'extraction_id':args.extraction,'documents':mapping['documents'],
+            'empty_document_ids':empty,
             'original_seal_sha256':original['seal_sha256'],'symmetric_extraction_seal_sha256':current['seal_sha256']})
         print(job)
     else:
@@ -117,6 +121,14 @@ def main() -> None:
             summaries.append({'episode':episode,'status':score['status'],'scores':score['scores'],
                               'agent_claims':score['counts']['agent_claims'],'reference_claims':score['counts']['reference_claims'],
                               'review_items':len(score['review_items']),'extraction_quality':quality['status']})
+        for identifier in mapping.get('empty_document_ids',[]):
+            episode=next(v['episode'] for v in mapping['documents'] if v['document_id']==identifier)
+            reference=read(PRIVATE/f"reference-v2/{mapping['group']}.json")['claims']
+            score=score_directional([],reference,[],run_id=episode)
+            write_atomic(target/(episode+'-score.json'),score)
+            summaries.append({'episode':episode,'status':score['status'],'scores':score['scores'],
+                'agent_claims':0,'reference_claims':len(reference),'review_items':0,'extraction_quality':'empty_submission',
+                'note':'Retained launched episode; consult launcher failure category separately. No model judgment used for empty report.'})
         write_atomic(target/'SUMMARY.json',summaries); print(json.dumps(summaries,indent=2))
 
 

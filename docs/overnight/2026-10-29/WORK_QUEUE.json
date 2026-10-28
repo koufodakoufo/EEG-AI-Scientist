@@ -60,10 +60,10 @@
   },
   {
     "started_at": null,
-    "next_action": "M12 fresh dev Actor active; collect/replay, extract, judge, then fresh Distiller",
+    "next_action": "Skill frozen before holdout",
     "blocked_reason": null,
     "deadline_at": null,
-    "status": "running",
+    "status": "passed",
     "depends_on": [
       "P1",
       "P2",
@@ -72,34 +72,43 @@
     "id": "P4",
     "owner": "fresh_actor_then_distiller",
     "evidence_paths": [
-      "BUDGET.json"
+      "private/evaluations/M14",
+      "framework/benchmarks/brainpec_pilot/skills/distinguish-recovery-response-and-causation"
     ]
   },
   {
     "started_at": null,
-    "next_action": "Matched holdout baseline and treatment",
+    "next_action": "Score first assigned pair including external capacity failure; then run optional second predeclared pair",
     "blocked_reason": null,
     "deadline_at": null,
-    "status": "pending",
+    "status": "running",
     "depends_on": [
       "P4"
     ],
     "id": "P5",
     "owner": "fresh_actors",
-    "evidence_paths": []
+    "evidence_paths": [
+      "private/HOLDOUT_PROTOCOL.json",
+      "server/evidence/M16",
+      "server/evidence/M17"
+    ]
   },
   {
     "started_at": null,
-    "next_action": "Reliability faults and high-value research queue",
+    "next_action": "Reliability fixes pass; assemble bounded future research queue",
     "blocked_reason": null,
     "deadline_at": "2026-10-29T07:59:40+08:00",
-    "status": "pending",
+    "status": "running",
     "depends_on": [
       "P1"
     ],
     "id": "P6",
     "owner": "builder",
-    "evidence_paths": []
+    "evidence_paths": [
+      "INDEPENDENT_REVIEW.md",
+      "server/precommit-review-unit.log",
+      "server/precommit-review-legacy.log"
+    ]
   },
   {
     "started_at": null,
