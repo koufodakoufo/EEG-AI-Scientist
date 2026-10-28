@@ -53,6 +53,24 @@ def main() -> None:
         for episode in (['M12'] if group=='dev' else ['M17','M20','M21']):
             folder = NIGHT/'submissions'/episode/'output'
             prediction_path = folder/'predictions.json'
+            if episode=='M21' and (folder/'metrics.json').is_file():
+                fit=json.loads((folder/'metrics.json').read_text(encoding='utf-8'))
+                predictions={name:[values[r['row_id']] for r in rows] for name,values in fit['predictions'].items()}
+                if any(set(values)!={r['row_id'] for r in rows} for values in fit['predictions'].values()):
+                    raise ValueError('M21 prediction identifiers mismatch')
+                recount={name:{c:accuracy([pred[i] for i in ix],[rows[i] for i in ix]) for c,ix in scope.items()}
+                         for name,pred in predictions.items()}
+                comparison=[{'model':name,'context':c,'recomputed':value,
+                    'reported':fit['classification'][name]['metrics']['all' if c=='pooled' else c]['accuracy'],
+                    'matches':abs(value-fit['classification'][name]['metrics']['all' if c=='pooled' else c]['accuracy'])<1e-12}
+                    for name,values in recount.items() for c,value in values.items()]
+                if predictions['fixed']!=base:
+                    raise ValueError('M21 fixed predictions differ')
+                result['episodes'][episode]={'status':'recounted','sha256':digest(folder/'metrics.json'),
+                    'fixed_predictions_match':True,'accuracy_recounts':recount,'reported_comparisons':comparison,
+                    'row_order_basis':'Exact row-ID mapping checked against public validation CSV.',
+                    'all_available_comparisons_match':all(c['matches'] for c in comparison)}
+                continue
             if episode=='M20' and (folder/'fit_results.json').is_file():
                 fit=json.loads((folder/'fit_results.json').read_text(encoding='utf-8'))
                 predictions=fit['predictions']

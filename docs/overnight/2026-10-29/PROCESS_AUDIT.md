@@ -1,0 +1,31 @@
+# Scientific workflow audit
+
+Builder qualitative review, unblinded; no composite score and no human-gold claim. Dimensions were frozen in `private/HOLDOUT_PROTOCOL.json`. The cases are invented mechanisms, not EEG experiments. Statements below are based on saved plans, code, reports and visible tool traces, not hidden reasoning.
+
+| Frozen dimension | M12 dev baseline | M17 first-pair skill | M20 second-pair skill | M21 second-pair baseline |
+|---|---|---|---|---|
+| Testable question / competing explanations | Separates recovery, target prediction and fixed-head reliance; limits interpretation to supplied resources. | Separates linear, quadratic and context-conditioned prediction; asks whether an additive coordinate masks an interaction. | Same separation plus explicit score/decision distinction and removal controls. | Same distinction, with context, single-property, a/b and component models. |
+| Discriminating experiments | Linear/nonlinear and coordinate probes, input edits, fitted property-association removal. | Interaction-only, additive-only, sign reversal, mean replacement and association subtraction. | Adds compact product model and score-dominance checks; later choices are disclosed as exploratory. | Direct a/b linear vs quadratic control and train-only inner selection; adds score dominance and row-permutation sensitivity. |
+| Controls / group and split handling | Train-only fits, disjoint groups, group bootstrap and train-group permutations. | Stratified group bootstrap, fixed penalties; notes weak template-preserving null. | Detects that 199 whole-group null refits preserve 97.92% accuracy; tests sign/complement sensitivity and explicitly denies calibrated significance. | Also detects the degenerate 100-refit null, audits 136/8 target templates, and adds a group-sign sensitivity analysis. Uses group-disjoint inner train folds. |
+| Interpretation / informative negatives | Bounds negative recovery by tested probe family; no physiological causality claim. | Notes score movement without decision flips; removes an associated component without calling it a causal feature deletion. | Retains failed null as informative; separates sampling uncertainty from edit randomness; does not erase validation-driven amendments. | Retains original null and supplementary analyses; distinguishes fixed-score contribution from class sensitivity and discloses exploratory additions. |
+| Budget / uncertainty / evidence | 419 s; 23 submitted claims; scientific artifacts replay, final diagnostic hash differs. | 407 s; 26 claims; all supplemental replay commands finish, final diagnostic hash differs. | 613 s; 25 claims; 12-command manifest exposes undisclosed evaluator restrictions. Core supplemental replay reproduces 5 artifacts; follow-up input remains missing. | 523 s; 25 claims; all four independent replay commands finish, 6/7 declared artifact hashes match. Final verification diagnostic differs. |
+
+M16, the first-pair baseline, was legally launched but interrupted by provider capacity after 115 s, before a report. Its partial plan/code and empty submission are retained. It cannot serve as an ability baseline for a treatment gain. Pair 2 is the only complete pair.
+
+## Visible ordering evidence
+
+All timestamps here are UTC, from `evidence/server/Mxx/trace/visible_trace.jsonl` (local date is 2026-10-29). M12 writes its plan at 18:10:19, then runs the analysis at 18:12:19. M17 writes its plan at 18:38:12, then writes/runs analysis at 18:38:57 and records later amendments at 18:40:16. M20 writes its plan at 18:55:01, writes/runs analysis at 18:56:07, and records amendments at 18:57:35. M21 writes its initial plan at 19:08:11, views CSV heads at 19:08:20, then expands the locked diagnostic list before the quantitative analysis at 19:09:26. This last distinction matters: M21's added a/b hypotheses are data-informed, not fully pre-data hypotheses; the report discloses them.
+
+The same launch prompt required every condition to plan first, preserve failures and separate claims from evidence. These are already strong baseline instructions. It would be misleading to attribute every good behavior in a treatment run to the extra skill.
+
+## Findings and unresolved checks
+
+Both completed holdout conditions recover the main interaction and context pattern, and both notice the weak null. There is no demonstrated unique skill contribution. M20 uses fixed penalties and more edit replicates; M21 uses inner training folds and a different uncertainty estimand. Those are observed workflow choices under equal ceilings, not controlled one-factor algorithm comparisons. Stratifying bootstrap by context fixes the context mix; resampling all groups lets it vary. The narrower interval is not automatically the better interval.
+
+The independent arithmetic audit checks 173 accuracy entries against saved predictions and public labels, plus the fixed-head formula and group-disjointness. All agree. M20 predictions lack explicit row IDs, so CSV ordering is inferred from its saved read/fit path and checked against the fixed-head sequence; other saved row-ID mappings are checked where available. No independent audit here certifies every confidence interval or every fitting decision.
+
+The evidence checker rejects mixed-partition artifacts such as an audit containing train and validation metadata when only one split label is supplied. M21's `E_supplement_train` is one such example. This does not establish data leakage; it reveals that the binding schema and evaluator split mapping need a clearer public contract. Original invalid statuses remain unchanged.
+
+M17's semantic judge marked two coverage questions for review: whether its product-model result covers the reference's explicit joint additive comparator, and whether fitted c-predictor results cover the reference's exact `c>=0` rule. These require checking the reports at that scope; they are not resolved by matching keywords or by declaring the numerical result plausible. The frozen scores retain zero credit for these edges.
+
+Next revision should fix the public replay dependency/command contract and extraction-cap diagnostics before collecting more skill-effect data. Do not retroactively edit this run's gold, silently discard M16, normalize diagnostic hash differences into a full pass, or call this a real EEG/RSI success.

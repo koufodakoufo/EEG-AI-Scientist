@@ -465,6 +465,20 @@
       "order_invariant": true
     }
   },
+  "granularity_sensitivity": {
+    "atomic_scores": {
+      "precision": 0.6666666666666666,
+      "recall": 1.0,
+      "f1": 0.8
+    },
+    "packed_scores": {
+      "precision": 0.0,
+      "recall": 1.0,
+      "f1": 0.0
+    },
+    "labels": "Builder-authored; not additional judge calls or rescored holdout.",
+    "conclusion": "Reference omits the interval. Packing it with supported estimates changes F1 from 0.8 to 0 without changing the report content. Complete-report extraction granularity is a material measurement choice."
+  },
   "deliberate_leak_positive_control": {
     "separate_toy_fixture": true,
     "holdout_touched": false,

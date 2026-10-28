@@ -1139,7 +1139,535 @@
       "all_available_comparisons_match": true
     },
     "M21": {
-      "status": "predictions_not_available"
+      "status": "recounted",
+      "sha256": "49016e700857ccd07a36965dff8f32eceb7b15bffbc4af00d466a18801693106",
+      "fixed_predictions_match": true,
+      "accuracy_recounts": {
+        "context_majority": {
+          "pooled": 0.5,
+          "context_0": 0.5,
+          "context_1": 0.5
+        },
+        "fixed": {
+          "pooled": 0.5416666666666666,
+          "context_0": 0.9583333333333334,
+          "context_1": 0.125
+        },
+        "fixed_product_only": {
+          "pooled": 0.9791666666666666,
+          "context_0": 1.0,
+          "context_1": 0.9583333333333334
+        },
+        "fixed_r3_only": {
+          "pooled": 0.5416666666666666,
+          "context_0": 0.9583333333333334,
+          "context_1": 0.125
+        },
+        "majority": {
+          "pooled": 0.5,
+          "context_0": 0.5,
+          "context_1": 0.5
+        },
+        "property_a_only": {
+          "pooled": 0.5,
+          "context_0": 0.5,
+          "context_1": 0.5
+        },
+        "property_ab_linear": {
+          "pooled": 0.5,
+          "context_0": 0.5,
+          "context_1": 0.5
+        },
+        "property_ab_quadratic": {
+          "pooled": 0.9791666666666666,
+          "context_0": 1.0,
+          "context_1": 0.9583333333333334
+        },
+        "property_b_only": {
+          "pooled": 0.5,
+          "context_0": 0.5,
+          "context_1": 0.5
+        },
+        "property_c_context": {
+          "pooled": 0.9166666666666666,
+          "context_0": 0.9583333333333334,
+          "context_1": 0.875
+        },
+        "property_c_only": {
+          "pooled": 0.5416666666666666,
+          "context_0": 0.9583333333333334,
+          "context_1": 0.125
+        },
+        "property_d_only": {
+          "pooled": 0.5,
+          "context_0": 0.4791666666666667,
+          "context_1": 0.5208333333333334
+        },
+        "property_linear": {
+          "pooled": 0.5364583333333334,
+          "context_0": 0.6041666666666666,
+          "context_1": 0.46875
+        },
+        "property_linear_context": {
+          "pooled": 0.9166666666666666,
+          "context_0": 0.9583333333333334,
+          "context_1": 0.875
+        },
+        "property_quadratic": {
+          "pooled": 0.9791666666666666,
+          "context_0": 1.0,
+          "context_1": 0.9583333333333334
+        },
+        "property_quadratic_context": {
+          "pooled": 0.9791666666666666,
+          "context_0": 1.0,
+          "context_1": 0.9583333333333334
+        },
+        "representation_linear": {
+          "pooled": 0.5416666666666666,
+          "context_0": 0.4791666666666667,
+          "context_1": 0.6041666666666666
+        },
+        "representation_linear_context": {
+          "pooled": 0.9166666666666666,
+          "context_0": 0.9583333333333334,
+          "context_1": 0.875
+        },
+        "representation_quadratic": {
+          "pooled": 0.9791666666666666,
+          "context_0": 1.0,
+          "context_1": 0.9583333333333334
+        },
+        "representation_quadratic_context": {
+          "pooled": 0.9791666666666666,
+          "context_0": 1.0,
+          "context_1": 0.9583333333333334
+        }
+      },
+      "reported_comparisons": [
+        {
+          "model": "context_majority",
+          "context": "pooled",
+          "recomputed": 0.5,
+          "reported": 0.5,
+          "matches": true
+        },
+        {
+          "model": "context_majority",
+          "context": "context_0",
+          "recomputed": 0.5,
+          "reported": 0.5,
+          "matches": true
+        },
+        {
+          "model": "context_majority",
+          "context": "context_1",
+          "recomputed": 0.5,
+          "reported": 0.5,
+          "matches": true
+        },
+        {
+          "model": "fixed",
+          "context": "pooled",
+          "recomputed": 0.5416666666666666,
+          "reported": 0.5416666666666666,
+          "matches": true
+        },
+        {
+          "model": "fixed",
+          "context": "context_0",
+          "recomputed": 0.9583333333333334,
+          "reported": 0.9583333333333334,
+          "matches": true
+        },
+        {
+          "model": "fixed",
+          "context": "context_1",
+          "recomputed": 0.125,
+          "reported": 0.125,
+          "matches": true
+        },
+        {
+          "model": "fixed_product_only",
+          "context": "pooled",
+          "recomputed": 0.9791666666666666,
+          "reported": 0.9791666666666666,
+          "matches": true
+        },
+        {
+          "model": "fixed_product_only",
+          "context": "context_0",
+          "recomputed": 1.0,
+          "reported": 1.0,
+          "matches": true
+        },
+        {
+          "model": "fixed_product_only",
+          "context": "context_1",
+          "recomputed": 0.9583333333333334,
+          "reported": 0.9583333333333334,
+          "matches": true
+        },
+        {
+          "model": "fixed_r3_only",
+          "context": "pooled",
+          "recomputed": 0.5416666666666666,
+          "reported": 0.5416666666666666,
+          "matches": true
+        },
+        {
+          "model": "fixed_r3_only",
+          "context": "context_0",
+          "recomputed": 0.9583333333333334,
+          "reported": 0.9583333333333334,
+          "matches": true
+        },
+        {
+          "model": "fixed_r3_only",
+          "context": "context_1",
+          "recomputed": 0.125,
+          "reported": 0.125,
+          "matches": true
+        },
+        {
+          "model": "majority",
+          "context": "pooled",
+          "recomputed": 0.5,
+          "reported": 0.5,
+          "matches": true
+        },
+        {
+          "model": "majority",
+          "context": "context_0",
+          "recomputed": 0.5,
+          "reported": 0.5,
+          "matches": true
+        },
+        {
+          "model": "majority",
+          "context": "context_1",
+          "recomputed": 0.5,
+          "reported": 0.5,
+          "matches": true
+        },
+        {
+          "model": "property_a_only",
+          "context": "pooled",
+          "recomputed": 0.5,
+          "reported": 0.5,
+          "matches": true
+        },
+        {
+          "model": "property_a_only",
+          "context": "context_0",
+          "recomputed": 0.5,
+          "reported": 0.5,
+          "matches": true
+        },
+        {
+          "model": "property_a_only",
+          "context": "context_1",
+          "recomputed": 0.5,
+          "reported": 0.5,
+          "matches": true
+        },
+        {
+          "model": "property_ab_linear",
+          "context": "pooled",
+          "recomputed": 0.5,
+          "reported": 0.5,
+          "matches": true
+        },
+        {
+          "model": "property_ab_linear",
+          "context": "context_0",
+          "recomputed": 0.5,
+          "reported": 0.5,
+          "matches": true
+        },
+        {
+          "model": "property_ab_linear",
+          "context": "context_1",
+          "recomputed": 0.5,
+          "reported": 0.5,
+          "matches": true
+        },
+        {
+          "model": "property_ab_quadratic",
+          "context": "pooled",
+          "recomputed": 0.9791666666666666,
+          "reported": 0.9791666666666666,
+          "matches": true
+        },
+        {
+          "model": "property_ab_quadratic",
+          "context": "context_0",
+          "recomputed": 1.0,
+          "reported": 1.0,
+          "matches": true
+        },
+        {
+          "model": "property_ab_quadratic",
+          "context": "context_1",
+          "recomputed": 0.9583333333333334,
+          "reported": 0.9583333333333334,
+          "matches": true
+        },
+        {
+          "model": "property_b_only",
+          "context": "pooled",
+          "recomputed": 0.5,
+          "reported": 0.5,
+          "matches": true
+        },
+        {
+          "model": "property_b_only",
+          "context": "context_0",
+          "recomputed": 0.5,
+          "reported": 0.5,
+          "matches": true
+        },
+        {
+          "model": "property_b_only",
+          "context": "context_1",
+          "recomputed": 0.5,
+          "reported": 0.5,
+          "matches": true
+        },
+        {
+          "model": "property_c_context",
+          "context": "pooled",
+          "recomputed": 0.9166666666666666,
+          "reported": 0.9166666666666666,
+          "matches": true
+        },
+        {
+          "model": "property_c_context",
+          "context": "context_0",
+          "recomputed": 0.9583333333333334,
+          "reported": 0.9583333333333334,
+          "matches": true
+        },
+        {
+          "model": "property_c_context",
+          "context": "context_1",
+          "recomputed": 0.875,
+          "reported": 0.875,
+          "matches": true
+        },
+        {
+          "model": "property_c_only",
+          "context": "pooled",
+          "recomputed": 0.5416666666666666,
+          "reported": 0.5416666666666666,
+          "matches": true
+        },
+        {
+          "model": "property_c_only",
+          "context": "context_0",
+          "recomputed": 0.9583333333333334,
+          "reported": 0.9583333333333334,
+          "matches": true
+        },
+        {
+          "model": "property_c_only",
+          "context": "context_1",
+          "recomputed": 0.125,
+          "reported": 0.125,
+          "matches": true
+        },
+        {
+          "model": "property_d_only",
+          "context": "pooled",
+          "recomputed": 0.5,
+          "reported": 0.5,
+          "matches": true
+        },
+        {
+          "model": "property_d_only",
+          "context": "context_0",
+          "recomputed": 0.4791666666666667,
+          "reported": 0.4791666666666667,
+          "matches": true
+        },
+        {
+          "model": "property_d_only",
+          "context": "context_1",
+          "recomputed": 0.5208333333333334,
+          "reported": 0.5208333333333334,
+          "matches": true
+        },
+        {
+          "model": "property_linear",
+          "context": "pooled",
+          "recomputed": 0.5364583333333334,
+          "reported": 0.5364583333333334,
+          "matches": true
+        },
+        {
+          "model": "property_linear",
+          "context": "context_0",
+          "recomputed": 0.6041666666666666,
+          "reported": 0.6041666666666666,
+          "matches": true
+        },
+        {
+          "model": "property_linear",
+          "context": "context_1",
+          "recomputed": 0.46875,
+          "reported": 0.46875,
+          "matches": true
+        },
+        {
+          "model": "property_linear_context",
+          "context": "pooled",
+          "recomputed": 0.9166666666666666,
+          "reported": 0.9166666666666666,
+          "matches": true
+        },
+        {
+          "model": "property_linear_context",
+          "context": "context_0",
+          "recomputed": 0.9583333333333334,
+          "reported": 0.9583333333333334,
+          "matches": true
+        },
+        {
+          "model": "property_linear_context",
+          "context": "context_1",
+          "recomputed": 0.875,
+          "reported": 0.875,
+          "matches": true
+        },
+        {
+          "model": "property_quadratic",
+          "context": "pooled",
+          "recomputed": 0.9791666666666666,
+          "reported": 0.9791666666666666,
+          "matches": true
+        },
+        {
+          "model": "property_quadratic",
+          "context": "context_0",
+          "recomputed": 1.0,
+          "reported": 1.0,
+          "matches": true
+        },
+        {
+          "model": "property_quadratic",
+          "context": "context_1",
+          "recomputed": 0.9583333333333334,
+          "reported": 0.9583333333333334,
+          "matches": true
+        },
+        {
+          "model": "property_quadratic_context",
+          "context": "pooled",
+          "recomputed": 0.9791666666666666,
+          "reported": 0.9791666666666666,
+          "matches": true
+        },
+        {
+          "model": "property_quadratic_context",
+          "context": "context_0",
+          "recomputed": 1.0,
+          "reported": 1.0,
+          "matches": true
+        },
+        {
+          "model": "property_quadratic_context",
+          "context": "context_1",
+          "recomputed": 0.9583333333333334,
+          "reported": 0.9583333333333334,
+          "matches": true
+        },
+        {
+          "model": "representation_linear",
+          "context": "pooled",
+          "recomputed": 0.5416666666666666,
+          "reported": 0.5416666666666666,
+          "matches": true
+        },
+        {
+          "model": "representation_linear",
+          "context": "context_0",
+          "recomputed": 0.4791666666666667,
+          "reported": 0.4791666666666667,
+          "matches": true
+        },
+        {
+          "model": "representation_linear",
+          "context": "context_1",
+          "recomputed": 0.6041666666666666,
+          "reported": 0.6041666666666666,
+          "matches": true
+        },
+        {
+          "model": "representation_linear_context",
+          "context": "pooled",
+          "recomputed": 0.9166666666666666,
+          "reported": 0.9166666666666666,
+          "matches": true
+        },
+        {
+          "model": "representation_linear_context",
+          "context": "context_0",
+          "recomputed": 0.9583333333333334,
+          "reported": 0.9583333333333334,
+          "matches": true
+        },
+        {
+          "model": "representation_linear_context",
+          "context": "context_1",
+          "recomputed": 0.875,
+          "reported": 0.875,
+          "matches": true
+        },
+        {
+          "model": "representation_quadratic",
+          "context": "pooled",
+          "recomputed": 0.9791666666666666,
+          "reported": 0.9791666666666666,
+          "matches": true
+        },
+        {
+          "model": "representation_quadratic",
+          "context": "context_0",
+          "recomputed": 1.0,
+          "reported": 1.0,
+          "matches": true
+        },
+        {
+          "model": "representation_quadratic",
+          "context": "context_1",
+          "recomputed": 0.9583333333333334,
+          "reported": 0.9583333333333334,
+          "matches": true
+        },
+        {
+          "model": "representation_quadratic_context",
+          "context": "pooled",
+          "recomputed": 0.9791666666666666,
+          "reported": 0.9791666666666666,
+          "matches": true
+        },
+        {
+          "model": "representation_quadratic_context",
+          "context": "context_0",
+          "recomputed": 1.0,
+          "reported": 1.0,
+          "matches": true
+        },
+        {
+          "model": "representation_quadratic_context",
+          "context": "context_1",
+          "recomputed": 0.9583333333333334,
+          "reported": 0.9583333333333334,
+          "matches": true
+        }
+      ],
+      "row_order_basis": "Exact row-ID mapping checked against public validation CSV.",
+      "all_available_comparisons_match": true
     }
   },
   "limits": [

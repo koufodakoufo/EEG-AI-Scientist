@@ -1,6 +1,6 @@
 # Imported framework and local-only artifacts
 
-The local `framework/` directory preserves the 281 regular files supplied in the wzf source distribution. Its source manifest and original package are retained in the local setup archive. The current upstream repository and latest team revision remain unverified.
+At import, the local `framework/` directory preserved the 281 regular files supplied in the wzf source distribution. The authorized 2026-10-29 overnight work subsequently added research_bench modules and targeted driver repairs; the active copy is now adapted code. Its original source manifest and distribution remain in the local archive. The current upstream repository and latest team revision remain unverified.
 
 The versioned framework deliberately excludes the supplied `examples/demo_claude_001/` run directory and `tasks/reve_isa/src/split_manifest.json`. The former contains historical runtime state and outputs; the latter contains participant identifiers. Both remain present locally without content changes. Original distribution archives and review ZIPs also remain local because they include those artifacts. A Git checkout therefore contains a selected source snapshot, not a complete reproduction of all 281 supplied files.
 

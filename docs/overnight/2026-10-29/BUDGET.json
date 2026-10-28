@@ -4,7 +4,7 @@
   "deadline_at": "2026-10-29T08:29:40+08:00",
   "stop_new_research_at": "2026-10-29T07:59:40+08:00",
   "extra_model_calls_max": 24,
-  "extra_model_calls_reserved": 20,
+  "extra_model_calls_reserved": 24,
   "max_parallel_model_workers": 2,
   "per_call_timeout_seconds": 1800,
   "preflight_timeout_seconds": 90,
@@ -238,6 +238,54 @@
       "updated_at": "2026-10-28T18:53:10.686363+00:00",
       "elapsed_seconds": 75.305,
       "evidence": "server/evidence/M19"
+    },
+    {
+      "id": "M20",
+      "role": "holdout_actor_skill_pair2",
+      "status": "completed",
+      "reserved_at": "2026-10-28T18:53:55.036989+00:00",
+      "timeout_seconds": 900,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-28T19:05:03.289737+00:00",
+      "elapsed_seconds": 612.691,
+      "evidence": "server/evidence/M20"
+    },
+    {
+      "id": "M21",
+      "role": "holdout_actor_baseline_pair2",
+      "status": "completed",
+      "reserved_at": "2026-10-28T19:05:03.322855+00:00",
+      "timeout_seconds": 900,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-28T19:16:03.655855+00:00",
+      "dispatch_notes": [
+        "Pre-model dispatch failed: nonexistent nightly venv path; corrected to base venv.",
+        "Pre-model dispatch failed: jobs are in builders/jobs, not private/jobs. No Actor case or model process existed before corrected launch."
+      ],
+      "elapsed_seconds": 522.988,
+      "evidence": "server/evidence/M21"
+    },
+    {
+      "id": "M22",
+      "role": "submission_extractor",
+      "status": "completed",
+      "reserved_at": "2026-10-28T19:16:19.666841+00:00",
+      "timeout_seconds": 600,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-28T19:20:26.185179+00:00",
+      "elapsed_seconds": 144.011,
+      "evidence": "server/evidence/M22"
+    },
+    {
+      "id": "M23",
+      "role": "semantic_judge",
+      "status": "completed",
+      "reserved_at": "2026-10-28T19:20:26.497422+00:00",
+      "timeout_seconds": 600,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-28T19:23:14.044337+00:00",
+      "elapsed_seconds": 100.82,
+      "evidence": "server/evidence/M23"
     }
   ]
 }
