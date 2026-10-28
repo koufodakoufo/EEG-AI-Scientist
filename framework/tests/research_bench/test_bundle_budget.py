@@ -9,7 +9,7 @@ import tempfile
 import unittest
 
 from eegfm.research_bench.bundle import create_public_bundle, freeze_experiment, verify_public_bundle, verify_seal
-from eegfm.research_bench.budget import BudgetExceeded, mark_call, reserve_call, run_bounded
+from eegfm.research_bench.budget import BudgetExceeded, mark_call, reserve_call, run_bounded, tree_bytes
 
 
 class BundleTests(unittest.TestCase):
@@ -102,6 +102,23 @@ class BudgetTests(unittest.TestCase):
         state=json.loads(self.path.read_text()); state['stop_new_research_at']='2000-01-01T00:00:00+00:00'
         self.path.write_text(json.dumps(state))
         with self.assertRaises(BudgetExceeded): reserve_call(self.path,'one','actor',60)
+
+    def test_storage_accounting_and_early_stop(self) -> None:
+        owned=self.root/'owned'; owned.mkdir()
+        (owned/'one').write_bytes(b'1'*32)
+        (owned/'two').write_bytes(b'2'*32)
+        self.assertEqual(tree_bytes(owned),64)
+        self.assertGreater(tree_bytes(owned,stop_above=20),20)
+
+    @unittest.skipUnless(sys.platform=='linux','Linux launcher fault injection')
+    def test_output_and_storage_faults(self) -> None:
+        output=run_bounded([sys.executable,'-c','import time; print("x"*4096,flush=True); time.sleep(5)'],cwd=self.root,
+                           output_dir=self.root/'noisy',timeout_seconds=3,stdout_limit_bytes=1024,minimum_free_bytes=0)
+        self.assertEqual(output['status'],'output_exceeded')
+        scope=self.root/'scope'; scope.mkdir()
+        storage=run_bounded([sys.executable,'-c','from pathlib import Path; import time; Path("large").write_bytes(b"x"*4096); time.sleep(5)'],cwd=scope,
+                            output_dir=self.root/'storage',timeout_seconds=3,storage_scope=scope,storage_limit_bytes=1024,minimum_free_bytes=0)
+        self.assertEqual(storage['status'],'storage_exceeded')
 
     @unittest.skipUnless(sys.platform=='linux','Linux launcher enforcement test')
     def test_hard_timeout_and_affinity(self) -> None:

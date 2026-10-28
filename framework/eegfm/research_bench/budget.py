@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import signal
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -112,9 +113,26 @@ def _group_rss_bytes(pgid: int) -> int:
     return total
 
 
+def tree_bytes(root: Path, *, stop_above: int = 10 * 1024**3) -> int:
+    """Count only regular files below an owned scope, without following links."""
+    total = 0
+    for current, directories, files in os.walk(root, followlinks=False):
+        directories[:] = [name for name in directories if not Path(current, name).is_symlink()]
+        for name in files:
+            path = Path(current, name)
+            try:
+                if not path.is_symlink(): total += path.stat().st_size
+            except FileNotFoundError:
+                continue
+            if total > stop_above: return total
+    return total
+
+
 def run_bounded(argv: Sequence[str], *, cwd: Path, output_dir: Path, timeout_seconds: float,
                 env: Mapping[str, str] | None = None, memory_limit_bytes: int = 12 * 1024**3,
-                threads: int = 4, stdout_limit_bytes: int = 64 * 1024**2) -> dict[str, Any]:
+                threads: int = 4, stdout_limit_bytes: int = 64 * 1024**2,
+                storage_scope: Path | None = None, storage_limit_bytes: int = 10 * 1024**3,
+                minimum_free_bytes: int = 20 * 1024**3) -> dict[str, Any]:
     """Linux only: affinity, address-space cap, aggregate group RSS, wall clock.
 
     Own process group is terminated on timeout, failure and normal exit to collect
@@ -127,6 +145,13 @@ def run_bounded(argv: Sequence[str], *, cwd: Path, output_dir: Path, timeout_sec
         raise ValueError('Requested resources exceed nightly limits')
     if output_dir.exists():
         raise FileExistsError('Run evidence directory already exists; no silent retry')
+    if not 0 < storage_limit_bytes <= 10 * 1024**3:
+        raise ValueError('Storage cap exceeds nightly allocation')
+    if shutil.disk_usage(cwd).free < minimum_free_bytes:
+        raise BudgetExceeded('Working disk below free-space safety floor')
+    scope = (storage_scope or cwd).resolve(strict=True)
+    if tree_bytes(scope, stop_above=storage_limit_bytes) > storage_limit_bytes:
+        raise BudgetExceeded('Owned storage scope already exceeds cap')
     output_dir.mkdir(parents=True, mode=0o700)
     import resource
     available = sorted(os.sched_getaffinity(0))[:threads]
@@ -134,12 +159,15 @@ def run_bounded(argv: Sequence[str], *, cwd: Path, output_dir: Path, timeout_sec
         os.sched_setaffinity(0, available)
         resource.setrlimit(resource.RLIMIT_AS, (memory_limit_bytes, memory_limit_bytes))
         resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+        resource.setrlimit(resource.RLIMIT_FSIZE, (512 * 1024**2, 512 * 1024**2))
     child_env = dict(os.environ if env is None else env)
     child_env.update({key: str(threads) for key in ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'VECLIB_MAXIMUM_THREADS')})
     start = time.monotonic()
     record: dict[str, Any] = {'schema_version': 'bounded_run_v1', 'argv': list(argv), 'cwd': str(cwd), 'started_at': utc_now(),
                               'status': 'starting', 'timeout_seconds': timeout_seconds, 'memory_limit_bytes': memory_limit_bytes,
-                              'affinity_cpus': available, 'threads': threads, 'cost_usd': 'unknown', 'peak_group_rss_bytes': 0}
+                              'affinity_cpus': available, 'threads': threads, 'cost_usd': 'unknown', 'peak_group_rss_bytes': 0,
+                              'storage_scope':str(scope),'storage_limit_bytes':storage_limit_bytes,
+                              'storage_poll_seconds':1.0,'per_file_limit_bytes':512*1024**2}
     write_atomic(output_dir / 'status.json', record)
     process: subprocess.Popen[bytes] | None = None
     try:
@@ -148,6 +176,7 @@ def run_bounded(argv: Sequence[str], *, cwd: Path, output_dir: Path, timeout_sec
                                        stdin=subprocess.DEVNULL, start_new_session=True, preexec_fn=limit_child)
             record.update(status='running', pid=process.pid)
             write_atomic(output_dir / 'status.json', record)
+            next_storage_poll = start
             while process.poll() is None:
                 rss = _group_rss_bytes(process.pid)
                 record['peak_group_rss_bytes'] = max(record['peak_group_rss_bytes'], rss)
@@ -157,6 +186,14 @@ def run_bounded(argv: Sequence[str], *, cwd: Path, output_dir: Path, timeout_sec
                     record['status'] = 'memory_exceeded'; break
                 if stdout.tell() + stderr.tell() > stdout_limit_bytes:
                     record['status'] = 'output_exceeded'; break
+                if time.monotonic() >= next_storage_poll:
+                    used = tree_bytes(scope, stop_above=storage_limit_bytes)
+                    record['last_scope_bytes'] = used
+                    if used > storage_limit_bytes:
+                        record['status'] = 'storage_exceeded'; break
+                    if shutil.disk_usage(cwd).free < minimum_free_bytes:
+                        record['status'] = 'disk_free_floor'; break
+                    next_storage_poll = time.monotonic() + 1.0
                 time.sleep(0.1)
             if process.poll() is not None:
                 record['status'] = 'completed' if process.returncode == 0 else 'failed'

@@ -14,33 +14,41 @@
   },
   {
     "started_at": null,
-    "next_action": "Implement contracts and directional scorer with adversarial tests",
+    "next_action": "Run added CLI and disk fault tests on Linux; independent replay collector",
     "blocked_reason": null,
-    "evidence": [],
+    "evidence": [
+      "commit:c8787d2",
+      "server/research-bench-tests-first.log"
+    ],
     "deadline_at": "2026-10-29T02:05:00+08:00",
-    "status": "pending",
+    "status": "running",
     "depends_on": [],
     "id": "P1",
     "owner": "builder"
   },
   {
     "started_at": "2026-10-29T00:41:00+08:00",
-    "next_action": "Primary-source tree and candidate slices",
+    "next_action": "Keep both cases sealed before enrollment; freeze symmetric semantic extraction protocol",
     "blocked_reason": null,
-    "evidence": [],
+    "evidence": [
+      "METHOD_NOTE.md",
+      ".local/overnight-20261029/private/EXPORT_FREEZE.json"
+    ],
     "deadline_at": "2026-10-29T01:06:00+08:00",
-    "status": "running",
+    "status": "passed",
     "depends_on": [],
     "id": "P2",
     "owner": "M01"
   },
   {
     "started_at": null,
-    "next_action": "Same-origin integration and isolation canaries",
-    "blocked_reason": null,
-    "evidence": [],
+    "next_action": "M06 offline runtime review then fresh live canary",
+    "blocked_reason": "Live host missing; tool exclusion not yet verified",
+    "evidence": [
+      "ISOLATION_REPORT.json"
+    ],
     "deadline_at": "2026-10-29T02:30:00+08:00",
-    "status": "pending",
+    "status": "running",
     "depends_on": [
       "P0"
     ],

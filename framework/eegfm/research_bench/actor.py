@@ -122,7 +122,9 @@ def prepare_control(*, case: Path, public: Path, control_home: Path, native_bina
 
 
 def actor_argv(metadata: dict[str, Any], prompt: str, output_file: Path) -> list[str]:
-    return [metadata['native_binary'], 'exec', '--json', '--ephemeral', '--ignore-user-config', '--ignore-rules',
+    # CLI 0.165.0 applies --ignore-user-config to the selected profile too.
+    # Fresh dedicated CODEX_HOME is the isolation mechanism for user config.
+    return [metadata['native_binary'], 'exec', '--json', '--ephemeral', '--ignore-rules',
             '--strict-config', '--skip-git-repo-check', '-C', metadata['case'], '-p', 'actor',
             '--output-last-message', str(output_file), prompt]
 

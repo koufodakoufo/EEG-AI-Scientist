@@ -1,0 +1,16 @@
+{
+  "schema_version": "isolation_report_v1",
+  "status": "blocked",
+  "blocked_reason": "isolation",
+  "detail": "Offline native sandbox boundaries passed, but live model tool execution is blocked by missing codex-code-mode-host; hosted web/MCP tool exclusion not yet verified.",
+  "cli_version": "0.165.0",
+  "offline_probe": "server/evidence/isolation-probe-v4.json",
+  "live_probe": "server/evidence/M05",
+  "model_control_response": "M03 CODEX_READY, exit0,46.34s",
+  "offline_positive_checks": ["public_read", "current_run_write"],
+  "offline_denied_checks": ["private_absolute", "private_parent", "private_symlink", "other_case", "control_home", "ancestor_agents", "gold_write", "budget_write", "public_write", "direct_https", "local_proxy", "local_ssh"],
+  "unresolved_checks": ["live_shell_permissions", "hosted_web_unavailable", "mcp_unavailable", "collaboration_unavailable", "fresh_context_instruction_audit", "host_proc_namespace"],
+  "tested_research_actors": 0,
+  "distillers": 0,
+  "blind_evaluation_claimed": false
+}

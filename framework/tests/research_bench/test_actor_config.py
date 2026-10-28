@@ -26,7 +26,7 @@ class ActorConfigTests(unittest.TestCase):
     def test_argv_does_not_resume_or_mix_legacy_permissions(self) -> None:
         argv=actor_argv({'native_binary':'/runtime/codex','case':'/isolated/case'},'ONLY THIS PROMPT',Path('/trusted/final.txt'))
         self.assertIn('--ignore-rules',argv)
-        self.assertIn('--ignore-user-config',argv)
+        self.assertNotIn('--ignore-user-config',argv)  # 0.165.0 would discard the restrictive profile
         self.assertIn('--ephemeral',argv)
         self.assertNotIn('resume',argv)
         self.assertNotIn('--sandbox',argv)
