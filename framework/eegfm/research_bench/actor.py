@@ -95,6 +95,15 @@ enabled = false
 '''
 
 
+def profile_template_sha256(model: str | None) -> str:
+    """Fingerprint policy independently of each fresh run's path names."""
+    from pathlib import PurePosixPath
+    text=build_profile(case=PurePosixPath('/BENCH/case'),public=PurePosixPath('/BENCH/case/public'),
+                       control_home=PurePosixPath('/BENCH/control'),runtime=PurePosixPath('/BENCH/runtime'),
+                       native_binary=PurePosixPath('/BIN/codex'),bwrap_dir=PurePosixPath('/BIN/bwrap'),model=model)
+    return hashlib.sha256(text.encode()).hexdigest()
+
+
 def prepare_control(*, case: Path, public: Path, control_home: Path, native_binary: Path,
                     bwrap_dir: Path, auth_source: Path, model: str | None = None) -> dict[str, Any]:
     """Copy only explicitly authorized authentication bytes; never log contents."""
@@ -129,6 +138,7 @@ def prepare_control(*, case: Path, public: Path, control_home: Path, native_bina
                 'control_home': str(control_home), 'runtime': str(runtime), 'native_binary': str(native_binary),
                 'native_binary_sha256': digest_file(native_binary), 'profile_sha256': hashlib.sha256(profile.encode()).hexdigest(),
                 'code_mode_host_sha256':digest_file(native_binary.parent/'codex-code-mode-host') if (native_binary.parent/'codex-code-mode-host').is_file() else None,
+                'bwrap_sha256':digest_file(bwrap_dir/'bwrap'),'profile_template_sha256':profile_template_sha256(model),
                 'model_requested': model, 'auth_copied': True, 'auth_contents_logged': False,
                 'context': 'fresh exec; no parent conversation; no resumed session',
                 'isolation_status': 'requires_live_canary_validation'}
@@ -150,8 +160,11 @@ def launch_actor(metadata: dict[str, Any], prompt: str, *, output_dir: Path, tim
                  bwrap_dir: Path, proxy_url: str, role: str, isolation_report: dict[str, Any] | None = None) -> dict[str, Any]:
     if role not in {'preflight', 'isolation_canary', 'diagnostic', 'actor', 'distiller', 'judge'}:
         raise ValueError('Unknown model role')
-    if role in {'actor', 'distiller'} and (not isolation_report or isolation_report.get('status') != 'passed'):
-        raise RuntimeError('Blind Actor/Distiller launch blocked: isolation not verified')
+    if digest_file(Path(metadata['control_home'])/'actor.config.toml')!=metadata['profile_sha256']:
+        raise RuntimeError('Control profile changed after preparation')
+    verify_public_bundle(Path(metadata['public']))
+    if role in {'actor', 'distiller'}:
+        validate_isolation_gate(metadata,isolation_report)
     if role == 'preflight' and timeout_seconds > 90:
         raise ValueError('Preflight timeout exceeds 90 seconds')
     if not proxy_url.startswith('http://127.0.0.1:') or not proxy_url.rsplit(':', 1)[1].isdigit():
@@ -166,3 +179,21 @@ def launch_actor(metadata: dict[str, Any], prompt: str, *, output_dir: Path, tim
     report.update(role=role, profile_sha256=metadata['profile_sha256'], context=metadata['context'])
     write_atomic(output_dir / 'status.json', report)
     return report
+
+
+def validate_isolation_gate(metadata: dict[str,Any],report: dict[str,Any] | None) -> None:
+    if not report or report.get('status')!='passed' or report.get('schema_version')!='isolation_report_v2':
+        raise RuntimeError('Blind launch blocked: live isolation not verified')
+    for key in ('native_binary_sha256','code_mode_host_sha256','bwrap_sha256','profile_template_sha256'):
+        if not metadata.get(key) or report.get(key)!=metadata[key]:
+            raise RuntimeError(f'Blind launch blocked: isolation {key} mismatch')
+    probes=report.get('probes',{})
+    denied=('private_absolute','private_parent','private_symlink','other_case','control_config','ancestor_agents',
+            'host_controller_proc','gold.txt','scorer.py','budget.json','events.jsonl','public_write',
+            'direct_socket','generic_proxy','live_local_service','https')
+    if any(probes.get(name,{}).get('allowed') is not False for name in denied):
+        raise RuntimeError('Blind launch blocked: incomplete denial canaries')
+    if any(probes.get(name,{}).get('allowed') is not True for name in ('public_read','own_write')):
+        raise RuntimeError('Blind launch blocked: positive canaries missing')
+    if probes.get('proxy_environment_present') is not False or not report.get('tool_surface_verified') or not report.get('model_control_succeeded'):
+        raise RuntimeError('Blind launch blocked: tool/control boundary unverified')
