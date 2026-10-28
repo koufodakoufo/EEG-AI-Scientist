@@ -17,7 +17,9 @@ class ActorConfigTests(unittest.TestCase):
         self.assertIn('web_search = "disabled"',profile)
         self.assertIn('inherit = "none"',profile)
         self.assertNotIn('proxy',profile.lower())
-        self.assertIn('"/trusted/control" = "deny"',profile)
+        self.assertIn('"/trusted/control/auth.json" = "deny"',profile)
+        self.assertIn('"/trusted/control/tmp/arg0-linux" = "read"',profile)
+        self.assertNotIn('"/trusted/control" = "read"',profile)
 
     def test_control_home_cannot_live_in_case(self) -> None:
         with self.assertRaisesRegex(ValueError,'outside'):

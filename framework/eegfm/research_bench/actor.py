@@ -46,8 +46,9 @@ default_permissions = "actor"
 {_quote(runtime)} = "read"
 {_quote(case)} = "write"
 {_quote(public)} = "read"
-{_quote(control_home)} = "deny"
 {_quote(control_home / 'tmp/arg0-linux')} = "read"
+{_quote(control_home / 'auth.json')} = "deny"
+{_quote(control_home / 'actor.config.toml')} = "deny"
 [permissions.actor.network]
 enabled = false
 [shell_environment_policy]
