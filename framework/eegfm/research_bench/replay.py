@@ -78,12 +78,19 @@ def replay_submission(*,frozen_output: Path,public: Path,replay_case: Path,contr
     replay_case.mkdir(parents=True); control_home.mkdir(parents=True,mode=0o700); evidence_dir.mkdir(parents=True)
     shutil.copytree(public,replay_case/'public')
     for name in ('output','home','tmp'): (replay_case/name).mkdir()
-    # Only source scripts are supplied. Previously claimed result artifacts are
-    # never copied into the replay, so they must actually be recreated.
+    # Source and the two preregistration inputs are supplied, never prior metrics
+    # or reports. These input bytes are explicitly distinguished from regenerated
+    # results; a code artifact copied here cannot count as independently produced.
+    seeded=[]
     for path in frozen_output.rglob('*.py'):
         name=path.relative_to(frozen_output).as_posix(); checked_file(frozen_output,name)
         destination=replay_case/'output'/safe_relative(name); destination.parent.mkdir(parents=True,exist_ok=True)
         shutil.copyfile(path,destination)
+        seeded.append(name)
+    for name in ('PLAN.md','LOCKED_ANALYSIS.json'):
+        if (frozen_output/name).exists():
+            source=checked_file(frozen_output,name)
+            shutil.copyfile(source,replay_case/'output'/name); seeded.append(name)
     runtime=control_home.parent/(control_home.name+'-runtime'); runtime.mkdir(mode=0o700)
     for name in ('codex-linux-sandbox','apply_patch','applypatch'): (runtime/name).symlink_to(native_binary)
     profile=build_profile(case=replay_case,public=replay_case/'public',control_home=control_home,runtime=runtime,
@@ -104,16 +111,19 @@ def replay_submission(*,frozen_output: Path,public: Path,replay_case: Path,contr
                 actual_hash=digest_file(actual); original_hash=digest_file(original)
                 artifacts.append({'artifact_path':name,'sha256':actual_hash})
                 comparisons.append({'command_id':command['command_id'],'artifact_path':name,
-                                    'replay_sha256':actual_hash,'submission_sha256':original_hash,'matches':actual_hash==original_hash})
+                                    'replay_sha256':actual_hash,'submission_sha256':original_hash,'matches':actual_hash==original_hash,
+                                    'seeded_input':name in seeded,'independently_regenerated':name not in seeded})
             except (ValueError,OSError) as error:
                 comparisons.append({'command_id':command['command_id'],'artifact_path':name,'matches':False,'error':str(error)})
         ledger.append({'command_id':command['command_id'],'run_id':run_id,'status':result['status'],
                        'exit_code':result['exit_code'],'data_split':'validation','artifacts':artifacts,
+                       'artifact_data_splits':{name:('not_applicable' if Path(name).suffix in {'.py','.md'} or name=='LOCKED_ANALYSIS.json' else 'validation') for name in command['artifacts']},
                        'provenance':'independent_sandbox_replay','argv':command['argv'],'execution_evidence':str(evidence_dir/f'command-{index+1:02d}')})
         if result['status']!='completed': break
     success=len(ledger)==len(commands) and all(r['status']=='completed' for r in ledger) and all(r['matches'] for r in comparisons)
-    report={'schema_version':'replay_report_v1','status':'passed' if success else 'failed','run_id':run_id,
+    report={'schema_version':'replay_report_v2','status':'passed' if success else 'failed','run_id':run_id,
             'comparisons':comparisons,'command_ledger':ledger,'profile_sha256':hashlib.sha256(profile.encode()).hexdigest(),
+            'seeded_inputs':seeded,'all_commands_completed':len(ledger)==len(commands) and all(r['status']=='completed' for r in ledger),
             'auth_present':False,'model_calls':0,'scientific_validity':'not established by replay',
             'original_execution_provenance':'consult separate Codex event trace; replay does not retroactively certify original execution'}
     write_atomic(evidence_dir/'replay-report.json',report)

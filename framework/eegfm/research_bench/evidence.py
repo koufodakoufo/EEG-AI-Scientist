@@ -172,7 +172,11 @@ def audit_evidence(
                 errors.append("run_id_mismatch")
             if command.get("status") != "completed" or type(command.get("exit_code")) is not int or command.get("exit_code") != 0:
                 errors.append("command_not_successful")
-            if command.get("data_split") != record.data_split:
+            artifact_splits=command.get('artifact_data_splits',{})
+            if not isinstance(artifact_splits,dict) or any(not isinstance(k,str) or not isinstance(v,str) for k,v in artifact_splits.items()):
+                errors.append('invalid_artifact_split_ledger')
+                artifact_splits={}
+            if artifact_splits.get(record.artifact_path,command.get("data_split")) != record.data_split:
                 errors.append("data_split_mismatch")
             artifacts = command.get("artifacts")
             if not isinstance(artifacts, list) or not all(isinstance(item, dict) and set(item) == {"artifact_path", "sha256"} for item in artifacts):

@@ -55,6 +55,16 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(score["scores"]["f1"], 1)
         self.assertIsNone(score["evidence_audit"])
 
+    def test_trusted_artifact_split_overrides_mixed_command_default(self) -> None:
+        self.command['artifact_data_splits']={'metrics.json':'validation'}
+        self.record['data_split']='validation'
+        self.assertTrue(self.audit()['valid'])
+        self.record['data_split']='train'
+        self.assert_invalid('data_split_mismatch')
+        self.command['artifact_data_splits']={'metrics.json':'test'}
+        self.record['data_split']='test'
+        self.assert_invalid('disallowed_data_split')
+
     def test_missing_artifact(self) -> None:
         self.artifact.unlink()
         self.assert_invalid("missing_artifact")
