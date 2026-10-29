@@ -1,0 +1,18 @@
+{
+  "version": "real-reference-v1",
+  "status": "predeclared_before_validation_and_test_results",
+  "identity": "New EEGMAT adaptation with an official pretrained CBraMod backbone; not BrainPEC downstream replication",
+  "task": "background versus mental arithmetic, not clinical stress or depression",
+  "subject_split": {"train": [0, 23], "validation": [24, 29], "test": [30, 35]},
+  "windows": {"seconds": 5, "maximum_per_recording": 12, "selection": "evenly spaced full windows, both conditions retained"},
+  "input": {"channels": 20, "sample_rate_hz": 200, "unit": "microvolt divided by 100", "extra_filter": "none"},
+  "representation": {"post_transformer_layers": [6, 12], "pool": "mean across channels and time patches", "dimension": 200},
+  "head": {"backbone_frozen": true, "type": "train-standardized logistic regression", "C_grid": [0.01, 0.1, 1.0, 10.0], "selection": "validation balanced accuracy; ties prefer smaller C"},
+  "probe": {"features": "first two entries in each of six official registry families, 12 entries/62 columns", "alphas": [1.0, 10.0, 100.0], "transforms_fit_on": "train only", "selection": "per-feature-group mean validation R2; ties prefer smaller alpha", "metric": "raw unclipped column R2; constant train columns excluded and counted", "negative_control": "seeded participant-block derangement PLUS independent row permutation within destination blocks, destroying condition/window alignment; verify every active target column changes; diagnostic randomized-target control, not a permutation significance test; no test target fitting"},
+  "interventions": {"selection": "top two distinct feature groups by their best validation mean R2 across the two layers; no task accuracy selection", "basis": "SVD of fitted linear-probe directions, numerical rank tolerance 1e-8", "operation": "subtract pooled learned-subspace component as the same shift at every activation token, then run all remaining frozen layers and the frozen head", "controls": "3 seeded random subspaces with identical actual rank and exactly matched per-window shift norm", "random_seeds": [1301, 1302, 1303], "residual_recovery": "refit probes on altered training representations; select alpha using altered validation representations only"},
+  "uncertainty": {"unit": "participant; all windows/conditions resampled together", "bootstrap_resamples": 2000, "seed": 20261029, "report": "95% marginal intervals, explicitly not simultaneous", "multiplicity": "Q1 family is all 24 feature-layer groups, additionally report Bonferroni-adjusted bootstrap intervals at 1-0.05/24; Q2 selected-family size 2, adjusted intervals 97.5%; approximation noted with only six final-test subjects", "primary_Q2_contrast": "change in balanced accuracy versus mean change across three rank/strength-matched random controls"},
+  "interpretation": ["recoverability does not establish prediction reliance", "representation intervention does not establish physiological causation", "negative task effects and null findings are retained", "45 Hz/30 Hz metadata conflicts require EDF-header evidence; high-frequency conclusions remain qualified", "single small dataset and six held-out subjects cannot establish clinical generalization"],
+  "test_policy": "Only after fitted parameters, choices, code and this protocol are hash frozen. One trusted reference evaluation; further independent replay is audit only, never new selection.",
+  "cpu_threads": 4,
+  "gpu": 0
+}

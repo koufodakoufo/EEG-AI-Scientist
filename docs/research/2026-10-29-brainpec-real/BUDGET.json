@@ -1,0 +1,123 @@
+{
+  "schema_version": 2,
+  "started_at": "2026-10-29T14:13:58+08:00",
+  "deadline_at": "2026-10-30T02:13:58+08:00",
+  "stop_new_research_at": "2026-10-30T01:28:58+08:00",
+  "extra_model_calls_max": 48,
+  "extra_model_calls_reserved": 9,
+  "reserved_for_final_review_and_scoring": 8,
+  "max_parallel_model_workers": 2,
+  "per_call_timeout_seconds": 1800,
+  "preflight_timeout_seconds": 90,
+  "episode_model_sessions_max": 6,
+  "episode_model_seconds_max": 5400,
+  "compute_threads": 4,
+  "memory_limit_bytes": 12884901888,
+  "gpu_allocated": 0,
+  "storage_limit_bytes": 21474836480,
+  "download_limit_bytes": 8589934592,
+  "work_disk_free_floor_bytes": 21474836480,
+  "home_free_floor_bytes": 4294967296,
+  "retry_limit_per_failure": 2,
+  "cost_usd": "unknown",
+  "calls": [
+    {
+      "id": "R01",
+      "role": "builder_public_resources",
+      "status": "completed",
+      "reserved_at": "2026-10-29T06:16:18.548004+00:00",
+      "timeout_seconds": 1200,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-29T06:32:08.090045+00:00",
+      "artifact": "RESOURCE_RECON.md"
+    },
+    {
+      "id": "R02",
+      "role": "builder_driver_design_audit",
+      "status": "completed",
+      "reserved_at": "2026-10-29T06:16:18.575090+00:00",
+      "timeout_seconds": 1200,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-29T06:30:28.700185+00:00",
+      "artifact": "DRIVER_RECON.md"
+    },
+    {
+      "id": "R03",
+      "role": "builder_driver_bridge",
+      "status": "completed",
+      "reserved_at": "2026-10-29T06:30:28.720523+00:00",
+      "timeout_seconds": 1800,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-29T06:53:51.308442+00:00",
+      "artifact": "R03-framework-final.log"
+    },
+    {
+      "id": "R04",
+      "role": "builder_real_data_adapter",
+      "status": "completed",
+      "reserved_at": "2026-10-29T06:32:08.138299+00:00",
+      "timeout_seconds": 1800,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-29T06:48:54.866358+00:00",
+      "artifact": "R04-real-data-validation.json"
+    },
+    {
+      "id": "R05",
+      "role": "builder_scoring_v3",
+      "status": "completed",
+      "reserved_at": "2026-10-29T06:48:54.885421+00:00",
+      "timeout_seconds": 1800,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-29T07:11:04.034765+00:00",
+      "artifact": "SCORING_PROTOCOL_V3.md",
+      "termination": "interrupted_after_deliverables"
+    },
+    {
+      "id": "R06",
+      "role": "builder_sandbox_worker",
+      "status": "completed",
+      "reserved_at": "2026-10-29T06:53:51.327320+00:00",
+      "timeout_seconds": 1800,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-29T07:19:55.248774+00:00",
+      "artifact": "REAL_WORKER_INTERFACE.md"
+    },
+    {
+      "id": "R07",
+      "role": "builder_independent_security_review",
+      "status": "completed",
+      "reserved_at": "2026-10-29T07:11:04.048672+00:00",
+      "timeout_seconds": 1800,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-29T07:44:41.686193+00:00",
+      "artifact": "SECURITY_REVIEW_R07.md"
+    },
+    {
+      "id": "R08",
+      "role": "builder_public_views",
+      "status": "completed",
+      "reserved_at": "2026-10-29T07:19:55.268426+00:00",
+      "timeout_seconds": 1800,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-29T07:50:48.169886+00:00",
+      "artifact": "R08-public-view-validation.json"
+    },
+    {
+      "id": "R09",
+      "role": "builder_scientific_implementation_review",
+      "status": "completed",
+      "reserved_at": "2026-10-29T07:50:48.203232+00:00",
+      "timeout_seconds": 1800,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-29T08:14:31.663824+00:00",
+      "artifact": "SCIENCE_REVIEW_R09.md"
+    }
+  ],
+  "incidents": [
+    {
+      "at": "2026-10-29T07:13:02.476126+00:00",
+      "kind": "brief_parallel_worker_overrun",
+      "detail": "R05 deliverables were complete but provenance wrap-up was still active when R07 began. Three extra workers briefly overlapped; R05 was immediately interrupted after live-status check. Future slot release requires final/idle state."
+    }
+  ]
+}

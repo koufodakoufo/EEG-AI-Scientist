@@ -1,0 +1,18 @@
+{
+  "fixture_version": "scoring_v3_synthetic_calibration_1",
+  "source": "Builder-authored invented examples; no old study numbers or current EEG outputs",
+  "status": "deterministic_contract_calibration_only",
+  "semantic_model_calibration": "not_run",
+  "cases": [
+    {"id":"point_and_interval", "report":"For the invented fixture model on validation, accuracy was 0.5; the 95% interval was [0.1,0.9].", "reference":"Validation accuracy was 0.5.", "oracle":{"atoms":["point","interval"],"reference_covers_point":true,"reference_covers_interval":false,"interval_truth":"requires independent evidence"}},
+    {"id":"split_merge", "variants":["Validation accuracy was 0.5, with a 95% interval [0.4,0.6].","Validation accuracy was 0.5. Its 95% interval was [0.4,0.6]."], "oracle":{"same_typed_semantics":true,"atoms":2}},
+    {"id":"duplicate", "report":"Validation accuracy was 0.5. Validation accuracy was 0.5.", "oracle":{"canonical_atoms":1,"source_occurrences":2}},
+    {"id":"empty", "report":"", "reference":"Validation accuracy was 0.5.", "oracle":{"status":"complete_empty_submission","reference_precision":0,"reference_recall":0}},
+    {"id":"new_valid", "report":"Validation mean of the separately measured fixture variable was 0.75.", "reference":"Validation accuracy was 0.5.", "evidence_values":[0.5,1.0], "oracle":{"new_evidence_valid_finding":true,"contradiction":false}},
+    {"id":"same_name_different_split", "agent_scope":{"split":"train","metric":"accuracy"}, "reference_scope":{"split":"validation","metric":"accuracy"}, "oracle":{"supported_edge_allowed":false}},
+    {"id":"service_failure", "extractor_status":"service_failure", "claims":[], "oracle":{"numeric_score":null,"ability_failure":false}},
+    {"id":"explicit_truncation", "extractor_status":"truncated", "notes":"Additional assertions remain after declared capacity.", "oracle":{"eligible_for_scoring":false,"silent_discard_allowed":false}},
+    {"id":"mechanism_extra", "report":"Fixture accuracy was 0.5; this proves a biological mechanism.", "oracle":{"atoms":["point","mechanism"],"point_check_validates_mechanism":false}},
+    {"id":"cluster_interval", "grouped_values":[[0,1],[0,1],[0,1]], "oracle":{"whole_cluster_mean_bootstrap_interval":[0.5,0.5],"row_bootstrap_is_same_estimand":false}}
+  ]
+}

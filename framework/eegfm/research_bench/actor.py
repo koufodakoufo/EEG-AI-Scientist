@@ -22,7 +22,8 @@ def _quote(value: str | Path) -> str:
 
 
 def build_profile(*, case: Path, public: Path, control_home: Path, runtime: Path,
-                  native_binary: Path, bwrap_dir: Path, model: str | None = None) -> str:
+                  native_binary: Path, bwrap_dir: Path, model: str | None = None,
+                  read_only_roots: tuple[Path, ...] = ()) -> str:
     values = [case, public, control_home, runtime, native_binary, bwrap_dir]
     if any(not path.is_absolute() for path in values):
         raise ValueError('Launcher paths must be absolute')
@@ -33,6 +34,20 @@ def build_profile(*, case: Path, public: Path, control_home: Path, runtime: Path
         pass
     else:
         raise ValueError('Authentication/control home must be outside Actor case')
+    extra_reads = ''
+    for root in read_only_roots:
+        if not root.is_absolute() or len(root.parts) < 3 or '..' in root.parts:
+            raise ValueError('Scientific runtime must be a narrow absolute directory')
+        if any(root == protected or root in protected.parents or protected in root.parents
+               for protected in (case, control_home, runtime, public)):
+            raise ValueError('Scientific runtime cannot overlap writable or control paths')
+        extra_reads += f'{_quote(root)} = "read"\n'
+    extra_environment = '' if not read_only_roots else f'''PYTHONDONTWRITEBYTECODE = "1"
+CUDA_VISIBLE_DEVICES = ""
+XDG_CACHE_HOME = {_quote(case / 'tmp/cache')}
+TORCH_HOME = {_quote(case / 'tmp/torch')}
+MPLCONFIGDIR = {_quote(case / 'tmp/matplotlib')}
+'''
     model_line = '' if model is None else f'model = {_quote(model)}\n'
     return f'''{model_line}approval_policy = "never"
 model_reasoning_effort = "medium"
@@ -47,7 +62,7 @@ default_permissions = "actor"
 {_quote(case)} = "write"
 {_quote(public)} = "read"
 {_quote(control_home / 'tmp/arg0-linux')} = "read"
-{_quote(control_home / 'auth.json')} = "deny"
+{extra_reads}{_quote(control_home / 'auth.json')} = "deny"
 {_quote(control_home / 'actor.config.toml')} = "deny"
 [permissions.actor.network]
 enabled = false
@@ -62,7 +77,7 @@ OMP_NUM_THREADS = "4"
 OPENBLAS_NUM_THREADS = "4"
 MKL_NUM_THREADS = "4"
 NUMEXPR_NUM_THREADS = "4"
-[features]
+{extra_environment}[features]
 apps = false
 plugins = false
 hooks = false
@@ -95,17 +110,19 @@ enabled = false
 '''
 
 
-def profile_template_sha256(model: str | None) -> str:
+def profile_template_sha256(model: str | None, *, read_only_roots: tuple[Path, ...] = ()) -> str:
     """Fingerprint policy independently of each fresh run's path names."""
     from pathlib import PurePosixPath
     text=build_profile(case=PurePosixPath('/BENCH/case'),public=PurePosixPath('/BENCH/case/public'),
                        control_home=PurePosixPath('/BENCH/control'),runtime=PurePosixPath('/BENCH/runtime'),
-                       native_binary=PurePosixPath('/BIN/codex'),bwrap_dir=PurePosixPath('/BIN/bwrap'),model=model)
+                       native_binary=PurePosixPath('/BIN/codex'),bwrap_dir=PurePosixPath('/BIN/bwrap'),model=model,
+                       read_only_roots=read_only_roots)
     return hashlib.sha256(text.encode()).hexdigest()
 
 
 def prepare_control(*, case: Path, public: Path, control_home: Path, native_binary: Path,
-                    bwrap_dir: Path, auth_source: Path, model: str | None = None) -> dict[str, Any]:
+                    bwrap_dir: Path, auth_source: Path, model: str | None = None,
+                    read_only_roots: tuple[Path, ...] = ()) -> dict[str, Any]:
     """Copy only explicitly authorized authentication bytes; never log contents."""
     if os.name != 'posix':
         raise RuntimeError('Linux control preparation only')
@@ -113,6 +130,7 @@ def prepare_control(*, case: Path, public: Path, control_home: Path, native_bina
     case = case.resolve(strict=True)
     public = public.resolve(strict=True)
     native_binary = native_binary.resolve(strict=True)
+    read_only_roots = tuple(path.resolve(strict=True) for path in read_only_roots)
     if control_home.exists() or control_home.is_symlink():
         raise FileExistsError('Each run requires a fresh control home')
     if auth_source.is_symlink() or not auth_source.is_file():
@@ -125,7 +143,7 @@ def prepare_control(*, case: Path, public: Path, control_home: Path, native_bina
     for name in ('codex-linux-sandbox', 'apply_patch', 'applypatch'):
         (runtime / name).symlink_to(native_binary)
     profile = build_profile(case=case, public=public, control_home=control_home, runtime=runtime,
-                            native_binary=native_binary, bwrap_dir=bwrap_dir, model=model)
+                            native_binary=native_binary, bwrap_dir=bwrap_dir, model=model,read_only_roots=read_only_roots)
     (control_home / 'actor.config.toml').write_text(profile, encoding='utf-8')
     os.chmod(control_home / 'actor.config.toml', 0o600)
     # No config, plugin, memory, session, hooks or old research directories copied.
@@ -138,7 +156,8 @@ def prepare_control(*, case: Path, public: Path, control_home: Path, native_bina
                 'control_home': str(control_home), 'runtime': str(runtime), 'native_binary': str(native_binary),
                 'native_binary_sha256': digest_file(native_binary), 'profile_sha256': hashlib.sha256(profile.encode()).hexdigest(),
                 'code_mode_host_sha256':digest_file(native_binary.parent/'codex-code-mode-host') if (native_binary.parent/'codex-code-mode-host').is_file() else None,
-                'bwrap_sha256':digest_file(bwrap_dir/'bwrap'),'profile_template_sha256':profile_template_sha256(model),
+                'bwrap_sha256':digest_file(bwrap_dir/'bwrap'),'profile_template_sha256':profile_template_sha256(model,read_only_roots=read_only_roots),
+                'read_only_roots':[str(path) for path in read_only_roots],
                 'model_requested': model, 'auth_copied': True, 'auth_contents_logged': False,
                 'context': 'fresh exec; no parent conversation; no resumed session',
                 'isolation_status': 'requires_live_canary_validation'}
@@ -158,11 +177,18 @@ def actor_argv(metadata: dict[str, Any], prompt: str, output_file: Path) -> list
 
 def launch_actor(metadata: dict[str, Any], prompt: str, *, output_dir: Path, timeout_seconds: int,
                  bwrap_dir: Path, proxy_url: str, role: str, isolation_report: dict[str, Any] | None = None,
-                 prompt_via_stdin: bool = False) -> dict[str, Any]:
+                 prompt_via_stdin: bool = False, case_storage_limit_bytes: int = 64*1024**2) -> dict[str, Any]:
     if role not in {'preflight', 'isolation_canary', 'diagnostic', 'actor', 'distiller', 'judge'}:
         raise ValueError('Unknown model role')
     if digest_file(Path(metadata['control_home'])/'actor.config.toml')!=metadata['profile_sha256']:
         raise RuntimeError('Control profile changed after preparation')
+    binary_paths = {'native_binary_sha256':Path(metadata['native_binary']),
+                    'bwrap_sha256':bwrap_dir/'bwrap'}
+    if metadata.get('code_mode_host_sha256'):
+        binary_paths['code_mode_host_sha256'] = Path(metadata['native_binary']).parent/'codex-code-mode-host'
+    for key, path in binary_paths.items():
+        if digest_file(path) != metadata.get(key):
+            raise RuntimeError('Runtime binary changed after preparation: '+key)
     verify_public_bundle(Path(metadata['public']))
     if role in {'actor', 'distiller'}:
         validate_isolation_gate(metadata,isolation_report)
@@ -181,7 +207,7 @@ def launch_actor(metadata: dict[str, Any], prompt: str, *, output_dir: Path, tim
         os.chmod(input_path,0o600)
     argv = actor_argv(metadata, '-' if prompt_via_stdin else prompt, output_dir / 'final.txt')
     report = run_bounded(argv, cwd=Path(metadata['case']), output_dir=output_dir, timeout_seconds=timeout_seconds, env=env,
-                         limit_address_space=False,storage_limit_bytes=64*1024**2,stdin_path=input_path)
+                         limit_address_space=False,storage_limit_bytes=case_storage_limit_bytes,stdin_path=input_path)
     report.update(role=role, profile_sha256=metadata['profile_sha256'], context=metadata['context'])
     report.update(prompt_transport='stdin' if prompt_via_stdin else 'argv',prompt_sha256=hashlib.sha256(prompt.encode()).hexdigest())
     write_atomic(output_dir / 'status.json', report)
@@ -195,6 +221,11 @@ def validate_isolation_gate(metadata: dict[str,Any],report: dict[str,Any] | None
         if not metadata.get(key) or report.get(key)!=metadata[key]:
             raise RuntimeError(f'Blind launch blocked: isolation {key} mismatch')
     probes=report.get('probes',{})
+    if metadata.get('read_only_roots') and (
+            probes.get('scientific_runtime_read',{}).get('allowed') is not True or
+            probes.get('scientific_python',{}).get('allowed') is not True or
+            probes.get('scientific_runtime_write',{}).get('allowed') is not False):
+        raise RuntimeError('Scientific runtime boundary has not passed live probes')
     denied=('private_absolute','private_parent','private_symlink','other_case','control_config','ancestor_agents',
             'host_controller_proc','gold.txt','scorer.py','budget.json','events.jsonl','public_write',
             'direct_socket','generic_proxy','live_local_service','https')

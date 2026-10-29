@@ -21,6 +21,7 @@ import signal
 import subprocess
 import sys
 import time
+from typing import Any
 
 from . import jobs as J
 from . import state as S
@@ -155,9 +156,10 @@ def attention(run, reason):
 
 class Driver:
     def __init__(self, run_id, adapter, poll=60.0, session_timeout=4 * 3600, max_sessions=100,
-                 stall_limit=3, backoff=60.0, outage_max=6 * 3600, once=False):
-        self.run = run_dir(run_id)
-        self.task = task_of(self.run)
+                 stall_limit=3, backoff=60.0, outage_max=6 * 3600, once=False,
+                 run_path=None, task=None):
+        self.run = Path(run_path) if run_path is not None else run_dir(run_id)
+        self.task = task if task is not None else task_of(self.run)
         self.adapter = adapter
         self.poll, self.session_timeout, self.max_sessions = poll, session_timeout, max_sessions
         self.stall_limit, self.backoff, self.outage_max, self.once = stall_limit, backoff, outage_max, once
@@ -210,6 +212,25 @@ class Driver:
         append_jsonl(self.run / "sessions.jsonl", record)
         return record
 
+    def review_ready(self, state: dict[str, Any]) -> bool:
+        """Trusted integrations may perform their pre-authorized protocol review."""
+        return False
+
+    def refresh_jobs(self, state: dict[str, Any]) -> list[dict[str, Any]]:
+        return [J.refresh(self.run, self.task["compute"], job) for job in state.get("jobs", [])]
+
+    def jobs_finished(self, records: list[dict[str, Any]]) -> None:
+        self.transition("working", "jobs finished: " + ", ".join(
+            f"{r['job_id']}={r['status']}" for r in records) + "; collect them with bin/eegfm eval collect",
+            actor="driver")
+
+    def transition(self, status: str, note: str, actor: str = "driver") -> dict[str, Any]:
+        return S.set_state(self.run, status, note, actor=actor)
+
+    def validate_done(self) -> None:
+        """Legacy runs retain their declaration semantics; trusted adapters override."""
+        return None
+
     def loop(self):
         signal.signal(signal.SIGTERM, lambda *_: setattr(self, "stop", True))
         stalls, transient_since, failures = 0, None, 0
@@ -217,6 +238,7 @@ class Driver:
             state = S.get(self.run)
             status = state.get("status")
             if status == "done":
+                self.validate_done()
                 self.heartbeat("finished")
                 return 0
             if status == "blocked":
@@ -224,6 +246,8 @@ class Driver:
                 self.heartbeat("blocked", reason=state.get("note"))
                 return 3
             if status == "awaiting_review":
+                if self.review_ready(state):
+                    continue
                 attention(self.run, "The research brief is ready for review: runs/"
                           f"{self.run.name}/RESEARCH_BRIEF.md\n\nApprove: bin/eegfm brief approve {self.run.name} "
                           f"--note \"...\"\nReject with feedback: bin/eegfm brief reject {self.run.name} --note \"...\"")
@@ -234,7 +258,7 @@ class Driver:
                 continue
             (self.run / "ATTENTION.md").unlink(missing_ok=True)
             if status == "waiting_job":
-                records = [J.refresh(self.run, self.task["compute"], job) for job in state.get("jobs", [])]
+                records = self.refresh_jobs(state)
                 pending = [r["job_id"] for r in records if r["status"] not in J.TERMINAL]
                 self.heartbeat("waiting_job", pending=pending)
                 if pending:
@@ -242,22 +266,20 @@ class Driver:
                         return 0
                     self.sleep(self.poll)
                     continue
-                S.set_state(self.run, "working", "jobs finished: " + ", ".join(
-                    f"{r['job_id']}={r['status']}" for r in records) + "; collect them with bin/eegfm eval collect",
-                    actor="driver")
+                self.jobs_finished(records)
                 continue
             if len(read_jsonl(self.run / "sessions.jsonl")) >= self.max_sessions:
-                S.set_state(self.run, "blocked", f"session budget {self.max_sessions} used", actor="driver")
+                self.transition("blocked", f"session budget {self.max_sessions} used", actor="driver")
                 continue
             record = self.session(state)
             if record["error"] == "fatal":
-                S.set_state(self.run, "blocked", f"agent cannot run: {record['summary'].get('reason')}", actor="driver")
+                self.transition("blocked", f"agent cannot run: {record['summary'].get('reason')}", actor="driver")
                 continue
             if record["error"] == "transient" and not record["progressed"]:
                 transient_since = transient_since or record["started"]
                 failures += 1
                 if time.time() - transient_since > self.outage_max:
-                    S.set_state(self.run, "blocked", "agent backend unavailable beyond the outage window",
+                    self.transition("blocked", "agent backend unavailable beyond the outage window",
                                 actor="driver")
                     continue
                 wait = min(900.0, self.backoff * 2 ** (failures - 1))
@@ -269,7 +291,7 @@ class Driver:
             transient_since, failures = None, 0
             stalls = 0 if record["progressed"] else stalls + 1
             if stalls >= self.stall_limit:
-                S.set_state(self.run, "blocked", f"{stalls} consecutive sessions changed nothing; inspect "
+                self.transition("blocked", f"{stalls} consecutive sessions changed nothing; inspect "
                             f"runs/{self.run.name}/sessions/", actor="driver")
                 continue
             if self.once:

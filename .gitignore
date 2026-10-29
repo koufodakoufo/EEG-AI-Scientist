@@ -94,3 +94,4 @@ review_only/
 
 # Local coordination locks are runtime state, not checkpoint artifacts.
 /docs/overnight/**/*.lock
+/docs/research/**/*.lock
