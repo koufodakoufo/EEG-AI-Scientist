@@ -1,0 +1,90 @@
+{
+  "schema_version": "semantic_calibration_extraction_inputs_v1",
+  "provenance": "Builder-authored SYNTHETIC development data; no real EEG data or outcomes.",
+  "cases": [
+    {
+      "case_id": "X01",
+      "source_id": "X01.txt",
+      "report": "SYNTHETIC. Scope: dataset=SYN-CAL; model=Toy-A; split=validation; conditions={\"task\":\"tokens\"}.\nAccuracy was 50%; the 95% percentile interval was [40%, 60%].",
+      "segment_chars": 4000,
+      "delivery_status": "complete"
+    },
+    {
+      "case_id": "X02",
+      "source_id": "X02.txt",
+      "report": "SYNTHETIC. Scope: dataset=SYN-CAL; model=Toy-A; split=validation; conditions={\"task\":\"tokens\"}.\nAccuracy was one half. The 95% percentile interval was [0.4, 0.6].",
+      "segment_chars": 4000,
+      "delivery_status": "complete"
+    },
+    {
+      "case_id": "X03",
+      "source_id": "X03.txt",
+      "report": "SYNTHETIC. Scope: dataset=SYN-CAL; model=Toy-A; split=validation; conditions={\"task\":\"tokens\"}.\nAccuracy was 0.5; this proves token ordering causes Toy-A errors.",
+      "segment_chars": 4000,
+      "delivery_status": "complete"
+    },
+    {
+      "case_id": "X04",
+      "source_id": "X04.txt",
+      "report": "SYNTHETIC. Scope: dataset=SYN-CAL; model=Toy-A; split=validation; conditions={\"task\":\"tokens\"}.\nValidation accuracy was 0.5. Training accuracy was 0.8.",
+      "segment_chars": 4000,
+      "delivery_status": "complete"
+    },
+    {
+      "case_id": "X05",
+      "source_id": "X05.txt",
+      "report": "SYNTHETIC. Scope: dataset=SYN-CAL; model=Toy-A; split=validation; conditions={\"task\":\"tokens\"}.\nAccuracy was 0.5. Accuracy was 0.5.",
+      "segment_chars": 4000,
+      "delivery_status": "complete"
+    },
+    {
+      "case_id": "X06",
+      "source_id": "X06.txt",
+      "report": "SYNTHETIC. Scope: dataset=SYN-CAL; model=Toy-A; split=validation; conditions={\"task\":\"tokens\"}.\nNo accuracy improvement was detected in this run.",
+      "segment_chars": 4000,
+      "delivery_status": "complete"
+    },
+    {
+      "case_id": "X07",
+      "source_id": "X07.txt",
+      "report": "SYNTHETIC. Scope: dataset=SYN-CAL; model=Toy-A; split=validation; conditions={\"task\":\"tokens\"}.\nThe effect of token order remains uncertain.",
+      "segment_chars": 4000,
+      "delivery_status": "complete"
+    },
+    {
+      "case_id": "X08",
+      "source_id": "X08.txt",
+      "report": "SYNTHETIC. Scope: dataset=SYN-CAL; model=Toy-A; split=validation; conditions={\"task\":\"tokens\"}.\nThe mean token score was 0.75 [evidence: synth-new].",
+      "segment_chars": 4000,
+      "delivery_status": "complete"
+    },
+    {
+      "case_id": "X09",
+      "source_id": "X09.txt",
+      "report": "",
+      "segment_chars": 4000,
+      "delivery_status": "complete"
+    },
+    {
+      "case_id": "X10",
+      "source_id": "X10.txt",
+      "report": "",
+      "segment_chars": 4000,
+      "delivery_status": "service_failure"
+    },
+    {
+      "case_id": "X11",
+      "source_id": "X11.txt",
+      "report": "SYNTHETIC. Scope: dataset=SYN-CAL; model=Toy-A; split=validation; conditions={\"task\":\"tokens\"}.\nAccuracy was 0.5. The next interval was [",
+      "segment_chars": 4000,
+      "delivery_status": "truncated"
+    },
+    {
+      "case_id": "X12",
+      "source_id": "X12.txt",
+      "report": "SYNTHETIC. Scope: dataset=SYN-CAL; model=Toy-A; split=validation; conditions={\"task\":\"tokens\"}.\n🧪 café é — 准确率 was 25%.",
+      "segment_chars": 4000,
+      "delivery_status": "complete"
+    }
+  ]
+}

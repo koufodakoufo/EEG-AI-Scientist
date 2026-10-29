@@ -95,3 +95,6 @@ review_only/
 # Local coordination locks are runtime state, not checkpoint artifacts.
 /docs/overnight/**/*.lock
 /docs/research/**/*.lock
+
+# Calibration answers are available only in the owner's Builder workspace.
+/docs/research/2026-10-30-extension/semantic-calibration/private-oracle.json

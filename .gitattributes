@@ -4,3 +4,7 @@
 /scripts/*.ps1 text eol=crlf
 /scripts/research/*.py text eol=lf
 /scripts/research/*.sh text eol=lf
+
+# Preserve the exact already-frozen Windows reference source bytes.
+/scripts/research/eegmmidb_reference.py -text
+/scripts/research/export_eegmmidb_task.py -text

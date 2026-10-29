@@ -1,0 +1,1022 @@
+{
+  "schema_version": "semantic_calibration_judge_inputs_v1",
+  "provenance": "Builder-authored SYNTHETIC development data; directional pairs are independently judged.",
+  "pairs": [
+    {
+      "pair_id": "J01",
+      "direction": "reference_supports_agent",
+      "agent_report": "Accuracy was one half.",
+      "reference_report": "Accuracy was 50%.",
+      "agent_claim": {
+        "claim_id": "J01a",
+        "kind": "point",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "accuracy",
+        "direction": "equal",
+        "qualifiers": [],
+        "payload": {
+          "metric": "accuracy",
+          "estimate": 0.5,
+          "unit": "fraction"
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 22,
+            "quote": "Accuracy was one half."
+          }
+        ],
+        "evidence_ids": []
+      },
+      "reference_claim": {
+        "claim_id": "J01r",
+        "kind": "point",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "accuracy",
+        "direction": "equal",
+        "qualifiers": [],
+        "payload": {
+          "metric": "accuracy",
+          "estimate": 0.5,
+          "unit": "fraction"
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 17,
+            "quote": "Accuracy was 50%."
+          }
+        ],
+        "evidence_ids": []
+      }
+    },
+    {
+      "pair_id": "J02",
+      "direction": "agent_covers_reference",
+      "agent_report": "Accuracy was one half.",
+      "reference_report": "Accuracy was 50%.",
+      "agent_claim": {
+        "claim_id": "J02a",
+        "kind": "point",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "accuracy",
+        "direction": "equal",
+        "qualifiers": [],
+        "payload": {
+          "metric": "accuracy",
+          "estimate": 0.5,
+          "unit": "fraction"
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 22,
+            "quote": "Accuracy was one half."
+          }
+        ],
+        "evidence_ids": []
+      },
+      "reference_claim": {
+        "claim_id": "J02r",
+        "kind": "point",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "accuracy",
+        "direction": "equal",
+        "qualifiers": [],
+        "payload": {
+          "metric": "accuracy",
+          "estimate": 0.5,
+          "unit": "fraction"
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 17,
+            "quote": "Accuracy was 50%."
+          }
+        ],
+        "evidence_ids": []
+      }
+    },
+    {
+      "pair_id": "J03",
+      "direction": "reference_supports_agent",
+      "agent_report": "The 95% percentile accuracy interval was [0.4, 0.6].",
+      "reference_report": "Accuracy was 0.5.",
+      "agent_claim": {
+        "claim_id": "J03a",
+        "kind": "interval",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "accuracy",
+        "direction": "equal",
+        "qualifiers": [],
+        "payload": {
+          "metric": "accuracy",
+          "low": 0.4,
+          "high": 0.6,
+          "level": 0.95,
+          "method": "percentile",
+          "unit": "fraction"
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 52,
+            "quote": "The 95% percentile accuracy interval was [0.4, 0.6]."
+          }
+        ],
+        "evidence_ids": []
+      },
+      "reference_claim": {
+        "claim_id": "J03r",
+        "kind": "point",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "accuracy",
+        "direction": "equal",
+        "qualifiers": [],
+        "payload": {
+          "metric": "accuracy",
+          "estimate": 0.5,
+          "unit": "fraction"
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 17,
+            "quote": "Accuracy was 0.5."
+          }
+        ],
+        "evidence_ids": []
+      }
+    },
+    {
+      "pair_id": "J04",
+      "direction": "agent_covers_reference",
+      "agent_report": "Accuracy was 0.5.",
+      "reference_report": "The 95% percentile accuracy interval was [0.4, 0.6].",
+      "agent_claim": {
+        "claim_id": "J04a",
+        "kind": "point",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "accuracy",
+        "direction": "equal",
+        "qualifiers": [],
+        "payload": {
+          "metric": "accuracy",
+          "estimate": 0.5,
+          "unit": "fraction"
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 17,
+            "quote": "Accuracy was 0.5."
+          }
+        ],
+        "evidence_ids": []
+      },
+      "reference_claim": {
+        "claim_id": "J04r",
+        "kind": "interval",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "accuracy",
+        "direction": "equal",
+        "qualifiers": [],
+        "payload": {
+          "metric": "accuracy",
+          "low": 0.4,
+          "high": 0.6,
+          "level": 0.95,
+          "method": "percentile",
+          "unit": "fraction"
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 52,
+            "quote": "The 95% percentile accuracy interval was [0.4, 0.6]."
+          }
+        ],
+        "evidence_ids": []
+      }
+    },
+    {
+      "pair_id": "J05",
+      "direction": "reference_supports_agent",
+      "agent_report": "Token ordering causes Toy-A errors.",
+      "reference_report": "Accuracy was 0.5.",
+      "agent_claim": {
+        "claim_id": "J05a",
+        "kind": "mechanism",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "mechanistic explanation",
+        "direction": "asserted",
+        "qualifiers": [],
+        "payload": {
+          "relation": "Token ordering causes Toy-A errors."
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 35,
+            "quote": "Token ordering causes Toy-A errors."
+          }
+        ],
+        "evidence_ids": []
+      },
+      "reference_claim": {
+        "claim_id": "J05r",
+        "kind": "point",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "accuracy",
+        "direction": "equal",
+        "qualifiers": [],
+        "payload": {
+          "metric": "accuracy",
+          "estimate": 0.5,
+          "unit": "fraction"
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 17,
+            "quote": "Accuracy was 0.5."
+          }
+        ],
+        "evidence_ids": []
+      }
+    },
+    {
+      "pair_id": "J06",
+      "direction": "reference_supports_agent",
+      "agent_report": "Training accuracy was 0.5.",
+      "reference_report": "Validation accuracy was 0.5.",
+      "agent_claim": {
+        "claim_id": "J06a",
+        "kind": "point",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "train",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "accuracy",
+        "direction": "equal",
+        "qualifiers": [],
+        "payload": {
+          "metric": "accuracy",
+          "estimate": 0.5,
+          "unit": "fraction"
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 26,
+            "quote": "Training accuracy was 0.5."
+          }
+        ],
+        "evidence_ids": []
+      },
+      "reference_claim": {
+        "claim_id": "J06r",
+        "kind": "point",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "accuracy",
+        "direction": "equal",
+        "qualifiers": [],
+        "payload": {
+          "metric": "accuracy",
+          "estimate": 0.5,
+          "unit": "fraction"
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 28,
+            "quote": "Validation accuracy was 0.5."
+          }
+        ],
+        "evidence_ids": []
+      }
+    },
+    {
+      "pair_id": "J07",
+      "direction": "reference_supports_agent",
+      "agent_report": "Accuracy with scrambled tokens was 0.5.",
+      "reference_report": "Accuracy with intact tokens was 0.5.",
+      "agent_claim": {
+        "claim_id": "J07a",
+        "kind": "point",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens",
+            "order": "scrambled"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "accuracy",
+        "direction": "equal",
+        "qualifiers": [],
+        "payload": {
+          "metric": "accuracy",
+          "estimate": 0.5,
+          "unit": "fraction"
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 39,
+            "quote": "Accuracy with scrambled tokens was 0.5."
+          }
+        ],
+        "evidence_ids": []
+      },
+      "reference_claim": {
+        "claim_id": "J07r",
+        "kind": "point",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens",
+            "order": "intact"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "accuracy",
+        "direction": "equal",
+        "qualifiers": [],
+        "payload": {
+          "metric": "accuracy",
+          "estimate": 0.5,
+          "unit": "fraction"
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 36,
+            "quote": "Accuracy with intact tokens was 0.5."
+          }
+        ],
+        "evidence_ids": []
+      }
+    },
+    {
+      "pair_id": "J08",
+      "direction": "agent_covers_reference",
+      "agent_report": "Toy-B accuracy was 0.5.",
+      "reference_report": "Toy-A accuracy was 0.5.",
+      "agent_claim": {
+        "claim_id": "J08a",
+        "kind": "point",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-B",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-B",
+        "predicate": "accuracy",
+        "direction": "equal",
+        "qualifiers": [],
+        "payload": {
+          "metric": "accuracy",
+          "estimate": 0.5,
+          "unit": "fraction"
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 23,
+            "quote": "Toy-B accuracy was 0.5."
+          }
+        ],
+        "evidence_ids": []
+      },
+      "reference_claim": {
+        "claim_id": "J08r",
+        "kind": "point",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "accuracy",
+        "direction": "equal",
+        "qualifiers": [],
+        "payload": {
+          "metric": "accuracy",
+          "estimate": 0.5,
+          "unit": "fraction"
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 23,
+            "quote": "Toy-A accuracy was 0.5."
+          }
+        ],
+        "evidence_ids": []
+      }
+    },
+    {
+      "pair_id": "J09",
+      "direction": "reference_supports_agent",
+      "agent_report": "Accuracy was 0.6.",
+      "reference_report": "Accuracy was 0.5.",
+      "agent_claim": {
+        "claim_id": "J09a",
+        "kind": "point",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "accuracy",
+        "direction": "equal",
+        "qualifiers": [],
+        "payload": {
+          "metric": "accuracy",
+          "estimate": 0.6,
+          "unit": "fraction"
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 17,
+            "quote": "Accuracy was 0.6."
+          }
+        ],
+        "evidence_ids": []
+      },
+      "reference_claim": {
+        "claim_id": "J09r",
+        "kind": "point",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "accuracy",
+        "direction": "equal",
+        "qualifiers": [],
+        "payload": {
+          "metric": "accuracy",
+          "estimate": 0.5,
+          "unit": "fraction"
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 17,
+            "quote": "Accuracy was 0.5."
+          }
+        ],
+        "evidence_ids": []
+      }
+    },
+    {
+      "pair_id": "J10",
+      "direction": "reference_supports_agent",
+      "agent_report": "An accuracy improvement was detected in this run.",
+      "reference_report": "No accuracy improvement was detected in this run.",
+      "agent_claim": {
+        "claim_id": "J10a",
+        "kind": "qualitative",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "finding",
+        "direction": "positive",
+        "qualifiers": [
+          "in this run"
+        ],
+        "payload": {
+          "statement": "An accuracy improvement was detected in this run."
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 49,
+            "quote": "An accuracy improvement was detected in this run."
+          }
+        ],
+        "evidence_ids": []
+      },
+      "reference_claim": {
+        "claim_id": "J10r",
+        "kind": "qualitative",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "finding",
+        "direction": "negative",
+        "qualifiers": [
+          "in this run"
+        ],
+        "payload": {
+          "statement": "No accuracy improvement was detected in this run."
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 49,
+            "quote": "No accuracy improvement was detected in this run."
+          }
+        ],
+        "evidence_ids": []
+      }
+    },
+    {
+      "pair_id": "J11",
+      "direction": "reference_supports_agent",
+      "agent_report": "Token order has no effect.",
+      "reference_report": "The effect of token order remains uncertain.",
+      "agent_claim": {
+        "claim_id": "J11a",
+        "kind": "qualitative",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "finding",
+        "direction": "negative",
+        "qualifiers": [],
+        "payload": {
+          "statement": "Token order has no effect."
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 26,
+            "quote": "Token order has no effect."
+          }
+        ],
+        "evidence_ids": []
+      },
+      "reference_claim": {
+        "claim_id": "J11r",
+        "kind": "qualitative",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "finding",
+        "direction": "uncertain",
+        "qualifiers": [],
+        "payload": {
+          "statement": "The effect of token order remains uncertain."
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 44,
+            "quote": "The effect of token order remains uncertain."
+          }
+        ],
+        "evidence_ids": []
+      }
+    },
+    {
+      "pair_id": "J12",
+      "direction": "agent_covers_reference",
+      "agent_report": "In this run, an accuracy improvement was not detected.",
+      "reference_report": "No accuracy improvement was detected in this run.",
+      "agent_claim": {
+        "claim_id": "J12a",
+        "kind": "qualitative",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "finding",
+        "direction": "negative",
+        "qualifiers": [
+          "in this run"
+        ],
+        "payload": {
+          "statement": "In this run, an accuracy improvement was not detected."
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 54,
+            "quote": "In this run, an accuracy improvement was not detected."
+          }
+        ],
+        "evidence_ids": []
+      },
+      "reference_claim": {
+        "claim_id": "J12r",
+        "kind": "qualitative",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "finding",
+        "direction": "negative",
+        "qualifiers": [
+          "in this run"
+        ],
+        "payload": {
+          "statement": "No accuracy improvement was detected in this run."
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 49,
+            "quote": "No accuracy improvement was detected in this run."
+          }
+        ],
+        "evidence_ids": []
+      }
+    },
+    {
+      "pair_id": "J13",
+      "direction": "reference_supports_agent",
+      "agent_report": "The mean token score was 0.75.",
+      "reference_report": "Accuracy was 0.5.",
+      "agent_claim": {
+        "claim_id": "J13a",
+        "kind": "point",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "mean_token_score",
+        "direction": "equal",
+        "qualifiers": [],
+        "payload": {
+          "metric": "mean_token_score",
+          "estimate": 0.75,
+          "unit": "fraction"
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 30,
+            "quote": "The mean token score was 0.75."
+          }
+        ],
+        "evidence_ids": [
+          "synth-new"
+        ]
+      },
+      "reference_claim": {
+        "claim_id": "J13r",
+        "kind": "point",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "accuracy",
+        "direction": "equal",
+        "qualifiers": [],
+        "payload": {
+          "metric": "accuracy",
+          "estimate": 0.5,
+          "unit": "fraction"
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 17,
+            "quote": "Accuracy was 0.5."
+          }
+        ],
+        "evidence_ids": []
+      }
+    },
+    {
+      "pair_id": "J14",
+      "direction": "reference_supports_agent",
+      "agent_report": "That effect was larger.",
+      "reference_report": "This effect increased.",
+      "agent_claim": {
+        "claim_id": "J14a",
+        "kind": "qualitative",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "finding",
+        "direction": "asserted",
+        "qualifiers": [],
+        "payload": {
+          "statement": "That effect was larger."
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 23,
+            "quote": "That effect was larger."
+          }
+        ],
+        "evidence_ids": []
+      },
+      "reference_claim": {
+        "claim_id": "J14r",
+        "kind": "qualitative",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "finding",
+        "direction": "asserted",
+        "qualifiers": [],
+        "payload": {
+          "statement": "This effect increased."
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 22,
+            "quote": "This effect increased."
+          }
+        ],
+        "evidence_ids": []
+      }
+    },
+    {
+      "pair_id": "J15",
+      "direction": "reference_supports_agent",
+      "agent_report": "At least one token failed.",
+      "reference_report": "Exactly two tokens failed.",
+      "agent_claim": {
+        "claim_id": "J15a",
+        "kind": "qualitative",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "finding",
+        "direction": "asserted",
+        "qualifiers": [],
+        "payload": {
+          "statement": "At least one token failed."
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 26,
+            "quote": "At least one token failed."
+          }
+        ],
+        "evidence_ids": []
+      },
+      "reference_claim": {
+        "claim_id": "J15r",
+        "kind": "qualitative",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "finding",
+        "direction": "asserted",
+        "qualifiers": [],
+        "payload": {
+          "statement": "Exactly two tokens failed."
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 26,
+            "quote": "Exactly two tokens failed."
+          }
+        ],
+        "evidence_ids": []
+      }
+    },
+    {
+      "pair_id": "J16",
+      "direction": "agent_covers_reference",
+      "agent_report": "At least one token failed.",
+      "reference_report": "Exactly two tokens failed.",
+      "agent_claim": {
+        "claim_id": "J16a",
+        "kind": "qualitative",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "finding",
+        "direction": "asserted",
+        "qualifiers": [],
+        "payload": {
+          "statement": "At least one token failed."
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 26,
+            "quote": "At least one token failed."
+          }
+        ],
+        "evidence_ids": []
+      },
+      "reference_claim": {
+        "claim_id": "J16r",
+        "kind": "qualitative",
+        "scope": {
+          "dataset": "SYN-CAL",
+          "model": "Toy-A",
+          "split": "validation",
+          "conditions": {
+            "task": "tokens"
+          }
+        },
+        "subject": "Toy-A",
+        "predicate": "finding",
+        "direction": "asserted",
+        "qualifiers": [],
+        "payload": {
+          "statement": "Exactly two tokens failed."
+        },
+        "source_spans": [
+          {
+            "start": 0,
+            "end": 26,
+            "quote": "Exactly two tokens failed."
+          }
+        ],
+        "evidence_ids": []
+      }
+    }
+  ]
+}
