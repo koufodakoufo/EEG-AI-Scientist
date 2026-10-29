@@ -92,6 +92,12 @@ class WorkerTests(unittest.TestCase):
         self.assertNotIn(str(self.inputs / "test.npz"), command)
         self.assertIn(str(self.inputs / "validation.npz"), command)
         self.assertNotIn("--share-net", command)
+        # Server bwrap 0.6.1 has no --size. Scratch must be a private owned
+        # directory included in the sampled job storage cap, never host /tmp.
+        self.assertNotIn("--size", command)
+        self.assertIn(str(job / "tmp"), command)
+        self.assertIn(["--bind", str(job / "tmp"), "/tmp"],
+                      [command[i:i+3] for i in range(len(command)-2)])
         self.assertEqual(command[-10:], ["--split", "validation", "--input", "/inputs/evaluation.npz", "--train", "/inputs/train.npz", "--public", "/public", "--output", "/out"])
 
     @unittest.skipUnless(sys.platform == "linux", "Linux runtime identity")

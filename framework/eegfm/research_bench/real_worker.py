@@ -234,7 +234,7 @@ class SandboxedWorkerEvaluator:
         cache = Path("/etc/ld.so.cache")
         if cache.is_file(): command += ["--ro-bind", str(cache), str(cache)]
         command += ["--proc", "/proc", "--remount-ro", "/proc", "--dev", "/dev", "--remount-ro", "/dev",
-                    "--size", str(256 * 1024**2), "--tmpfs", "/tmp", "--dir", "/inputs",
+                    "--bind", str(output.parent / "tmp"), "/tmp", "--dir", "/inputs",
                     "--ro-bind", str(candidate), "/candidate", "--ro-bind", str(self.public), "/public",
                     "--ro-bind", str(selected.train.path), "/inputs/train.npz",
                     "--ro-bind", str(selected.evaluation.path), "/inputs/evaluation.npz",
@@ -290,6 +290,9 @@ class SandboxedWorkerEvaluator:
             if candidate_digest(candidate) != spec.candidate_digest: raise ValueError("Snapshot changed")
             output = job / "out"
             output.mkdir()
+            # Bubblewrap 0.6.1 lacks --size. Keep private scratch on the owned
+            # data volume and inside the same monitored 2 GiB job allocation.
+            (job / "tmp").mkdir(mode=0o700)
             command = self.build_command(spec, candidate, output)
             status = run_bounded(command, cwd=job, output_dir=job / "execution", timeout_seconds=self.timeout,
                 env={"PATH": "/usr/bin:/bin", "LANG": "C.UTF-8", "CUDA_VISIBLE_DEVICES": "", "PYTHONDONTWRITEBYTECODE": "1"},

@@ -11,6 +11,7 @@ runtime = RuntimeConfig(
     bwrap=Path("<verified-bwrap>"),
     python=Path("/data/duandh/eegfm-stage-a-20261028/brainpec-real-20261029/venv/bin/python"),
     environment_roots=(Path("/data/duandh/eegfm-stage-a-20261028/brainpec-real-20261029/venv"),),
+    manifest=FileBinding(Path("<requirements.lock.txt>"), "<sha256>"),
 )
 evaluator = SandboxedWorkerEvaluator(
     private_root=Path("<outside-all-Actor-grants>/worker-evidence"),
@@ -39,7 +40,7 @@ evaluator = SandboxedWorkerEvaluator(
 - candidate 复制到私有 job snapshot 后再次校验；执行后重新核验 candidate/public/split/inputs。所有数据/产物路径拒绝 symlink、hardlink、特殊文件；public 与 private 必须互不包含。集成方还须确保 private 不在 Actor case 的其他可写目录内。
 - 固定 argv：`python -B /candidate/main.py --split validation|test --input /inputs/evaluation.npz --train /inputs/train.npz --public /public --output /out`。controller 从不 import/exec candidate。
 - bwrap 使用 `--unshare-all --die-with-parent --new-session --cap-drop ALL --clearenv`；根、`/proc`、`/dev` 只读；只读 mount 系统 `/usr`、`/lib`、`/lib64`、`/etc/ld.so.cache` 及配置的确切环境；candidate/public 只读；输入**逐文件**只读挂载，不挂载其父目录。
-- 只有 `/out` 与 256 MiB `/tmp` 可写；HOME、cache、HF/Torch cache 指向该私有临时区；无 proxy、无环境继承、禁 user site/pyc、`CUDA_VISIBLE_DEVICES=''`。没有模型请求通道。
+- 只有 `/out` 与本作业私有 `/tmp` 可写；HOME、cache、HF/Torch cache 指向该私有临时区；无 proxy、无环境继承、禁 user site/pyc、`CUDA_VISIBLE_DEVICES=''`。没有模型请求通道。服务器 bwrap 0.6.1 不支持 `--size`；本轮改为将自有数据盘上的 job/tmp 绑定至 `/tmp`，计入同一 2 GiB 作业目录采样上限，不使用宿主 `/tmp`，也不宣称 256 MiB tmpfs 内核限额。
 - 复用 `run_bounded`：4 CPU、12 GiB RAM、timeout≤1800s、owned-descendant 清理、16 MiB stdout/stderr、2 GiB job storage、单文件 512 MiB。RAM 为已有 RSS 采样及地址空间限制，不新增 cgroup 保证。
 - 沿用 `OwnedProcessTree` 的进程所有权前提：同一 controller Python 进程内顺序执行 worker；并行 episode 使用独立 controller 进程，不在一个进程里同时启动无关子树。已存在但未注册的 evidence 目录拒绝覆盖。
 
