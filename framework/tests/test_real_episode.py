@@ -101,6 +101,28 @@ class RealEpisodeTests(unittest.TestCase):
         for forbidden in ("control.sqlite3", "REFERENCE_PROTOCOL", "gold", str(self.private)):
             self.assertNotIn(forbidden, prompt)
 
+    def test_inline_skill_uses_exact_frozen_bytes_and_rejects_changed_payload(self) -> None:
+        public = self.root / "prompt-public"
+        public.mkdir()
+        skill = public / "SKILL.md"
+        skill.write_bytes(b"Optional research guidance.\nSecond line.\n")
+        config = {"condition": "skill", "skill_delivery": "inline-frozen-v1",
+                  "skill": {"path": str(skill), "sha256": digest_file(skill)}}
+        text, digest = module.frozen_skill_context(config, public)
+        self.assertIn(skill.read_bytes().decode(), text)
+        self.assertIn(digest_file(skill), text)
+        self.assertEqual(digest, digest_file(skill))
+        skill.write_text("Changed treatment")
+        with self.assertRaises(ValueError):
+            module.frozen_skill_context(config, public)
+
+    def test_no_skill_and_legacy_delivery_do_not_inject_optional_content(self) -> None:
+        for config in ({"condition": "no_skill", "skill_delivery": "inline-frozen-v1"},
+                       {"condition": "skill", "skill_delivery": "mounted-only-v1"}):
+            self.assertEqual(module.frozen_skill_context(config, self.root), ("", None))
+        with self.assertRaises(ValueError):
+            module.frozen_skill_context({"condition": "no_skill", "skill_delivery": "unknown"}, self.root)
+
     def test_repeated_baseline_cannot_complete_scientific_episode(self) -> None:
         self.evaluator.analysis_groups = 0
         output = self.case / "output"

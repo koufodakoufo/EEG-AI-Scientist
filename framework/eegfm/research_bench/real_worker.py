@@ -29,6 +29,52 @@ import zipfile
 from .budget import run_bounded, write_atomic
 from .bundle import canonical_bytes, digest_file, safe_relative, verify_public_bundle
 
+# Match only the trusted validator's complete fixed messages. No exception text
+# or candidate/private value is ever returned to the Actor.
+_OUTPUT_DIAGNOSTICS = {
+    "Control strength must match each individual window": "intervention_strength_mismatch",
+    "Recorded shifts do not lie in the recorded direction spans": "direction_span_mismatch",
+    "Controls must match actual numerical rank": "control_rank_mismatch",
+    "Controls must have distinct subspaces": "control_subspace_mismatch",
+    "Nonfinite numeric evidence": "nonfinite_evidence",
+    "Nonfinite derived intervention evidence": "nonfinite_evidence",
+    "R2 arithmetic overflow in candidate evidence": "nonfinite_evidence",
+}
+_CANDIDATE_OUTPUT_ERRORS = frozenset({
+    "Unexpected prediction array schema", "Prediction archive too large",
+    "Unsafe dtype header", "Invalid array shape/dtype", "Array byte length mismatch",
+    "Prediction rows do not match trusted split", "Nonfinite predictions",
+    "Scientific sample IDs must match exact trusted row order",
+    "Negative target control must be a permutation of training rows",
+    "Negative control must derange complete participant blocks",
+    "Negative control retained within-participant row alignment",
+    "Negative control does not bijectively map participant blocks",
+    "An active target column is unchanged by the negative control",
+    "Use analysis.npz for the fixed two-layer feature schema",
+    "Frozen validation selection requires actual validation analysis",
+    "Interventions require Q1 evidence",
+    "Frozen validation predictions differ from actual validation evidence",
+    "Intervention rows or validation-selected feature/layer mismatch",
+    "Unused direction columns must be zero padding", "A positive actual rank is required",
+    "Intervention has zero strength in every window",
+})
+_REQUIRED_OUTPUT_FILES = frozenset({"results.npz", "analysis.npz", "interventions.npz"})
+
+
+def _output_failure_diagnostic(error: Exception, output: Path) -> str:
+    """Only recognized candidate faults may relax the completion gate."""
+    if type(error) is ValueError:
+        message = str(error)
+        if message in _OUTPUT_DIAGNOSTICS:
+            return _OUTPUT_DIAGNOSTICS[message]
+        if message in _CANDIDATE_OUTPUT_ERRORS:
+            return "candidate_outputs_rejected"
+    elif type(error) is FileNotFoundError and error.filename is not None:
+        missing = Path(error.filename)
+        if missing.is_absolute() and missing in {output / name for name in _REQUIRED_OUTPUT_FILES}:
+            return "candidate_outputs_rejected"
+    return "evaluation_integrity_failed"
+
 if TYPE_CHECKING:
     from .driver_bridge import EvaluationSpec
 
@@ -281,6 +327,7 @@ class SandboxedWorkerEvaluator:
                 db.execute("INSERT INTO jobs VALUES(?,?,?,?,?,?)", (spec.job_id, fingerprint, json.dumps(record), None, os.getpid(), owner["start"]))
         if previous: return self.poll(spec.job_id)
         job = self.job_directory(spec.job_id)
+        diagnostic_code = "evaluation_setup_failed"
         try:
             job.mkdir(exist_ok=False)
             write_atomic(job / "request.json", {**record, "fingerprint": fingerprint, "runtime_binary_hashes": self.runtime_hashes})
@@ -297,12 +344,21 @@ class SandboxedWorkerEvaluator:
                 env={"PATH": "/usr/bin:/bin", "LANG": "C.UTF-8", "CUDA_VISIBLE_DEVICES": "", "PYTHONDONTWRITEBYTECODE": "1"},
                 threads=4, memory_limit_bytes=12 * 1024**3, storage_scope=job, storage_limit_bytes=2 * 1024**3,
                 stdout_limit_bytes=16 * 1024**2, minimum_free_bytes=self.free_floor)
-            if status["status"] != "completed" or status["exit_code"] != 0 or status.get("process_cleanup", {}).get("surviving_owned_pids") != []:
+            diagnostic_code = "evaluation_integrity_failed"
+            if status.get("process_cleanup", {}).get("surviving_owned_pids") != []:
+                raise RuntimeError("Worker process cleanup was not confirmed")
+            diagnostic_code = "candidate_execution_failed"
+            if status["status"] != "completed" or status["exit_code"] != 0:
                 raise RuntimeError("Worker did not complete cleanly")
+            diagnostic_code = "evaluation_integrity_failed"
             self._verify(spec)
             if candidate_digest(candidate) != spec.candidate_digest: raise ValueError("Worker modified candidate")
+            diagnostic_code = "candidate_outputs_rejected"
             _tree(output, maximum_bytes=512 * 1024**2, maximum_files=512, hidden=True)
-            aggregated = self.validate_aggregate(output, self.aggregate(output, spec))
+            aggregated = self.aggregate(output, spec)
+            diagnostic_code = "evaluation_integrity_failed"
+            aggregated = self.validate_aggregate(output, aggregated)
+            diagnostic_code = "evaluation_setup_failed"
             write_atomic(job / "aggregation-private.json", aggregated)
             metrics_file = job / "released_metrics.json"
             write_atomic(metrics_file, aggregated["metrics"])
@@ -315,6 +371,11 @@ class SandboxedWorkerEvaluator:
             return result
         except BaseException as error:
             result = self._base_result(record, "failed")
+            if not isinstance(error, Exception):
+                diagnostic_code = "evaluation_interrupted"
+            elif diagnostic_code == "candidate_outputs_rejected":
+                diagnostic_code = _output_failure_diagnostic(error, output)
+            result["diagnostic_code"] = diagnostic_code
             job.mkdir(exist_ok=True)
             write_atomic(job / "receipt.json", {"status": "failed", "error_type": type(error).__name__, "result": result})
             self._finish(spec.job_id, result)
@@ -335,6 +396,7 @@ class SandboxedWorkerEvaluator:
         if owner and owner["start"] == row[3] and owner["state"] != "Z":
             return self._base_result(record, "waiting")
         result = self._base_result(record, "failed")
+        result["diagnostic_code"] = "evaluation_interrupted"
         self._finish(job_id, result)
         return result
 

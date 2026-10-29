@@ -53,8 +53,12 @@ Limits are at most six model sessions, at most 900 seconds per session, at most
 tool network. Every session, including a failed one, consumes its allocation.
 Each candidate tree is limited to 256 regular files and 64 MiB. Large frozen
 resources stay in `public/`. Worker jobs are capped at 900 seconds. Do not leave
-background processes running. A failed allocated worker job prevents a complete
-lifecycle in this version; inspect code locally before submission.
+background processes running. This task uses `validation-recovery-v1`: a failed
+validation iteration with an eligible trusted diagnostic may be corrected by a
+new iteration before lock. Failed attempts remain recorded and consume the
+budget of two scientific iterations (in addition to one baseline). They do not
+receive extra model sessions. A baseline, integrity, or final-test failure still
+prevents completion. Inspect code and numeric evidence locally before submission.
 Completion also requires `q1_groups > 0` in both the locked scientific iteration's
 validation result and its final test result. Lock an iteration candidate. Merely
 repeating baseline predictions cannot satisfy the analysis stage. Partial Q1

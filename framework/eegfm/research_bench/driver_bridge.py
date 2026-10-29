@@ -37,6 +37,29 @@ from eegfm.driver import Adapter, Driver
 from .bundle import canonical_bytes, digest_file, safe_relative
 
 
+RECOVERY_POLICIES = frozenset({"strict-v1", "validation-recovery-v1"})
+# Closed vocabulary: never derive public messages from exceptions or worker text.
+FAILURE_MESSAGES = {
+    "evaluation_failed": "Evaluation failed without a recognized candidate diagnostic; trusted review is required.",
+    "evaluation_setup_failed": "Trusted evaluation setup failed; trusted review is required.",
+    "evaluation_integrity_failed": "Evaluation integrity checks failed; trusted review is required.",
+    "evaluation_interrupted": "Evaluation was interrupted; the consumed job cannot be resubmitted.",
+    "evaluator_unavailable": "The evaluator did not return a valid response; trusted review is required.",
+    "worker_result_rejected": "The worker response failed controller validation; trusted review is required.",
+    "candidate_execution_failed": "Candidate execution did not finish cleanly; check the entrypoint and resource limits.",
+    "candidate_outputs_rejected": "Candidate outputs failed validation; check the public schema and complete required artifacts.",
+    "intervention_strength_mismatch": "Control strength must match the intervention strength in every window; check precision and per-window norms.",
+    "direction_span_mismatch": "Recorded shifts must lie in their recorded direction spans; check numerical precision and reconstruction.",
+    "control_rank_mismatch": "Controls must match actual numerical rank; check the recorded direction bases.",
+    "control_subspace_mismatch": "Controls must use distinct subspaces; check the recorded direction bases.",
+    "nonfinite_evidence": "Scientific evidence must contain finite numeric values; check derived arrays and overflow.",
+    "final_test_failed": "The one-shot final test failed; its reservation is consumed and completion is blocked.",
+}
+RECOVERABLE_FAILURES = frozenset({"candidate_execution_failed", "candidate_outputs_rejected",
+    "intervention_strength_mismatch", "direction_span_mismatch", "control_rank_mismatch",
+    "control_subspace_mismatch", "nonfinite_evidence"})
+
+
 class SandboxedEvaluator(Protocol):
     """Trusted implementation; poll must have NO execution/submission side effect."""
     sandboxed: bool
@@ -120,7 +143,8 @@ def _manifest(root: Path) -> tuple[list[dict[str, Any]], str]:
 class BridgeController:
     def __init__(self, *, trusted_root: Path, case_root: Path, episode_id: str, run_id: str,
                  public_manifest_sha256: str, split_manifest_sha256: str,
-                 evaluator: SandboxedEvaluator, max_attempts: int = 4) -> None:
+                 evaluator: SandboxedEvaluator, max_attempts: int = 4,
+                 recovery_policy: str = "strict-v1") -> None:
         self.root = Path(trusted_root).resolve()
         self.case = Path(case_root).resolve(strict=True)
         if self.root == self.case or self.root in self.case.parents or self.case in self.root.parents:
@@ -129,6 +153,9 @@ class BridgeController:
             raise ValueError("Evaluator must implement the separate-sandbox contract")
         if type(max_attempts) is not int or not 1 <= max_attempts <= 32:
             raise ValueError("Invalid attempt budget")
+        if not isinstance(recovery_policy, str) or recovery_policy not in RECOVERY_POLICIES:
+            raise ValueError("Unknown recovery policy")
+        self.recovery_policy = recovery_policy
         self.episode_id, self.run_id = _identifier(episode_id), _identifier(run_id)
         self.evaluator = evaluator
         self.run = self.root / "runs" / self.run_id
@@ -140,6 +167,8 @@ class BridgeController:
                     "public_manifest_sha256": _digest(public_manifest_sha256),
                     "split_manifest_sha256": _digest(split_manifest_sha256),
                     "max_attempts": max_attempts, "research_mode": "analysis"}
+        if recovery_policy != "strict-v1":
+            identity["recovery_policy"] = recovery_policy
         with self._transaction() as db:
             db.execute("CREATE TABLE IF NOT EXISTS state (id INTEGER PRIMARY KEY CHECK(id=1), value TEXT NOT NULL)")
             db.execute("CREATE TABLE IF NOT EXISTS requests (id TEXT PRIMARY KEY, digest TEXT NOT NULL, request TEXT NOT NULL, response TEXT NOT NULL)")
@@ -267,11 +296,13 @@ class BridgeController:
                         candidate_digest=response.get("candidate_digest"), job_id=response.get("job_id"))
         # Reservation and immutable response are durable BEFORE any worker starts.
         if pending:
+            diagnostic_code = "evaluator_unavailable"
             try:
                 result = self.evaluator.submit(pending)
+                diagnostic_code = "worker_result_rejected"
                 self._accept_result(pending.job_id, result)
             except Exception as error:
-                self._fail_job(pending.job_id, type(error).__name__)
+                self._fail_job(pending.job_id, type(error).__name__, diagnostic_code)
         return response
 
     def _dispatch(self, state: dict[str, Any], operation: str, payload: Any) -> tuple[dict[str, Any], dict[str, Any] | None]:
@@ -323,7 +354,7 @@ class BridgeController:
             if state["lock"] or state["status"] != "working":
                 raise ValueError("One lock per episode in working state")
             matches = [a for a in state["attempts"] if a["id"] == payload["attempt_id"]]
-            if not matches or matches[0]["status"] != "evaluated" or matches[0]["candidate_digest"] != payload["candidate_digest"]:
+            if not matches or not self._validated_attempt(state, matches[0]) or matches[0]["candidate_digest"] != payload["candidate_digest"]:
                 raise ValueError("Lock must match an evaluated candidate")
             digest = _digest(payload["candidate_digest"])
             if _manifest(self.run / "candidates" / digest)[1] != digest:
@@ -407,7 +438,13 @@ class BridgeController:
             self._event("brief_review", **state["review"])
 
     def _accept_result(self, job_id: str, result: dict[str, Any]) -> None:
-        _fields(result, {"job_id", "candidate_digest", "split", "status", "metrics", "artifacts", "sandbox_receipt"})
+        fields = {"job_id", "candidate_digest", "split", "status", "metrics", "artifacts", "sandbox_receipt"}
+        if isinstance(result, dict) and "diagnostic_code" in result:
+            fields.add("diagnostic_code")
+        _fields(result, fields)
+        code = result.get("diagnostic_code", "evaluation_failed")
+        if not isinstance(code, str) or code not in FAILURE_MESSAGES or ("diagnostic_code" in result and result["status"] != "failed"):
+            raise ValueError("Invalid worker diagnostic")
         if result["status"] not in {"waiting", "succeeded", "failed"} or not isinstance(result["sandbox_receipt"], str) or not result["sandbox_receipt"]:
             raise ValueError("Invalid worker receipt/status")
         metrics = result["metrics"]
@@ -435,11 +472,14 @@ class BridgeController:
             if _manifest(self.run / "candidates" / job["candidate_digest"])[1] != job["candidate_digest"]:
                 raise ValueError("Candidate changed during evaluation")
             job.update(status=result["status"], result=result)
+            if result["status"] == "failed":
+                job["diagnostic_code"] = code
             if result["status"] != "waiting":
                 if job["split"] == "validation":
                     attempt = next(a for a in state["attempts"] if a["id"] == job["attempt_id"])
                     attempt.update(status="evaluated" if result["status"] == "succeeded" else "failed",
-                                   metrics=metrics, retention="retained_valid" if result["status"] == "succeeded" else "execution_failed")
+                                   metrics=metrics if result["status"] == "succeeded" else {},
+                                   retention="retained_valid" if result["status"] == "succeeded" else "execution_failed")
                 else:
                     write_json(self.run / "sealed" / "final_test.json", result)
                 state.update(status="working", note=f"job {job_id} {result['status']}")
@@ -447,13 +487,15 @@ class BridgeController:
             self._save(db, state)
             self._event("job_result", job_id=job_id, status=result["status"], split=job["split"])
 
-    def _fail_job(self, job_id: str, error_type: str) -> None:
+    def _fail_job(self, job_id: str, error_type: str, diagnostic_code: str = "evaluation_failed") -> None:
+        if diagnostic_code not in FAILURE_MESSAGES:
+            raise ValueError("Unknown failure diagnostic")
         with self._transaction() as db:
             state = self._load(db)
             job = state["jobs"][job_id]
             if job['status'] in {'succeeded', 'failed'}:
                 return
-            job.update(status="failed", error_type=error_type)
+            job.update(status="failed", error_type=error_type, diagnostic_code=diagnostic_code)
             if job["split"] == "validation":
                 next(a for a in state["attempts"] if a["id"] == job["attempt_id"]).update(status="failed", retention="execution_failed")
             state.update(status="working", note=f"job {job_id} failed; no automatic resubmission")
@@ -465,10 +507,13 @@ class BridgeController:
             state = self._load(db)
             pending = [key for key, job in state["jobs"].items() if job["status"] not in {"succeeded", "failed"}]
         for job_id in pending:
+            diagnostic_code = "evaluator_unavailable"
             try:
-                self._accept_result(job_id, self.evaluator.poll(job_id))
+                result = self.evaluator.poll(job_id)
+                diagnostic_code = "worker_result_rejected"
+                self._accept_result(job_id, result)
             except Exception as error:
-                self._fail_job(job_id, type(error).__name__)
+                self._fail_job(job_id, type(error).__name__, diagnostic_code)
         with self._transaction() as db:
             return list(self._load(db)["jobs"].values())
 
@@ -535,14 +580,37 @@ class BridgeController:
             self._session_history(state)
         return record
 
+    def _validated_attempt(self, state: dict[str, Any], attempt: dict[str, Any]) -> bool:
+        jobs = [state["jobs"][key] for key in attempt["jobs"] if state["jobs"][key]["split"] == "validation"]
+        return (attempt["status"] == "evaluated" and len(jobs) == 1
+                and jobs[0]["status"] == "succeeded"
+                and jobs[0]["candidate_digest"] == attempt["candidate_digest"]
+                and jobs[0].get("result", {}).get("status") == "succeeded")
+
+    def _recoverable_job(self, state: dict[str, Any], job: dict[str, Any]) -> bool:
+        return (self.recovery_policy == "validation-recovery-v1"
+                and job["split"] == "validation" and job["status"] == "failed"
+                and job.get("diagnostic_code") in RECOVERABLE_FAILURES
+                and any(a["id"] == job["attempt_id"] and a["kind"] == "iteration"
+                        and a["status"] == "failed" for a in state["attempts"]))
+
     def _completion_ready(self, state: dict[str, Any]) -> None:
         if not state["sessions"] or not state["sessions"][-1]["ok"]:
             raise ValueError("Successful completed model session required")
         if not state["review"] or not state["contract"] or not state["lock"] or not state["test_job"]:
             raise ValueError("Lifecycle incomplete")
-        if any(job["status"] != "succeeded" for job in state["jobs"].values()):
+        if any(job["status"] != "succeeded" and not self._recoverable_job(state, job) for job in state["jobs"].values()):
             raise ValueError("All required jobs must succeed")
-        if not any(a["kind"] == "iteration" and a["status"] == "evaluated" for a in state["attempts"]):
+        baseline = [a for a in state["attempts"] if a["kind"] == "baseline"]
+        selected = [a for a in state["attempts"] if a["id"] == state["lock"]["attempt_id"]]
+        final = state["jobs"][state["test_job"]]
+        if (len(baseline) != 1 or not self._validated_attempt(state, baseline[0])
+                or len(selected) != 1 or not self._validated_attempt(state, selected[0])
+                or final["status"] != "succeeded" or final["split"] != "test"
+                or final["attempt_id"] != selected[0]["id"]
+                or final["candidate_digest"] != state["lock"]["candidate_digest"]):
+            raise ValueError("Successful baseline, locked validation and final test required")
+        if not any(a["kind"] == "iteration" and self._validated_attempt(state, a) for a in state["attempts"]):
             raise ValueError("At least one successful scientific analysis required")
 
     def validate_done(self) -> None:
@@ -567,13 +635,31 @@ class BridgeController:
         with self._transaction() as db:
             state = self._load(db)
             requests = [json.loads(row[0]) for row in db.execute("SELECT response FROM requests ORDER BY rowid")]
-        jobs = [{key: job[key] for key in ("job_id", "attempt_id", "candidate_digest", "split", "status")} |
-                ({"result": {key: value for key, value in job["result"].items() if key != "sandbox_receipt"}}
-                 if job.get("result") else {}) for job in state["jobs"].values()]
-        return {"episode_id": self.episode_id, "run_id": self.run_id,
+        jobs = []
+        for job in state["jobs"].values():
+            public = {key: job[key] for key in ("job_id", "attempt_id", "candidate_digest", "split", "status")}
+            if job.get("result"):
+                public["result"] = {key: value for key, value in job["result"].items()
+                                    if key not in {"sandbox_receipt", "diagnostic_code"}}
+                if job["status"] == "failed":
+                    public["result"].update(metrics={}, artifacts=[])
+            if self.recovery_policy == "validation-recovery-v1" and job["status"] == "failed":
+                code = "final_test_failed" if job["split"] == "test" else job.get("diagnostic_code", "evaluation_failed")
+                public["diagnostic"] = {"code": code, "message": FAILURE_MESSAGES[code],
+                                        "eligible_for_new_iteration": self._recoverable_job(state, job)}
+            jobs.append(public)
+        projection = {"episode_id": self.episode_id, "run_id": self.run_id,
                 "state": {"status": state["status"], "note": state["note"], "version": state["version"]},
                 "review": state["review"], "contract": state["contract"], "attempts": state["attempts"],
                 "jobs": jobs, "lock": state["lock"], "responses": requests}
+        if self.recovery_policy == "validation-recovery-v1":
+            used = sum(a["kind"] == "iteration" for a in state["attempts"])
+            projection["recovery"] = {"policy": self.recovery_policy,
+                "max_iterations": state["identity"]["max_attempts"], "used_iterations": used,
+                "remaining_iterations": state["identity"]["max_attempts"] - used,
+                "final_test_consumed": state["test_job"] is not None,
+                "rule": "Eligible validation failures remain failed and consume an iteration. Submit a corrected candidate as a new attempt before lock, within the remaining iteration and session budgets. Baseline, integrity and final-test failures block completion."}
+        return projection
 
 
 @dataclass(frozen=True)

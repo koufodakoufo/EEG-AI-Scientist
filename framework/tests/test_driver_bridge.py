@@ -20,10 +20,13 @@ class Evaluator:
         self.crash = False
 
     def result(self, spec: Any) -> dict[str, Any]:
-        return {"job_id": spec.job_id, "candidate_digest": spec.candidate_digest,
+        result = {"job_id": spec.job_id, "candidate_digest": spec.candidate_digest,
                 "split": spec.split, "status": "failed" if self.fail else "succeeded",
                 "metrics": {"accuracy_delta": -0.25}, "artifacts": [],
                 "sandbox_receipt": "synthetic-test-only"}
+        if self.fail:
+            result["diagnostic_code"] = "candidate_outputs_rejected"
+        return result
 
     def submit(self, spec: Any) -> dict[str, Any]:
         self.calls.append(spec)
@@ -336,6 +339,134 @@ class DriverBridgeTests(unittest.TestCase):
         result=self.mod.BridgeDriver(self.controller,launch=crash,max_sessions=2,once=True).loop()
         self.assertEqual(result,3)
         self.assertEqual(len(calls),1)
+
+    def recovery_controller(self) -> None:
+        self.assertIn("recovery_policy", __import__("inspect").signature(self.mod.BridgeController).parameters,
+                      "A frozen opt-in recovery policy is required")
+        self.controller = self.mod.BridgeController(
+            trusted_root=self.root / "recovery", case_root=self.case,
+            episode_id="E01", run_id="run01", public_manifest_sha256="a" * 64,
+            split_manifest_sha256="b" * 64, evaluator=self.evaluator, max_attempts=2,
+            recovery_policy="validation-recovery-v1")
+
+    def finish_report(self) -> None:
+        self.controller.record_session({"status": "completed", "exit_code": 0,
+            "stdout": '{"type":"turn.completed"}\n', "stderr": "",
+            "process_cleanup": {"surviving_owned_pids": []}})
+        (self.case / "output" / "report.md").write_text("Retained failures, corrected analysis, and limitations.\n")
+        self.request("report", {"path": "report.md"})
+
+    def test_recovery_retains_failed_validation_and_completes_only_corrected_attempt(self) -> None:
+        self.recovery_controller()
+        self.ready()
+        self.candidate()
+        self.evaluator.fail = True
+        failed = self.request("attempt", {"candidate_dir": "candidate", "split": "validation", "title": "invalid output"})
+        with self.assertRaises(ValueError):
+            self.request("lock", {"attempt_id": failed["attempt_id"], "candidate_digest": failed["candidate_digest"]})
+        failed_evidence = (self.controller.run / "jobs" / f"{failed['job_id']}.json").read_bytes()
+        self.evaluator.fail = False
+        (self.case / "output" / "candidate" / "analysis.py").write_text("value = 2\n")
+        corrected = self.request("attempt", {"candidate_dir": "candidate", "split": "validation", "title": "corrected output"})
+        with self.assertRaisesRegex(ValueError, "budget"):
+            self.request("attempt", {"candidate_dir": "candidate", "split": "validation", "title": "over budget"})
+        self.request("lock", {"attempt_id": corrected["attempt_id"], "candidate_digest": corrected["candidate_digest"]})
+        self.request("test", {"candidate_digest": corrected["candidate_digest"], "split": "test"})
+        self.finish_report()
+        self.controller.validate_done()
+        projection = self.controller.projection()
+        self.assertEqual(projection["state"]["status"], "done")
+        self.assertEqual([a["status"] for a in projection["attempts"]], ["evaluated", "failed", "evaluated"])
+        self.assertEqual(failed_evidence, (self.controller.run / "jobs" / f"{failed['job_id']}.json").read_bytes())
+        self.assertEqual(projection["recovery"]["remaining_iterations"], 0)
+
+    def test_recovery_final_test_failure_consumes_reservation_and_blocks_completion(self) -> None:
+        self.recovery_controller()
+        result = self.locked()
+        self.evaluator.fail = True
+        payload = {"candidate_digest": result["candidate_digest"], "split": "test"}
+        self.request("test", payload, "consumed-test")
+        self.evaluator.fail = False
+        calls = len(self.evaluator.calls)
+        self.request("test", payload, "consumed-test")
+        with self.assertRaises(ValueError):
+            self.request("test", payload, "second-test")
+        with self.assertRaises(ValueError):
+            self.request("attempt", {"candidate_dir": "candidate", "split": "validation", "title": "bypass test"})
+        with self.assertRaises(ValueError):
+            self.finish_report()
+        self.assertEqual(len(self.evaluator.calls), calls)
+        self.assertEqual(self.controller.projection()["jobs"][-1]["diagnostic"]["code"], "final_test_failed")
+        self.assertNotIn("candidate_outputs_rejected", json.dumps(self.controller.projection()["jobs"][-1]))
+
+    def test_recovery_cannot_replace_failed_baseline_or_change_policy_on_resume(self) -> None:
+        self.recovery_controller()
+        self.ready()
+        self.evaluator.fail = True
+        self.candidate()
+        with self.assertRaises(ValueError):
+            self.candidate()
+        with self.assertRaises(ValueError):
+            self.request("attempt", {"candidate_dir": "candidate", "split": "validation", "title": "bypass baseline"})
+        with self.assertRaisesRegex(ValueError, "identity"):
+            self.mod.BridgeController(trusted_root=self.root / "recovery", case_root=self.case,
+                episode_id="E01", run_id="run01", public_manifest_sha256="a" * 64,
+                split_manifest_sha256="b" * 64, evaluator=self.evaluator, max_attempts=2)
+
+    def test_recovery_diagnostics_are_enumerated_and_never_echo_worker_details(self) -> None:
+        self.recovery_controller()
+        self.ready()
+        self.candidate()
+        original = self.evaluator.result
+        self.evaluator.result = lambda spec: {**original(spec), "status": "failed",
+            "diagnostic_code": "/private/truth.npz contains secret labels", "metrics": {"private": 77}}
+        self.request("attempt", {"candidate_dir": "candidate", "split": "validation", "title": "malformed diagnostic"})
+        projection = self.controller.projection()
+        self.assertEqual(projection["jobs"][-1]["diagnostic"]["code"], "worker_result_rejected")
+        serialized = json.dumps(projection)
+        for secret in ("truth.npz", "secret labels", '"private": 77', "synthetic-test-only"):
+            self.assertNotIn(secret, serialized)
+
+    def test_recovery_survives_restart_with_same_frozen_policy_and_retains_failure(self) -> None:
+        self.recovery_controller()
+        self.ready()
+        self.candidate()
+        self.evaluator.fail = True
+        failed = self.request("attempt", {"candidate_dir": "candidate", "split": "validation", "title": "invalid evidence"})
+        before = self.controller.projection()
+        self.recovery_controller()
+        after = self.controller.projection()
+        self.assertEqual(before, after)
+        self.assertEqual(after["recovery"]["remaining_iterations"], 1)
+        self.assertEqual(after["jobs"][-1]["job_id"], failed["job_id"])
+        self.assertEqual(after["jobs"][-1]["diagnostic"]["code"], "candidate_outputs_rejected")
+        self.assertEqual(len(self.evaluator.calls), 2)
+
+    def test_recovery_cannot_forgive_invalid_worker_response_after_later_success(self) -> None:
+        self.recovery_controller()
+        self.ready()
+        self.candidate()
+        original = self.evaluator.result
+        self.evaluator.result = lambda spec: {**original(spec), "split": "test"}
+        self.request("attempt", {"candidate_dir": "candidate", "split": "validation", "title": "bad worker identity"})
+        self.evaluator.result = original
+        corrected = self.request("attempt", {"candidate_dir": "candidate", "split": "validation", "title": "later valid result"})
+        self.request("lock", {"attempt_id": corrected["attempt_id"], "candidate_digest": corrected["candidate_digest"]})
+        self.request("test", {"candidate_digest": corrected["candidate_digest"], "split": "test"})
+        with self.assertRaises(ValueError):
+            self.finish_report()
+        self.assertFalse(self.controller.projection()["jobs"][1]["diagnostic"]["eligible_for_new_iteration"])
+
+    def test_strict_default_still_rejects_any_failed_validation_job(self) -> None:
+        self.ready()
+        baseline = self.candidate()
+        self.evaluator.fail = True
+        self.request("attempt", {"candidate_dir": "candidate", "split": "validation", "title": "failed iteration"})
+        self.evaluator.fail = False
+        self.request("lock", {"attempt_id": baseline["attempt_id"], "candidate_digest": baseline["candidate_digest"]})
+        self.request("test", {"candidate_digest": baseline["candidate_digest"], "split": "test"})
+        with self.assertRaises(ValueError):
+            self.finish_report()
 
 
 if __name__ == "__main__":

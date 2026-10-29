@@ -166,6 +166,71 @@ class WorkerTests(unittest.TestCase):
             self.assertEqual(result["status"], "failed")
             self.assertEqual(evaluator.poll(spec.job_id), result)
 
+    @unittest.skipUnless(sys.platform == "linux", "Linux worker enrollment")
+    def test_missing_output_or_rejected_aggregation_releases_only_finite_diagnostic(self) -> None:
+        def aggregate(output: Path, spec: Any) -> dict[str, Any]:
+            (output / "results.npz").read_bytes()
+            raise AssertionError("Missing output must fail before this line")
+        evaluator = self.evaluator(aggregate)
+        finished = {"status": "completed", "exit_code": 0, "process_cleanup": {"surviving_owned_pids": []}}
+        with patch.object(self.mod, "run_bounded", return_value=finished):
+            result = evaluator.submit(self.spec())
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(result.get("diagnostic_code"), "candidate_outputs_rejected")
+        self.assertEqual(result["metrics"], {})
+        self.assertEqual(result["artifacts"], [])
+        self.assertNotIn("secret labels", json.dumps(result))
+        self.assertEqual(evaluator.poll(self.spec().job_id), result)
+
+    @unittest.skipUnless(sys.platform == "linux", "Linux worker enrollment")
+    def test_invalid_trusted_aggregation_response_is_not_recoverable(self) -> None:
+        evaluator = self.evaluator(lambda output, spec: {"metrics": {"secret": 77}, "artifacts": []})
+        finished = {"status": "completed", "exit_code": 0, "process_cleanup": {"surviving_owned_pids": []}}
+        with patch.object(self.mod, "run_bounded", return_value=finished):
+            result = evaluator.submit(self.spec())
+        self.assertEqual(result.get("diagnostic_code"), "evaluation_integrity_failed")
+        self.assertNotIn("secret", json.dumps(result))
+
+    @unittest.skipUnless(sys.platform == "linux", "Linux worker enrollment")
+    def test_unclean_execution_has_distinct_safe_diagnostic(self) -> None:
+        evaluator = self.evaluator()
+        failed = {"status": "timed_out", "exit_code": -9, "process_cleanup": {"surviving_owned_pids": []}}
+        with patch.object(self.mod, "run_bounded", return_value=failed):
+            result = evaluator.submit(self.spec())
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(result.get("diagnostic_code"), "candidate_execution_failed")
+
+    @unittest.skipUnless(sys.platform == "linux", "Linux worker enrollment")
+    def test_surviving_worker_or_unexpected_aggregator_error_is_not_recoverable(self) -> None:
+        evaluator = self.evaluator()
+        unfinished = {"status": "completed", "exit_code": 0, "process_cleanup": {"surviving_owned_pids": [123]}}
+        with patch.object(self.mod, "run_bounded", return_value=unfinished):
+            result = evaluator.submit(self.spec())
+        self.assertEqual(result.get("diagnostic_code"), "evaluation_integrity_failed")
+        def broken(output: Path, spec: Any) -> dict[str, Any]:
+            raise RuntimeError("unexpected controller defect /private/path")
+        # A distinct job preserves the first failure receipt.
+        evaluator = self.evaluator(broken)
+        finished = {"status": "completed", "exit_code": 0, "process_cleanup": {"surviving_owned_pids": []}}
+        with patch.object(self.mod, "run_bounded", return_value=finished):
+            result = evaluator.submit(self.spec("test"))
+        self.assertEqual(result.get("diagnostic_code"), "evaluation_integrity_failed")
+
+    @unittest.skipUnless(sys.platform == "linux", "Linux worker enrollment")
+    def test_fixed_validator_diagnostics_distinguish_strength_from_direction_span(self) -> None:
+        cases = [("validation", "Control strength must match each individual window", "intervention_strength_mismatch"),
+                 ("test", "Recorded shifts do not lie in the recorded direction spans", "direction_span_mismatch")]
+        for split, message, expected in cases:
+            with self.subTest(code=expected):
+                def rejected(output: Path, spec: Any) -> dict[str, Any]:
+                    raise ValueError(message)
+                evaluator = self.evaluator(rejected)
+                finished = {"status": "completed", "exit_code": 0, "process_cleanup": {"surviving_owned_pids": []}}
+                with patch.object(self.mod, "run_bounded", return_value=finished):
+                    result = evaluator.submit(self.spec(split))
+                self.assertEqual(result.get("diagnostic_code"), expected)
+                self.assertNotIn(message, json.dumps(result))
+
     @unittest.skipUnless(sys.platform == "linux", "Linux runtime identity")
     def test_unapproved_metrics_and_forged_artifact_hash_rejected(self) -> None:
         evaluator = self.evaluator()
@@ -227,6 +292,40 @@ print('PRIVATE_WORKER_STDOUT')
         status = json.loads((evaluator.job_directory(spec.job_id) / "execution" / "status.json").read_text())
         self.assertEqual(status["status"], "timed_out")
         self.assertEqual(status["process_cleanup"]["surviving_owned_pids"], [])
+
+
+class DiagnosticTests(unittest.TestCase):
+    def test_unknown_values_and_private_missing_files_fail_closed(self) -> None:
+        from eegfm.research_bench import real_worker as module
+        classify = getattr(module, "_output_failure_diagnostic", None)
+        self.assertIsNotNone(classify, "Output diagnostics need a closed classification boundary")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output = root / "out"
+            output.mkdir()
+            errors = [ValueError("Bound input changed"), ValueError("Unknown validator defect"),
+                      ValueError("Only predeclared metrics may be released"),
+                      ValueError("Control strength must match each individual window: private detail"),
+                      FileNotFoundError("Missing unlocated output"),
+                      FileNotFoundError(2, "missing", str(root / "truth.npz")),
+                      FileNotFoundError(2, "missing", str(output / "unknown.npz"))]
+            for error in errors:
+                with self.subTest(error=repr(error)):
+                    self.assertEqual(classify(error, output), "evaluation_integrity_failed")
+
+    def test_known_candidate_constraints_and_exact_missing_outputs_are_recoverable(self) -> None:
+        from eegfm.research_bench import real_worker as module
+        classify = getattr(module, "_output_failure_diagnostic", None)
+        self.assertIsNotNone(classify, "Output diagnostics need a closed classification boundary")
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            self.assertEqual(classify(ValueError("Control strength must match each individual window"), output),
+                             "intervention_strength_mismatch")
+            self.assertEqual(classify(ValueError("Interventions require Q1 evidence"), output),
+                             "candidate_outputs_rejected")
+            for name in ("results.npz", "analysis.npz", "interventions.npz"):
+                self.assertEqual(classify(FileNotFoundError(2, "missing", str(output / name)), output),
+                                 "candidate_outputs_rejected")
 
 
 @unittest.skipUnless(importlib.util.find_spec("numpy") is not None, "NumPy unavailable")

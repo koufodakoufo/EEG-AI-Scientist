@@ -92,6 +92,13 @@ Directions must have positive numerical rank. Controls must have the same actual
 rank, have distinct spans, and match the learned intervention's shift norm in
 every window. The aggregator derives shifts from original minus altered pooled
 activations and verifies their membership in the respective direction spans.
+Both norm matching and span residuals use an absolute tolerance of `1e-8` plus
+`1e-6` times the relevant learned/recorded shift norm. Compute pooled evidence
+from the actual original and modified token arrays with float64 accumulation
+(for example, `tokens.mean(axis=(1, 2), dtype=np.float64)`). Converting an already
+computed float32 mean to float64 does not recover its rounding error. The model
+tokens may remain float32; do not substitute intended shifts for measured pooled
+values. Validate both constraints locally before requesting evaluation.
 It computes task changes and the primary paired contrast: learned balanced
 accuracy change minus the mean change across the three controls. It also
 evaluates residual recovery for each selected feature group and variant.

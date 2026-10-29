@@ -19,7 +19,7 @@ from typing import Any
 from .actor import prepare_control, launch_actor, profile_template_sha256, validate_isolation_gate
 from .budget import BudgetExceeded, mark_call, reserve_call, write_atomic
 from .bundle import canonical_bytes, create_public_bundle, digest_file, safe_relative, verify_public_bundle
-from .driver_bridge import BridgeController, BridgeDriver, EvaluationSpec
+from .driver_bridge import BridgeController, BridgeDriver, EvaluationSpec, RECOVERY_POLICIES
 from eegfm.driver import Adapter
 from .real_worker import FileBinding, RuntimeConfig, SandboxedWorkerEvaluator, SplitInputs
 from .trace import collect_visible_trace
@@ -161,8 +161,28 @@ def prepare_public(config: dict[str, Any], case: Path, private: Path) -> Path:
         shutil.copyfile(binding(config["skill"]).path, stage / "SKILL.md")
     if any(digest_file(stage / name) != value for name, value in expected.items()):
         raise ValueError("Public source changed during export")
-    create_public_bundle(stage, public, expected, task_id="eegmat-representation-analysis-v1", tier="real_eeg")
+    task_id = config.get("task_id", "eegmat-representation-analysis-v1")
+    if not isinstance(task_id, str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,79}", task_id):
+        raise ValueError("Invalid public task identity")
+    create_public_bundle(stage, public, expected, task_id=task_id, tier="real_eeg")
     return public
+
+
+def frozen_skill_context(config: dict[str, Any], public: Path) -> tuple[str, str | None]:
+    """Bind actual treatment bytes into the model prompt for the new protocol."""
+    delivery = config.get("skill_delivery", "mounted-only-v1")
+    if delivery not in {"mounted-only-v1", "inline-frozen-v1"}:
+        raise ValueError("Unknown skill delivery policy")
+    if delivery == "mounted-only-v1" or config["condition"] == "no_skill":
+        return "", None
+    source = binding(config["skill"])
+    source.verify()
+    raw = (public / "SKILL.md").read_bytes()
+    if len(raw) > 65536 or hashlib.sha256(raw).hexdigest() != source.sha256:
+        raise ValueError("Frozen skill prompt bytes differ from enrollment")
+    return ("\nFROZEN_OPTIONAL_SKILL_SHA256 " + source.sha256 +
+            "\nBEGIN_FROZEN_OPTIONAL_SKILL\n" + raw.decode("utf-8") +
+            "\nEND_FROZEN_OPTIONAL_SKILL\n", source.sha256)
 
 
 def session_prompt(projection: dict[str, Any], number: int, scientific_python: Path,
@@ -203,9 +223,10 @@ class NativeEpisodeLaunch:
         timeout = min(900, remaining)
         call_id = config["call_ids"][number - 1]
         budget = Path(config["budget_path"])
+        skill_context, injected_skill_sha256 = frozen_skill_context(config, self.public)
+        prompt = session_prompt(projection, number, Path(config["scientific_python"]), self.history) + skill_context
         reserve_call(budget, call_id, "actor", timeout)
         output = self.private / "launches" / f"session-{number:02d}-{call_id}"
-        prompt = session_prompt(projection, number, Path(config["scientific_python"]), self.history)
         report: dict[str, Any] = {"status": "failed", "exit_code": -1, "stdout": "", "stderr": "",
                                   "process_cleanup": {"surviving_owned_pids": []}, "requests": []}
         running, invoked, verified_turn = False, False, False
@@ -220,7 +241,8 @@ class NativeEpisodeLaunch:
                 read_only_roots=tuple(Path(path) for path in config["scientific_roots"]))
             validate_isolation_gate(metadata, gate)
             mark_call(budget, call_id, "running", episode_id=self.controller.episode_id,
-                      session=number, prompt_sha256=hashlib.sha256(prompt.encode()).hexdigest())
+                      session=number, prompt_sha256=hashlib.sha256(prompt.encode()).hexdigest(),
+                      injected_skill_sha256=injected_skill_sha256)
             running = True
             invoked = True
             native = launch_actor(metadata, prompt, output_dir=output, timeout_seconds=timeout,
@@ -249,6 +271,7 @@ class NativeEpisodeLaunch:
         mark_call(budget, call_id, status if running else "blocked", evidence=str(output),
                   episode_id=self.controller.episode_id, session=number)
         self.history.append({"session": number, "status": status, "actual_native_invocation": invoked,
+                             "injected_skill_sha256": injected_skill_sha256,
                              "verified_model_turn": verified_turn and clean,
                              "request_count": len(report["requests"]),
                              "feedback": report["stderr"] if report["stderr"].startswith("Trusted launch/") else ""})
@@ -295,6 +318,9 @@ def run_episode(config: dict[str, Any]) -> dict[str, Any]:
 
     if config.get("schema_version") != "real_episode_config_v1":
         raise ValueError("Unsupported episode enrollment")
+    recovery_policy = config.get("recovery_policy", "strict-v1")
+    if not isinstance(recovery_policy, str) or recovery_policy not in RECOVERY_POLICIES:
+        raise ValueError("Unsupported recovery policy")
     if config.get("model", MODEL) != MODEL or config.get("reasoning_effort", "medium") != "medium":
         raise ValueError("Frozen model/effort required")
     call_ids = config["call_ids"]
@@ -378,7 +404,8 @@ def run_episode(config: dict[str, Any]) -> dict[str, Any]:
     controller = EpisodeController(trusted_root=private / "controller", case_root=case,
         episode_id=config["episode_id"], run_id=config["run_id"], public_manifest_sha256=public_hash,
         split_manifest_sha256=split.sha256, evaluator=DeadlineEvaluator(worker, enrolled["started_at_epoch"]),
-        max_attempts=config.get("max_attempts", 2))
+        max_attempts=config.get("max_attempts", 2),
+        recovery_policy=recovery_policy)
     launcher = NativeEpisodeLaunch(config, controller, private, public, enrolled["started_at_epoch"])
     driver = EpisodeDriver(controller, launch=launcher, reviewer=lambda projection: review_brief(controller, projection),
                           max_sessions=len(call_ids), poll=1.0)

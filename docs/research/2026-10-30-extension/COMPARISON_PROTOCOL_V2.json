@@ -1,0 +1,33 @@
+{
+  "version": "real-eegmat-comparison-v2",
+  "development_predecessor": "E01 blocked under v1; E02-E04 not admitted; all preserved",
+  "registered_before_first_v2_actor": true,
+  "task_id": "eegmat-representation-analysis-v2",
+  "data_export": "unchanged task-v2",
+  "numeric_evaluator": "unchanged from 0b24164; no tolerance relaxation",
+  "changes": ["public float64 pooling precision guidance", "validation-recovery-v1", "explicit inline frozen skill delivery with per-session hashes"],
+  "recovery_policy": "validation-recovery-v1",
+  "skill_delivery": "inline-frozen-v1",
+  "condition_order": [
+    {"episode_id":"E05","pair":1,"condition":"no_skill","call_ids":["R60","R61","R62","R63","R64","R65"]},
+    {"episode_id":"E06","pair":1,"condition":"skill","call_ids":["R66","R67","R68","R69","R70","R71"]},
+    {"episode_id":"E07","pair":2,"condition":"skill","call_ids":["R72","R73","R74","R75","R76","R77"]},
+    {"episode_id":"E08","pair":2,"condition":"no_skill","call_ids":["R78","R79","R80","R81","R82","R83"]}
+  ],
+  "admission": "E05 must complete the real lifecycle before E06. Pair 2 requires time for both episodes and closeout. Preserve every launched outcome; no selective replacements. V1 and v2 are not pooled as one comparison.",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "medium",
+  "sessions_per_episode": 6,
+  "seconds_per_session": 900,
+  "episode_wall_seconds": 5400,
+  "worker_seconds": 900,
+  "max_iterations_excluding_baseline": 2,
+  "cpu_threads": 4,
+  "memory_bytes": 12884901888,
+  "gpu": 0,
+  "bootstrap_resamples": 2000,
+  "skill": {"source":"unchanged synthetic-dev M15","sha256":"54d5ce036ebb184bc653060196bed701807bb516b63dfc40d892d9938079191d"},
+  "comparison_dimensions": ["lifecycle completion", "Q1 numeric coverage and negative controls", "Q2 actual model-path intervention", "Q3 residual information and matched controls", "source provenance and independent replay", "interpretation limits", "resource use", "actual treatment injection"],
+  "semantic_scoring": "v3 contract retained; semantic calibration pending; no accepted composite or general ability score",
+  "interpretation": "Exploratory few-pair skill-transfer case study on one real EEG task after a disclosed development correction. No RSI/generalization claim."
+}
