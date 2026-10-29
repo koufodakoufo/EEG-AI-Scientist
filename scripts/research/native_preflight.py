@@ -20,7 +20,7 @@ def main() -> None:
     source.mkdir(parents=True,exist_ok=False)
     case.mkdir(parents=True,exist_ok=False)
     (source/'TASK.md').write_text('Control preflight only. No scientific materials.\n')
-    create_public_bundle(source,case/'public',['TASK.md'],task_id='real-preflight',tier='control')
+    create_public_bundle(source,case/'public',['TASK.md'],task_id='real-preflight',tier='synthetic_mechanism')
     meta=prepare_control(case=case,public=case/'public',control_home=WORK/f'control/{call_id}',
         native_binary=RUNTIME/'tools/runtime-review/bin/codex',bwrap_dir=RUNTIME/'tools/bubblewrap/usr/bin',
         auth_source=BASE/'codex-home/auth.json',model='gpt-6.1-sol',read_only_roots=(WORK/'venv',))

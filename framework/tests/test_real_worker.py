@@ -61,7 +61,7 @@ class WorkerTests(unittest.TestCase):
         return self.mod.FileBinding(path, self.mod.digest_file(path))
 
     def runtime(self) -> Any:
-        return self.mod.RuntimeConfig(bwrap=Path("/usr/bin/bwrap"), python=Path("/usr/bin/python3"), environment_roots=())
+        return self.mod.RuntimeConfig(bwrap=Path(shutil.which("bwrap") or "/usr/bin/bwrap"), python=Path("/usr/bin/python3"), environment_roots=())
 
     def evaluator(self, aggregate: Any = None) -> Any:
         return self.mod.SandboxedWorkerEvaluator(private_root=self.root / "private", public_root=self.public,
@@ -110,7 +110,7 @@ class WorkerTests(unittest.TestCase):
         evaluator = self.evaluator()
         with self.assertRaises(ValueError): evaluator.submit(self.spec("train"))
         with self.assertRaises(ValueError):
-            self.mod.RuntimeConfig(bwrap=Path("/usr/bin/bwrap"), python=Path("/usr/bin/python3"), environment_roots=(Path("/"),))
+            self.mod.RuntimeConfig(bwrap=Path(shutil.which("bwrap") or "/usr/bin/bwrap"), python=Path("/usr/bin/python3"), environment_roots=(Path("/"),))
 
     @unittest.skipUnless(sys.platform == "linux", "Linux runtime identity")
     def test_evaluation_input_cannot_contain_labels_or_feature_targets(self) -> None:
@@ -170,7 +170,7 @@ class WorkerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             evaluator.validate_aggregate(output, {"metrics": {"accuracy": 0.5}, "artifacts": [{"path": "results.npz", "sha256": "0" * 64}]})
 
-    @unittest.skipUnless(sys.platform == "linux" and Path("/usr/bin/bwrap").exists(), "local bwrap unavailable")
+    @unittest.skipUnless(sys.platform == "linux" and Path(shutil.which("bwrap") or "/usr/bin/bwrap").exists(), "local bwrap unavailable")
     def test_live_stdlib_canary_denies_private_network_writes_and_duplicate_execution(self) -> None:
         secret = self.root / "private-sentinel.txt"
         secret.write_text("hidden")
@@ -206,7 +206,7 @@ print('PRIVATE_WORKER_STDOUT')
         self.assertNotIn("PRIVATE_WORKER_STDOUT", json.dumps(result))
         self.assertNotIn("canary.json", json.dumps(result))
 
-    @unittest.skipUnless(sys.platform == "linux" and Path("/usr/bin/bwrap").exists(), "local bwrap unavailable")
+    @unittest.skipUnless(sys.platform == "linux" and Path(shutil.which("bwrap") or "/usr/bin/bwrap").exists(), "local bwrap unavailable")
     def test_actual_timeout_and_output_link_cannot_produce_success(self) -> None:
         (self.candidate / "main.py").write_text("import pathlib; pathlib.Path('/out/results.npz').symlink_to('/public/TASK.md')\n")
         evaluator = self.evaluator()
