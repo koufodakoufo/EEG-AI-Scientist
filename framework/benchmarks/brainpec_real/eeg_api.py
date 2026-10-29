@@ -199,8 +199,11 @@ def _checked(path: Path, expected_sha256: str | None = None, maximum_bytes: int 
     if not stat.S_ISREG(info.st_mode) or info.st_nlink!=1 or info.st_size>maximum_bytes:
         raise ValueError('Invalid resource file type or size')
     if expected_sha256 is not None:
+        hasher = hashlib.sha256()
         with path.open('rb') as stream:
-            digest = hashlib.file_digest(stream,'sha256').hexdigest()
+            for block in iter(lambda: stream.read(1024 * 1024), b''):
+                hasher.update(block)
+        digest = hasher.hexdigest()
         if digest!=expected_sha256:
             raise ValueError('Frozen resource SHA256 mismatch')
     return path

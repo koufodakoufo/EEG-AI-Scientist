@@ -191,6 +191,17 @@ class PublicViewTests(unittest.TestCase):
 
 
 class PublicApiTests(unittest.TestCase):
+    def test_resource_digest_works_without_python311_file_digest(self) -> None:
+        api = self.load_api()
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / 'resource.bin'
+            path.write_bytes(b'pinned resource')
+            expected = hashlib.sha256(path.read_bytes()).hexdigest()
+            with mock.patch.object(hashlib, 'file_digest', None, create=True):
+                self.assertEqual(api._checked(path, expected), path.absolute())
+                with self.assertRaises(ValueError):
+                    api._checked(path, '0' * 64)
+
     def load_api(self) -> object:
         path = Path(__file__).resolve().parents[2]/'benchmarks/brainpec_real/eeg_api.py'
         self.assertTrue(path.exists(),'Standalone generic public API must exist')

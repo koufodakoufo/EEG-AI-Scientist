@@ -16,7 +16,9 @@ from eegfm.research_bench.trace import collect_visible_trace
 
 
 def main() -> None:
-    call_id='R11'; home=WORK/f'control/{call_id}'; evidence=WORK/f'evidence/{call_id}'
+    call_id=sys.argv[1] if len(sys.argv)>1 else 'R11'
+    if not call_id.startswith('R') or not call_id[1:].isdigit(): raise ValueError('Invalid call ID')
+    home=WORK/f'control/{call_id}'; evidence=WORK/f'evidence/{call_id}'
     meta=json.loads((home/'launcher-metadata.json').read_text())
     status=json.loads((evidence/'status.json').read_text())
     if status['status']!='completed' or status['exit_code']!=0 or status['process_cleanup']['surviving_owned_pids']:

@@ -34,6 +34,9 @@ class WorkerTests(unittest.TestCase):
             with zipfile.ZipFile(self.inputs / f"{name}.npz", "w") as archive:
                 archive.writestr("x.npy", b"trusted dummy input for stdlib canary")
                 if name == "train": archive.writestr("y.npy", b"train labels allowed")
+                else:
+                    archive.writestr("sample_ids.npy", b"sample IDs for stdlib canary")
+                    archive.writestr("subject_ids.npy", b"subject IDs for stdlib canary")
         self.split_manifest = self.root / "split.json"
         self.split_manifest.write_text('{"frozen":"fixture"}')
         self.candidate = self.root / "candidate"

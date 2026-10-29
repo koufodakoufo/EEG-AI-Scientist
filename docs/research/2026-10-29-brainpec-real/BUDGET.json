@@ -4,7 +4,7 @@
   "deadline_at": "2026-10-30T02:13:58+08:00",
   "stop_new_research_at": "2026-10-30T01:28:58+08:00",
   "extra_model_calls_max": 48,
-  "extra_model_calls_reserved": 9,
+  "extra_model_calls_reserved": 15,
   "reserved_for_final_review_and_scoring": 8,
   "max_parallel_model_workers": 2,
   "per_call_timeout_seconds": 1800,
@@ -111,6 +111,70 @@
       "cost_usd": "unknown",
       "updated_at": "2026-10-29T08:14:31.663824+00:00",
       "artifact": "SCIENCE_REVIEW_R09.md"
+    },
+    {
+      "id": "R12",
+      "role": "builder_scientific_aggregator",
+      "status": "completed",
+      "reserved_at": "2026-10-29T12:29:58.980393+00:00",
+      "timeout_seconds": 1800,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-29T12:46:56.490281+00:00",
+      "artifact": "R12-scientific-aggregate-windows.log"
+    },
+    {
+      "id": "R13",
+      "role": "builder_episode_orchestration",
+      "status": "completed",
+      "reserved_at": "2026-10-29T12:29:59.015766+00:00",
+      "timeout_seconds": 1800,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-29T12:48:24.416305+00:00",
+      "artifact": "R13-episode-tests.log"
+    },
+    {
+      "id": "R10",
+      "role": "preflight",
+      "status": "completed",
+      "reserved_at": "2026-10-29T12:46:56.518843+00:00",
+      "timeout_seconds": 90,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-29T12:49:18.199174+00:00",
+      "artifact": "server/evidence/R10",
+      "elapsed_seconds": 32.236
+    },
+    {
+      "id": "R14",
+      "role": "builder_independent_integration_review",
+      "status": "completed",
+      "reserved_at": "2026-10-29T12:48:24.445907+00:00",
+      "timeout_seconds": 1800,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-29T12:57:15.085975+00:00",
+      "artifact": "test_integration_review.py",
+      "findings_fixed": 2
+    },
+    {
+      "id": "R11",
+      "role": "isolation_canary",
+      "status": "failed",
+      "reserved_at": "2026-10-29T12:49:18.219327+00:00",
+      "timeout_seconds": 300,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-29T12:53:23.296537+00:00",
+      "artifact": "server/evidence/R11",
+      "reason": "Scientific venv Python symlink targeted an intentionally unmounted older environment; all privacy/network probes denied as expected"
+    },
+    {
+      "id": "R15",
+      "role": "isolation_canary",
+      "status": "completed",
+      "reserved_at": "2026-10-29T12:53:23.321680+00:00",
+      "timeout_seconds": 300,
+      "cost_usd": "unknown",
+      "updated_at": "2026-10-29T12:57:15.142535+00:00",
+      "artifact": "server/evidence/ISOLATION_REPORT.json",
+      "probe_count": 26
     }
   ],
   "incidents": [

@@ -215,14 +215,13 @@ class SandboxedWorkerEvaluator:
         selected = self.inputs[spec.split]
         train, evaluation = selected.train.verify(), selected.evaluation.verify()
         if train == evaluation: raise ValueError("Train and evaluation must be distinct")
-        # Evaluation inputs are prepared views, not the labelled source NPZ.
-        forbidden = {"y", "label", "labels", "target", "targets", "feature_targets", "target_features", "gold"}
+        # Exact prepared-view schema prevents hidden targets or renamed label
+        # arrays from entering the candidate mount through trusted misconfiguration.
+        expected = {"x.npy", "sample_ids.npy", "subject_ids.npy"}
         with zipfile.ZipFile(evaluation) as archive:
             names = archive.namelist()
-            if len(set(names)) != len(names) or any(Path(name).stem.lower() in forbidden for name in names):
-                raise ValueError("Evaluation inputs contain hidden labels/targets")
-            if any("/" in name or "\\" in name or not name.endswith(".npy") for name in names):
-                raise ValueError("Invalid evaluation archive")
+            if len(names) != len(expected) or set(names) != expected:
+                raise ValueError("Evaluation inputs require only x, sample_ids, and subject_ids")
         return selected
 
     def build_command(self, spec: EvaluationSpec, candidate: Path, output: Path) -> list[str]:

@@ -1,0 +1,25 @@
+{
+  "version": "real-eegmat-comparison-v1",
+  "registered_before_first_actor": true,
+  "task_export": "task-v2",
+  "scientific_scope": "Q1-Q3, with explicit partial completion",
+  "condition_order": [
+    {"episode_id": "E01", "pair": 1, "condition": "no_skill", "call_ids": ["R16","R17","R18","R19","R20","R21"]},
+    {"episode_id": "E02", "pair": 1, "condition": "skill", "call_ids": ["R22","R23","R24","R25","R26","R27"]},
+    {"episode_id": "E03", "pair": 2, "condition": "skill", "call_ids": ["R28","R29","R30","R31","R32","R33"]},
+    {"episode_id": "E04", "pair": 2, "condition": "no_skill", "call_ids": ["R34","R35","R36","R37","R38","R39"]}
+  ],
+  "admission": "First real baseline lifecycle must succeed before admitting its skill counterpart. Pair 2 only if observed cost supports a complete pair plus 45-minute closeout. No cherry-picked successful reruns.",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "medium",
+  "sessions_per_episode": 6,
+  "seconds_per_session": 900,
+  "episode_wall_seconds": 5400,
+  "worker_seconds": 900,
+  "bootstrap_resamples": 2000,
+  "skill": {"source": "unchanged synthetic-dev M15", "sha256": "54d5ce036ebb184bc653060196bed701807bb516b63dfc40d892d9938079191d"},
+  "comparison_dimensions": ["lifecycle completion", "Q1 numerical validity and controls", "Q2 actual frozen-model intervention", "Q3 residual information and matched controls", "source provenance and independent replay", "interpretation limits", "resource use"],
+  "semantic_scoring": "v3 contract frozen; model semantic calibration pending; no accepted P/R/F1 or composite capability score unless separately calibrated under the frozen policy",
+  "service_failure": "Retain every launch. Capacity/auth/network failure is external missingness, not zero capability. No unrecorded rerun or replacement. Any technical diagnostic remains separate.",
+  "interpretation": "At most two pairs on one real task; synthetic-dev skill transfer, not general ability improvement or RSI"
+}
