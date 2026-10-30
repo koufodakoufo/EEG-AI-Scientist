@@ -4,7 +4,7 @@
 
 ## 当前版本
 
-维护分支为`research/brainpec-real-20261029`，remote为`github`，地址`https://github.com/koufodakoufo/EEG-AI-Scientist.git`。本轮收尾提交及三节点/远端实际核验将保存为本目录`SYNC_RECEIPT.json`；它记录同步的内容提交，后续仅记录收据的提交可能在其后。不得把早期23f9df7或30cac6f检查点当最终状态。
+维护分支为`research/brainpec-real-20261029`，remote为`github`，地址`https://github.com/koufodakoufo/EEG-AI-Scientist.git`。本轮内容提交及三节点/远端实际核验已保存为本目录`SYNC_RECEIPT.json`；它记录35c7631同步检查点，收据自身和最终措辞修订提交位于其后。最终精确HEAD另存私有`closeout/backup/FINAL_STATE.json`并在最终回复给出。不得把早期23f9df7或30cac6f检查点当最终状态。
 
 原来源`/data/duandh/eegfm-stage-a-20261028/source/eeg-fm-research`应为`fb6c37e64a58d316d98ae087190483d3d4bf1389`，工作树干净。不要在其中继续开发。
 

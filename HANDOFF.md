@@ -1,4 +1,6 @@
-# Current handoff — 2026-10-28
+# Historical handoff — 2026-10-28
+
+> 历史快照：下文“未push”“登录待验收”描述2026-10-28现场，不能代表当前状态。最新入口为[START_HERE.zh-CN.md](START_HERE.zh-CN.md)，当前成果与未完成项见[MORNING_SUMMARY.md](MORNING_SUMMARY.md)。原交接正文保留。
 
 用户已明确：`X:\projects\EEG-AI-Scientist`是唯一正式本地项目。此前将C盘ChatGPT目录用作正式工程是执行偏差，现已纠正。
 
