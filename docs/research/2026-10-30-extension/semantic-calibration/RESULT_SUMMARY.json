@@ -1,0 +1,25 @@
+{
+  "schema_version": "semantic_calibration_v3_development_1",
+  "status": "passed_synthetic_development_calibration",
+  "atom_precision": 1.0,
+  "atom_recall": 1.0,
+  "pair_accuracy": 1.0,
+  "expected_atoms": 13,
+  "matched_atoms": 13,
+  "returned_atoms": 13,
+  "expected_pairs": 16,
+  "matched_pairs": 16,
+  "status_errors": 0,
+  "critical_errors": [],
+  "parse_or_contract_errors": [],
+  "native_evidence_errors": [],
+  "freeze_sha256": "9d5c47f367143a4fb308c3700380ad518cbe8a5a0c95562902728e719783c423",
+  "oracle_provenance": "Builder-authored manual development oracle; not independent blind gold",
+  "general_or_clinical_validity": "not_established",
+  "actual_model_calls_required": 2,
+  "call_ids": [
+    "R85",
+    "R86"
+  ],
+  "full_private_result_sha256": "fc8e294aaaa21ffbf41081ab2d25949f89ad8c61a2ad49a4dabea93bf8cc4098"
+}

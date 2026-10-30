@@ -1,0 +1,39 @@
+{
+  "schema_version": "closeout_resource_status_v1",
+  "as_of": "2026-10-30",
+  "purpose": "Current acceptance overlay; original resource manifest and frozen inputs preserved",
+  "original_manifest": "../2026-10-29-brainpec-real/RESOURCE_MANIFEST.json",
+  "eegmat": {
+    "identity": "official EEGMAT 1.0.0 + pretrained CBraMod + project-trained frozen head",
+    "status": "reference Q1-Q3 executed; actual Actors Q1 only",
+    "strict_load": "passed in actual scientific runtime",
+    "reference_result_sha256": "57921432aa9ddbfc4252f0a97148bb957b786e88ac2bf6d767550ee32819fd18",
+    "evidence": "../2026-10-29-brainpec-real/SCIENCE_RESULT.zh-CN.md"
+  },
+  "eegmmidb": {
+    "identity": "EEGMMIDB 1.0.0 R01/R02 baseline records",
+    "status": "reference and anonymous export verified; controller adaptation and Actor not run",
+    "reference_result_sha256": "0b7e87a2af5d776c2a1d94333bb37a84b243f96564d7985d471a417f5370e51d",
+    "evidence": "EEGMMIDB_REFERENCE.zh-CN.md"
+  },
+  "huoshanyun": {
+    "status": "CPU infrastructure acceptance only",
+    "models": [
+      "CBraMod",
+      "REVE base"
+    ],
+    "shared_weights_copied": false,
+    "real_eeg_run": false,
+    "actor_read_isolation_accepted": false,
+    "gpu_allocated": false,
+    "evidence": "HUOSHANYUN_SETUP.zh-CN.md"
+  },
+  "shared_existing_datasets": {
+    "policy": "read-only; no modifications/moves/deletes or copies",
+    "new_official_downloads": "separately owned EEGMAT and EEGMMIDB resources"
+  },
+  "upstream": {
+    "wzf_team_latest": "unknown; no verified team URL",
+    "original_source_git": "fb6c37e64a58d316d98ae087190483d3d4bf1389"
+  }
+}
