@@ -10,13 +10,20 @@
       ".local": true,
       "archive": true,
       "credentials": true,
+      "framework": true,
+      "build": true,
+      "docs/history": true,
+      "knowledge/history": true,
       "**/__pycache__": true,
       "**/.pytest_cache": true
     },
     "search.exclude": {
       ".local": true,
       "archive": true,
-      "credentials": true
+      "credentials": true,
+      "framework": true,
+      "docs/history": true,
+      "knowledge/history": true
     },
     "explorer.compactFolders": false
   }

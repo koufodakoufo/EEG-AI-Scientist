@@ -1,0 +1,124 @@
+{
+  "version": "eegmmidb-reference-v1",
+  "status": "predeclared_before_validation_and_test_results",
+  "identity": "New EEGMMIDB baseline-condition adaptation with official pretrained frozen CBraMod; private Builder reference, not Actor result",
+  "task": "R01 eyes-open baseline (0) versus R02 eyes-closed baseline (1); conditions confounded with fixed recording order",
+  "subject_split": {
+    "train": [
+      "S001",
+      "S024"
+    ],
+    "validation": [
+      "S025",
+      "S030"
+    ],
+    "test": [
+      "S031",
+      "S036"
+    ]
+  },
+  "windows": {
+    "seconds": 5,
+    "per_recording": 12,
+    "selection": "first 60 seconds, consecutive nonoverlapping windows"
+  },
+  "input": {
+    "channels": [
+      "Fp1",
+      "Fp2",
+      "F3",
+      "F4",
+      "F7",
+      "F8",
+      "T7",
+      "T8",
+      "C3",
+      "C4",
+      "P7",
+      "P8",
+      "P3",
+      "P4",
+      "O1",
+      "O2",
+      "Fz",
+      "Cz",
+      "Pz",
+      "FCz"
+    ],
+    "sample_rate_hz": 200,
+    "native_sample_rate_hz": 160,
+    "unit": "microvolt divided by 100",
+    "extra_filter": "none beyond FFT resampling",
+    "reference": "original acquisition reference retained; not asserted linked-ear"
+  },
+  "representation": {
+    "post_transformer_layers": [
+      6,
+      12
+    ],
+    "pool": "mean across channels and time patches",
+    "dimension": 200
+  },
+  "head": {
+    "backbone_frozen": true,
+    "type": "train-standardized logistic regression",
+    "C_grid": [
+      0.01,
+      0.1,
+      1.0,
+      10.0
+    ],
+    "selection": "validation balanced accuracy; ties prefer smaller C"
+  },
+  "probe": {
+    "features": "first two entries in each of six official registry families, 12 entries/62 columns",
+    "alphas": [
+      1.0,
+      10.0,
+      100.0
+    ],
+    "transforms_fit_on": "train only",
+    "selection": "per-feature-group mean validation R2; ties prefer smaller alpha",
+    "metric": "raw unclipped column R2; constant train columns excluded and counted",
+    "negative_control": "seeded participant-block derangement PLUS independent row permutation within destination blocks, destroying condition/window alignment; verify every active target column changes; diagnostic randomized-target control, not a permutation significance test; no test target fitting"
+  },
+  "interventions": {
+    "selection": "top two distinct feature groups by their best validation mean R2 across the two layers; no task accuracy selection",
+    "basis": "SVD of fitted linear-probe directions, numerical rank tolerance 1e-8",
+    "operation": "subtract pooled learned-subspace component as the same shift at every activation token, then run all remaining frozen layers and the frozen head",
+    "controls": "3 seeded random subspaces with identical actual rank and exactly matched per-window shift norm",
+    "random_seeds": [
+      1301,
+      1302,
+      1303
+    ],
+    "residual_recovery": "refit probes on altered training representations; select alpha using altered validation representations only"
+  },
+  "uncertainty": {
+    "unit": "participant; all windows/conditions resampled together",
+    "bootstrap_resamples": 2000,
+    "seed": 20261029,
+    "report": "95% marginal intervals, explicitly not simultaneous",
+    "multiplicity": "Q1 family is all 24 feature-layer groups, additionally report Bonferroni-adjusted bootstrap intervals at 1-0.05/24; Q2 selected-family size 2, adjusted intervals 97.5%; approximation noted with only six final-test subjects",
+    "primary_Q2_contrast": "change in balanced accuracy versus mean change across three rank/strength-matched random controls"
+  },
+  "interpretation": [
+    "recoverability does not establish prediction reliance",
+    "representation intervention does not establish physiological causation",
+    "negative task effects and null findings retained",
+    "R01/R02 fixed recording order is confounded with eye condition; no independent EOG artifact control",
+    "six held-out subjects and first-36 convenience subset cannot establish clinical or population generalization",
+    "new to this development project, with unknown potential overlap in CBraMod pretraining"
+  ],
+  "test_policy": "Only after fitted parameters, choices, code and this protocol are hash frozen. One trusted reference evaluation; further independent replay is audit only, never new selection.",
+  "cpu_threads": 4,
+  "gpu": 0,
+  "scope": "Q1-Q3 plus frozen head; all scope fixed before held-out scientific access",
+  "prepared_sha256": {
+    "train": "97b1621912e279fbaac83b70aa38644c60b851d765fd21fd0289b178b6a1ffbe",
+    "validation": "2550d391bb048cf39f7821eb73405250bc04d45ceeea1fc01fb73289b4c8358f",
+    "test": "0d5597e23164f36f1863c2f69e031f401b98ab85a84748cd9eb08196998e64b7"
+  },
+  "implementation": "Numerical functions and grids reused unchanged from frozen real_science.py and original real_reference.py; independent dataset and export adapters; no EEGMAT IDs or task labels",
+  "export": "Fresh opaque cryptographic participant/sample IDs and private row permutation; public train/validation only plus allowlisted generic API/resources/sanitized head; sealed test x+IDs/truth/mapping/manifests private"
+}

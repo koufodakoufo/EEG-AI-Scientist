@@ -1,0 +1,113 @@
+{
+  "schema_version": "nightly_freeze_verification_v1",
+  "cases": [
+    {
+      "group": "dev",
+      "public": ".local/overnight-20261029/public-bundles/dev",
+      "public_manifest_sha256": "8aa052295e7ee31bd28bf3d3e26912e5a88fec51c5b739ba580946fb84895420",
+      "files": [
+        {
+          "bytes": 2343,
+          "path": "DATA_DICTIONARY.md",
+          "sha256": "163f21f6c4d6073ef07633213a4ed788b6293c808b9698dab1a67eb72b30b129"
+        },
+        {
+          "bytes": 2434,
+          "path": "OUTPUT_CONTRACT.json",
+          "sha256": "8d26848facd50d46ae65221cdffc693607e58ac2d0e3967ca4915eb19fa88bb1"
+        },
+        {
+          "bytes": 1681,
+          "path": "RESOURCE_MANIFEST.json",
+          "sha256": "825576db24432da06a6eb70fa92d1bd85f1a181ff55bc5057edf5971978115f1"
+        },
+        {
+          "bytes": 4516,
+          "path": "TASK_PUBLIC.md",
+          "sha256": "f9daf868b782219e97d3eb20ce2edc3634f4e1817d182f951cffc49efa3b7660"
+        },
+        {
+          "bytes": 605,
+          "path": "fixed_model.py",
+          "sha256": "03dedcf18b5b733bc4a8508e7bf01b320efe71e7a7e615a7af7b567f3ac87d52"
+        },
+        {
+          "bytes": 86189,
+          "path": "train.csv",
+          "sha256": "c595cd7a35324b5a29c08d6f0a59f2987ef505c06745a4ce648004bc4ddcbd6d"
+        },
+        {
+          "bytes": 29736,
+          "path": "validation.csv",
+          "sha256": "72e0abd7793faef4b29b2299bcf324cac8aa39167ae925c6bf58066120b854a7"
+        }
+      ],
+      "private_reference": ".local/overnight-20261029/private/reference-v2/dev.json",
+      "private_reference_sha256": "bd04edfa062822d3b6ad7049543934859601239f8d7a1d13e99e5adfea2261b9",
+      "reference_report_sha256": "fc3faf7b06df5cc475f34a0324ffe255ad30a96cea1e7454c6f51891369d77ea",
+      "reference_claims": 10,
+      "seal_sha256": "cf1308028c77fd14a410b55a05fcc796fef3d628d6c2a8169d66da1031174908",
+      "verification": "passed"
+    },
+    {
+      "group": "holdout",
+      "public": ".local/overnight-20261029/public-bundles/holdout",
+      "public_manifest_sha256": "0d77612aa8a810a5eed20e435d782c5150a750f74a187e9d47d91bdf1e5541a4",
+      "files": [
+        {
+          "bytes": 2456,
+          "path": "DATA_DICTIONARY.md",
+          "sha256": "c76f1bbc1cc3c8458d0cda8383f6047131523fd083742d18c5ac99242857c8e2"
+        },
+        {
+          "bytes": 2434,
+          "path": "OUTPUT_CONTRACT.json",
+          "sha256": "8d26848facd50d46ae65221cdffc693607e58ac2d0e3967ca4915eb19fa88bb1"
+        },
+        {
+          "bytes": 1691,
+          "path": "RESOURCE_MANIFEST.json",
+          "sha256": "8c22ae96042c4835a7caa47f9cae20d71c2e87e0cf2eae671e6cbbc2912a29c8"
+        },
+        {
+          "bytes": 4561,
+          "path": "TASK_PUBLIC.md",
+          "sha256": "f1a088e25ea7ce6158ea1e1603b6f34e9a974dbdc951af8f1159bce63cdac32d"
+        },
+        {
+          "bytes": 625,
+          "path": "fixed_model.py",
+          "sha256": "0cf0342e40465ff44a53fe61e53b8d453b3b5b00c7ce7893a075cd09e6dfd71a"
+        },
+        {
+          "bytes": 85123,
+          "path": "train.csv",
+          "sha256": "06ae4b11ce8fd8ede7e163b2432e30d6bf85d714dad134b1349be10a69524480"
+        },
+        {
+          "bytes": 29391,
+          "path": "validation.csv",
+          "sha256": "ad8f9044cad6bfd3a9ff4842fe151b544f0988d897691f9d707c56b0c466888e"
+        }
+      ],
+      "private_reference": ".local/overnight-20261029/private/reference-v2/holdout.json",
+      "private_reference_sha256": "2a08a87e44a7c8d684af26490dbb1d8547ef9df2b2d593390fdc5a04c421e800",
+      "reference_report_sha256": "9493a983e3482c3dbf8bc60a55297520d4949a1d55ec7ce39696c15ef5665c8f",
+      "reference_claims": 7,
+      "seal_sha256": "97fa09050032cc36d118691d7548211c8c21add297a168bc47e31a5fb5b215a9",
+      "verification": "passed"
+    }
+  ],
+  "skill_sha256": "54d5ce036ebb184bc653060196bed701807bb516b63dfc40d892d9938079191d",
+  "actor_job_sha256": "b3b64b9a0af273952815ced0c7087b56ec0f8199549445906e296a4301455683",
+  "holdout_protocol_sha256": "fbaf62224962bf02e31edc0463256dd55f1b4acac01ce59cf52ab441b6ddce06",
+  "taskbook_sha256": "e203618cea72e09e881f54870bc5dd6d5c96f265a9a0012f64e923d58439c562",
+  "all_24_worker_reservations_terminal": true,
+  "model_calls_added": 0,
+  "reference_tree": ".local/overnight-20261029/private/reference/research_tree.json",
+  "reference_tree_validation": ".local/overnight-20261029/private/reference/validation_report.json",
+  "limits": [
+    "Hash sealing verifies preserved bytes, not scientific adequacy or semantic non-leakage.",
+    "Exact reference-report copy absent from public manifests; live boundary tests are a separate check."
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "remote": "origin",
+  "branch": "main",
+  "repository": "https://github.com/koufodakoufo/EEG-AI-Scientist.git",
+  "workspaces": {
+    "huoshanyun": {
+      "code": "/vePFS-0x0d/home/duandh/projects/EEG-AI-Scientist/code",
+      "runs": "/vePFS-0x0d/home/duandh/projects/EEG-AI-Scientist/runs",
+      "python": "/home/duandh/projects/EEG-AI-Scientist/envs/cpu/bin/python",
+      "registration_status": "pending"
+    },
+    "nccserver0": {
+      "code": "/data/duandh/EEG-AI-Scientist/code",
+      "runs": "/data/duandh/EEG-AI-Scientist/runs",
+      "python": "/data/duandh/eegfm-stage-a-20261028/brainpec-real-20261029/venv/bin/python"
+    }
+  }
+}

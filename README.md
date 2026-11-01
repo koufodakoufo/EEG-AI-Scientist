@@ -1,22 +1,32 @@
-# EEG-AI-Scientist
+# EEG RSI Scientist
 
-唯一正式本地工作区是 **X:\projects\EEG-AI-Scientist**，沿用根目录原有Git与github remote。当前维护分支为research/brainpec-real-20261029。
+让 AI 从真实 EEG 实验和反馈中学习可迁移的科研方法，并检验它是否更擅长改进下一代研究者。
 
-**简洁浏览：**用 VS Code 打开 [EEG-AI-Scientist.code-workspace](EEG-AI-Scientist.code-workspace)。此视图隐藏本地私有材料、历史归档、凭据目录和缓存；文件仍在原处，直接“打开文件夹”可恢复完整树。隐藏不等于权限隔离。
+内环提出假设、设计实验、形成证据；外环修改研究策略，在新问题上比较改进前后。EEG 表征分析是目前的实验场。一次任务完成、一次较好分数或一份新 skill 都不等于 RSI。
 
-先读[中文入口](START_HERE.zh-CN.md)和[一页简报](MORNING_SUMMARY.md)；详细结果见[本轮报告](docs/research/2026-10-30-extension/DETAILED_REPORT.zh-CN.md)。
+## 从哪里开始
 
-本轮完成真实EEG参考分析、两条真实Codex Actor经wzf driver的生命周期及一对skill案例。**Actor仅完成Q1；未证明skill提高科研能力，未完成真实任务间技能迁移。** 用户已要求收尾，不继续后台研究。
+- [下一轮 ignition 研究设计](docs/research/ignition-study.md)：研究什么、怎样比较、什么结果算证据。
+- [代码结构](docs/architecture.md)：各部分负责什么，哪些能力已经实现。
+- [机器与同步](docs/workspaces.md)：本地、火山云、ncc 和 GitHub 的关系。
+- [历史成果](docs/history/README.md)：已有结果和原始证据入口。
 
-| 位置 | 用途 |
-| --- | --- |
-| framework/ | 当前维护的wzf衍生框架，无独立.git |
-| scripts/research/ | 分析、导出、重放、校准与运行入口 |
-| docs/research/2026-10-30-extension/ | 当前报告、验收、恢复与证据索引 |
-| .local/ | 私有数据、参考和运行证据，不上传GitHub |
-| archive/ | 原工程、来源、历史归档 |
-| materials/、credentials/ | 私有材料；凭据不读取或打包 |
+## 日常使用
 
-nccserver0活动代码在/data/duandh/eegfm-stage-a-20261028/overnight-20261029/integration；原source/eeg-fm-research保持fb6c37e。火山云个人代码在/home/duandh/projects/EEG-AI-Scientist-20261030/repository。[完整路径](docs/research/2026-10-30-extension/PATH_MAP.md)
+从仓库根安装开发环境：
 
-C盘ChatGPT目录是临时支持材料，不是活动工程。团队最新上游地址仍未知，不把导入快照称为wzf团队最新版。共享数据和他人目录只读。用户已授权推送现有GitHub research分支；[同步与恢复](docs/research/2026-10-30-extension/RESUME.md)。
+```bash
+python -m pip install -e ".[dev]"
+python -m eegfm --help
+python -m pytest -q
+```
+
+`dev` 已包含测试与科学依赖；最小安装可用 `pip install -e .`，按需添加 `science`、`plots` 或 `reve`。Linux 负责受限 Agent、进程和沙箱执行。Windows 可编辑代码、阅读结果并运行可移植检查。完整安装与平台验证结果见机器说明。
+
+代码在 src/eegfm/，测试在 tests/，任务定义在 tasks/。运行产物、数据、权重和私有参考不进 Git。唯一正式本地工程为 X:/projects/EEG-AI-Scientist。
+
+## 当前事实
+
+已完成真实 EEG 参考分析，以及一次无/有固定方法提示的独立 AI 对照。两次 AI 运行只完成属性恢复分析；尚未证明稳定技能收益、真实任务经验迁移或递归自我改进。当前外环已有轨迹、记忆和 skill 材料管理，自动优化器和 ignition 对照仍待实现与运行。
+
+主线为 main。开发使用短期主题分支，验证后合回主线；旧阶段保存在 archive/* 标签。新运行按研究主题、协议版本、代际、条件与重复次数命名，日期只记录在元数据中。

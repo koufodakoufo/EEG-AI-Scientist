@@ -1,0 +1,13 @@
+{
+  "version": "skill_v1",
+  "origin": "fresh_dev_trajectory_distillation",
+  "model_call": "M15",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "medium",
+  "input_manifest": ".local/overnight-20261029/private/jobs/M15/PROVENANCE.json",
+  "skill_sha256": "54d5ce036ebb184bc653060196bed701807bb516b63dfc40d892d9938079191d",
+  "builder_text_edits": false,
+  "review": "No concrete task/feature names, numerical outcomes, seeds, model weights, expected effect directions or held-out content found.",
+  "limitations": "One strong synthetic development trajectory; no demonstrated baseline scientific failure. Candidate benefit is unproven. Two paired transfer repetitions at most, not five-rep skill validation.",
+  "discovery": "Experimental repository artifact; not globally installed. Treatment receives these exact bytes explicitly; baseline does not."
+}

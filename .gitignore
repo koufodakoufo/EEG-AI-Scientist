@@ -108,3 +108,6 @@ review_only/
 # Keep both historical and current locations protected.
 /tasks/reve_isa/src/split_manifest.json
 /docs/history/**/*.lock
+
+# Frozen local framework leftovers are preserved, not current source.
+/framework/

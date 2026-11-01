@@ -1,0 +1,89 @@
+{
+  "date": "2026-10-28",
+  "timezone": "Asia/Shanghai",
+  "canonical_local_workspace": "X:/projects/EEG-AI-Scientist",
+  "active_framework": "X:/projects/EEG-AI-Scientist/framework",
+  "temporary_folder": "C:/Users/14090/Documents/ChatGPT/EEG-FM-RSI",
+  "temporary_folder_after_correction": "Only pre-existing reports retained; task-created workspaces/docs/scripts/environment reports removed after verified migration",
+  "local_git": {
+    "repository": "X:/projects/EEG-AI-Scientist/.git",
+    "branch": "research/overnight-20261029",
+    "remote_name": "github",
+    "remote_url": "https://github.com/koufodakoufo/EEG-AI-Scientist.git",
+    "original_index_sha256": "1922ce329d38bb439062a4049a5dc67ed911bb08a92def255ef87193fa817183",
+    "original_config_sha256": "59d1dd91cf57d0aaefe5e3ab5180d8f1ce9e7f74e3c29da0426d063e717d103b",
+    "framework_has_nested_git": false,
+    "new_commits_this_reorganization": 2,
+    "pushes": 0,
+    "working_tree": "Authorized commits record reorganization; inspect git status and git log for live state",
+    "head_before_authorized_commits": "c22df47b6d79a49f691838122abb4eff0b01ff0e",
+    "index_preserved_until_user_authorized_commits": true,
+    "authorized_local_commit_sequence": [
+      "Preserve 16 pre-existing modified and 18 selected added files at original paths",
+      "Reorganize local workspace, import selected framework source and repair proxy tooling"
+    ],
+    "overnight_base_commit": "5df1d9e",
+    "overnight_status_document": "MORNING_SUMMARY.md"
+  },
+  "previous_c_drive_git": {
+    "source_repository_initialized": true,
+    "commits_created_previous_turn": [
+      "4a917a6bb857bf2522434ae033aa2a59c76ce9ab",
+      "fb6c37e64a58d316d98ae087190483d3d4bf1389"
+    ],
+    "github_remote_added": false,
+    "push_performed": false,
+    "active_repository_removed": true,
+    "restore_test_clone_removed": true,
+    "history_retained_as_bundle": "archive/setup-20261028/evidence/source-provenance/eeg-fm-research-source-snapshot-corrected.bundle"
+  },
+  "preservation": {
+    "original_business_files_mapped_and_hash_verified": 1214,
+    "old_experiment_archive_modified": false,
+    "credentials_read_or_moved": false,
+    "old_virtualenv": "Archived at archive/legacy-harness-20261028/.venv; relocation does not preserve runnability",
+    "migration_record": "archive/reorganization-20261028/migration.json",
+    "source_git_exclusions": [
+      "framework/examples/demo_claude_001",
+      "framework/tasks/reve_isa/src/split_manifest.json",
+      "archive/sources",
+      "archive/review-packages"
+    ],
+    "framework_files_matching_original_package_at_import": 281,
+    "active_framework_now": "Authorized overnight extensions and targeted driver fixes; original distributions remain in archive."
+  },
+  "remote": {
+    "host_alias": "nccserver0",
+    "verified_hostname": "nccserv0",
+    "account": "duandh",
+    "home": "/home/duandh",
+    "workspace": "/data/duandh/eegfm-stage-a-20261028",
+    "source": "/data/duandh/eegfm-stage-a-20261028/source/eeg-fm-research",
+    "source_commit": "fb6c37e64a58d316d98ae087190483d3d4bf1389",
+    "local_remote_relationship": "X root and nightly integration share Git ancestry and are synced by local bundles; preserved source/eeg-fm-research remains the separate fb6c37e import snapshot.",
+    "codex": "0.165.0 installed and isolated configuration present",
+    "offline_tests": "12 passed in 44.07s during prior stage A verification",
+    "user_login": "completed_by_user; subsequent fresh Codex model invocations succeeded",
+    "real_model_smoke": "passed M03; blind isolation passed M10; dev, distillation and holdout episodes completed with individual statuses in RUN_LEDGER.jsonl",
+    "latest_connectivity_check": {
+      "date": "2026-10-28",
+      "ssh_command_succeeded": true,
+      "strategy": "foreground PowerShell 5.1 supervisor, dynamically allocated SSH reverse-forward loopback port",
+      "local_proxy_port": 10808,
+      "authentication_discovery_endpoint_http_status": 200,
+      "project_cli_device_code_prompt_reached": true,
+      "extension_binary_dotenv_device_code_prompt_reached": true,
+      "device_probe_authorization_completed": false,
+      "ide_proxy_configuration": "/home/duandh/.codex/.env; helper-managed proxy variables only",
+      "unknown_old_listeners_modified": false,
+      "next_action": "Start foreground tunnel in your own Windows PowerShell, keep it open, reload CLI environment or VS Code window, complete browser login"
+    },
+    "dataset_modified_or_moved": false,
+    "same_origin_integration": "/data/duandh/eegfm-stage-a-20261028/overnight-20261029/integration",
+    "overnight_tests": "79 research_bench unittest tests and 14 original-framework pytest tests passed on Linux.",
+    "overnight_source_unchanged": true,
+    "overnight_proxy": "stopped normally after all model runs; restart managed Windows tunnel and source environment.sh before new remote Codex use"
+  },
+  "next": "Follow README.zh-CN.md VS Code steps for user login and read-only smoke; stop before architecture or scientific task work",
+  "updated_date": "2026-10-29"
+}

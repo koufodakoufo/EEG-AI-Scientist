@@ -1,0 +1,179 @@
+[
+  {
+    "started_at": "2026-10-29T00:29:40+08:00",
+    "next_action": "Model control verified by M10 and M11",
+    "blocked_reason": null,
+    "deadline_at": "2026-10-29T01:05:00+08:00",
+    "status": "passed",
+    "depends_on": [],
+    "id": "P0",
+    "owner": "builder",
+    "evidence_paths": [
+      "ISOLATION_REPORT.json",
+      "BUDGET.json"
+    ]
+  },
+  {
+    "started_at": null,
+    "next_action": "Final Linux verification: 79 benchmark tests and 14 original-framework tests.",
+    "blocked_reason": null,
+    "deadline_at": "2026-10-29T02:05:00+08:00",
+    "status": "passed",
+    "depends_on": [],
+    "id": "P1",
+    "owner": "builder",
+    "evidence_paths": [
+      "server/final-research-bench-tests.log",
+      "server/final-legacy-tests.log"
+    ],
+    "finished_at": "2026-10-28T19:38:12.916810+00:00"
+  },
+  {
+    "started_at": "2026-10-29T00:41:00+08:00",
+    "next_action": "Both public cases and symmetric reference extraction sealed before first Actor",
+    "blocked_reason": null,
+    "deadline_at": "2026-10-29T01:06:00+08:00",
+    "status": "passed",
+    "depends_on": [],
+    "id": "P2",
+    "owner": "M01",
+    "evidence_paths": [
+      ".local/overnight-20261029/private/reference-v2/FREEZE.json",
+      "METHOD_NOTE.md"
+    ]
+  },
+  {
+    "started_at": null,
+    "next_action": "Live boundary passed; preserve limitations",
+    "blocked_reason": null,
+    "deadline_at": "2026-10-29T02:30:00+08:00",
+    "status": "passed",
+    "depends_on": [
+      "P0"
+    ],
+    "id": "P3",
+    "owner": "builder",
+    "evidence_paths": [
+      "ISOLATION_REPORT.json",
+      "ACTOR_LAUNCHER.md"
+    ]
+  },
+  {
+    "started_at": null,
+    "next_action": "Skill frozen before holdout",
+    "blocked_reason": null,
+    "deadline_at": null,
+    "status": "passed",
+    "depends_on": [
+      "P1",
+      "P2",
+      "P3"
+    ],
+    "id": "P4",
+    "owner": "fresh_actor_then_distiller",
+    "evidence_paths": [
+      "private/evaluations/M14",
+      "framework/benchmarks/brainpec_pilot/skills/distinguish-recovery-response-and-causation"
+    ]
+  },
+  {
+    "started_at": null,
+    "next_action": "Frozen synthetic comparison executed: one complete pair, one external interruption; no demonstrated skill benefit.",
+    "blocked_reason": null,
+    "deadline_at": null,
+    "status": "passed",
+    "depends_on": [
+      "P4"
+    ],
+    "id": "P5",
+    "owner": "fresh_actors",
+    "evidence_paths": [
+      "RESULTS.md",
+      "PROCESS_AUDIT.md",
+      "RUN_LEDGER.jsonl"
+    ],
+    "finished_at": "2026-10-28T19:38:12.916810+00:00"
+  },
+  {
+    "started_at": null,
+    "next_action": "Reliability fixes, counterexamples, arithmetic audit and eight-candidate research queue completed.",
+    "blocked_reason": null,
+    "deadline_at": "2026-10-29T07:59:40+08:00",
+    "status": "passed",
+    "depends_on": [
+      "P1"
+    ],
+    "id": "P6",
+    "owner": "builder",
+    "evidence_paths": [
+      "SCORING_COUNTEREXAMPLES.json",
+      "NUMERICAL_AUDIT.json",
+      "RESEARCH_QUEUE.md"
+    ],
+    "finished_at": "2026-10-28T19:38:12.916810+00:00"
+  },
+  {
+    "started_at": null,
+    "next_action": "Evidence archive verified; final source/documentation commit and matching Git bundle are the closeout transaction.",
+    "blocked_reason": null,
+    "deadline_at": "2026-10-29T08:29:40+08:00",
+    "status": "passed",
+    "depends_on": [],
+    "id": "P7",
+    "owner": "builder",
+    "evidence_paths": [
+      "MORNING_SUMMARY.md",
+      "EVIDENCE_INDEX.md",
+      "RESUME.md",
+      ".local/overnight-20261029/recovery/RECOVERY_MANIFEST.json"
+    ],
+    "finished_at": "2026-10-28T19:38:12.916810+00:00"
+  },
+  {
+    "id": "E_REAL",
+    "depends_on": [
+      "P0"
+    ],
+    "status": "blocked",
+    "owner": "builder",
+    "started_at": null,
+    "deadline_at": null,
+    "evidence_paths": [
+      "RESULTS.md",
+      "RESEARCH_QUEUE.md"
+    ],
+    "blocked_reason": "Compatible real dataset/checkpoint/head/preprocessing/split identity unverified; GPU allocation zero.",
+    "next_action": "Obtain exact authorized resource identifiers before a real pilot."
+  },
+  {
+    "id": "L2_FULL",
+    "depends_on": [
+      "P5"
+    ],
+    "status": "blocked",
+    "owner": "builder",
+    "started_at": null,
+    "deadline_at": null,
+    "evidence_paths": [
+      "METHOD_NOTE.md",
+      "RESULTS.md"
+    ],
+    "blocked_reason": "Replay dependency/command contract and extraction granularity remain incomplete; semantic calibration not established.",
+    "next_action": "Freeze a revised evaluator only for a new version; preserve current primary results."
+  },
+  {
+    "id": "G3_EXTRA",
+    "depends_on": [
+      "P5"
+    ],
+    "status": "skipped",
+    "owner": "builder",
+    "started_at": null,
+    "deadline_at": null,
+    "evidence_paths": [
+      "BUDGET.json"
+    ],
+    "blocked_reason": "24/24 extra workers consumed; generic-prompt/third-judge conditions require a new budget.",
+    "next_action": "No additional model launch tonight."
+  }
+]

@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eeg-rsi-scientist"
+version = "0.1.0"
+description = "Research lifecycle, trusted evaluation, and EEG scientific tasks"
+requires-python = ">=3.10"
+dependencies = ["PyYAML>=6"]
+
+[project.optional-dependencies]
+science = ["numpy>=1.24", "scipy>=1.10", "scikit-learn>=1.3", "torch>=2.2", "mne>=1.6", "einops>=0.7"]
+dev = ["pytest>=8", "numpy>=1.24", "scipy>=1.10", "scikit-learn>=1.3", "torch>=2.2", "mne>=1.6", "einops>=0.7", "threadpoolctl>=3"]
+reve = ["transformers>=4.40", "safetensors>=0.4", "einops>=0.7"]
+plots = ["matplotlib>=3.7"]
+test = ["pytest>=8", "numpy>=1.24", "threadpoolctl>=3"]
+
+[project.scripts]
+eegfm = "eegfm.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+eegfm = ["templates/*.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "tests"]
+addopts = "-ra"
+markers = ["linux: requires Linux process isolation or lifecycle execution"]
