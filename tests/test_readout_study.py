@@ -107,6 +107,28 @@ def test_positive_calibration_preserves_ranking_even_for_adversarial_labels() ->
             assert np.mean((scores[:, 1] >= 0) == validation["y"]) == 1.0
 
 
+def test_calibration_intercept_precision_preserves_near_threshold_validation_decisions() -> None:
+    from eegfm.eeg.readout_study import fit_readouts
+    from scipy.special import expit
+
+    rng = np.random.default_rng(12)
+    original_y, validation_y = np.tile([0, 1], 40), np.tile([0, 1], 20)
+    x, validation_x = rng.normal(size=(80, 325)), rng.normal(size=(40, 325))
+    x[:, 262] = 3 * (2 * original_y - 1) + rng.normal(0, 0.2, 80) + 5
+    mean, scale = x[:, 262].mean(), x[:, 262].std()
+    # Reversed training labels force the positive slope to its fixed floor.
+    # A small intercept error can then overwhelm these legitimate small logits.
+    validation_x[:, 262] = mean + scale * 0.001 * (2 * validation_y - 1)
+    train_y = 1 - original_y
+    fits = fit_readouts(_split(x, train_y, "t"), _split(validation_x, validation_y, "v"))
+    for candidate in fits["models"]["B"]["selection_grid"]:
+        assert candidate["coefficient"][0] == 1e-8
+        assert candidate["validation_balanced_accuracy"] == 1.0
+        logits = candidate["coefficient"][0] * (x[:, 262] - mean) / scale + candidate["intercept"]
+        # The unpenalized intercept must solve its training score equation.
+        assert abs(np.sum(expit(logits) - train_y)) < 1e-12
+
+
 def test_gaussian_control_cannot_use_signal_in_other_input_columns() -> None:
     from eegfm.eeg.readout_study import fit_readouts, predict_readouts
 

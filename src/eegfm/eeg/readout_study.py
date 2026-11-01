@@ -68,7 +68,7 @@ def _balanced_accuracy(y: FloatArray, logits: FloatArray) -> float:
 
 
 def _calibration(z: FloatArray, y: FloatArray, c: float) -> dict[str, Any]:
-    from scipy.optimize import minimize
+    from scipy.optimize import brentq, minimize
     from scipy.special import expit
 
     def objective(parameters: FloatArray) -> tuple[float, FloatArray]:
@@ -88,8 +88,18 @@ def _calibration(z: FloatArray, y: FloatArray, c: float) -> dict[str, Any]:
                       options={"maxiter": 2000, "ftol": 1e-14, "gtol": 1e-8})
     if not fitted.success or not np.isfinite(fitted.x).all():
         raise RuntimeError(f"Positive calibration did not converge: {fitted.message}")
-    return {"coefficient": [float(fitted.x[0])], "intercept": float(fitted.x[1]),
-            "iterations": int(fitted.nit)}
+    # A tiny absolute optimization residual in the intercept can dominate logits
+    # when the constrained slope is 1e-8. For the fitted slope, solve the strictly
+    # monotone, unpenalized intercept score equation to floating-point precision.
+    linear = z[:, 0] * fitted.x[0]
+    bound = float(np.max(np.abs(linear))) + 50.0
+    remaining = 2000 - int(fitted.nit)
+    if remaining <= 0:
+        raise RuntimeError("Calibration exhausted its iteration cap before intercept refinement")
+    intercept, root = brentq(lambda value: float(np.sum(expit(linear + value) - y)),
+                             -bound, bound, xtol=5e-16, maxiter=remaining, full_output=True)
+    return {"coefficient": [float(fitted.x[0])], "intercept": float(intercept),
+            "iterations": int(fitted.nit + root.iterations)}
 
 
 def _fit_linear(train_x: FloatArray, y: FloatArray, val_x: FloatArray,
