@@ -72,7 +72,7 @@ downloads/
 # bin/
 /group-meeting/
 
-#------------------------Overnight study------------------------
+#------------------------Research runtime------------------------
 data/private/
 runs/
 artifacts/*.zip
@@ -98,3 +98,13 @@ review_only/
 
 # Calibration answers are available only in the owner's Builder workspace.
 /docs/research/2026-10-30-extension/semantic-calibration/private-oracle.json
+
+# Private material remains private after directory reorganization.
+**/private-oracle.json
+*.egg-info/
+/.worktrees/
+/.superpowers/
+
+# Keep both historical and current locations protected.
+/tasks/reve_isa/src/split_manifest.json
+/docs/history/**/*.lock
