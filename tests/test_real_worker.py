@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import subprocess
 import sys
 import tempfile
 from types import SimpleNamespace
@@ -65,6 +66,20 @@ class WorkerTests(unittest.TestCase):
 
     def runtime(self) -> Any:
         return self.mod.RuntimeConfig(bwrap=Path(shutil.which("bwrap") or "/usr/bin/bwrap"), python=Path("/usr/bin/python3"), environment_roots=())
+
+    def require_live_bwrap(self) -> None:
+        """Gate only actual canaries on host policy, never on worker outcomes."""
+        command = [str(self.runtime().bwrap), "--die-with-parent", "--unshare-all", "--new-session"]
+        for directory in ("/usr", "/lib", "/lib64"):
+            if Path(directory).exists():
+                command += ["--ro-bind", directory, directory]
+        command += ["--clearenv", "--", "/usr/bin/true"]
+        probe = subprocess.run(command, capture_output=True, text=True, timeout=10,
+                               env={**os.environ, "LANG": "C", "LC_ALL": "C"})
+        namespace_denied = "bwrap: No permissions to create a new namespace, likely because the kernel does not allow non-privileged user namespaces."
+        if probe.returncode == 1 and probe.stderr.startswith(namespace_denied):
+            self.skipTest(f"Host namespace policy denies {command[0]}: {probe.stderr.strip()}")
+        self.assertEqual(probe.returncode, 0, f"Unexpected bwrap capability failure: {probe.stderr}")
 
     def evaluator(self, aggregate: Any = None) -> Any:
         return self.mod.SandboxedWorkerEvaluator(private_root=self.root / "private", public_root=self.public,
@@ -246,6 +261,7 @@ class WorkerTests(unittest.TestCase):
 
     @unittest.skipUnless(sys.platform == "linux" and Path(shutil.which("bwrap") or "/usr/bin/bwrap").exists(), "local bwrap unavailable")
     def test_live_stdlib_canary_denies_private_network_writes_and_duplicate_execution(self) -> None:
+        self.require_live_bwrap()
         secret = self.root / "private-sentinel.txt"
         secret.write_text("hidden")
         code = '''import argparse,json,os,pathlib,socket
@@ -282,6 +298,7 @@ print('PRIVATE_WORKER_STDOUT')
 
     @unittest.skipUnless(sys.platform == "linux" and Path(shutil.which("bwrap") or "/usr/bin/bwrap").exists(), "local bwrap unavailable")
     def test_actual_timeout_and_output_link_cannot_produce_success(self) -> None:
+        self.require_live_bwrap()
         (self.candidate / "main.py").write_text("import pathlib; pathlib.Path('/out/results.npz').symlink_to('/public/TASK.md')\n")
         evaluator = self.evaluator()
         self.assertEqual(evaluator.submit(self.spec())["status"], "failed")
