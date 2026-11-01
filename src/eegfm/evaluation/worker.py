@@ -149,12 +149,25 @@ class SplitInputs:
 
 @dataclass(frozen=True)
 class RuntimeConfig:
-    bwrap: Path
+    bwrap: Path | None
     python: Path
     environment_roots: tuple[Path, ...] = ()
     manifest: FileBinding | None = None
+    backend: str = 'bwrap'
+    docker: Path | None = None
+    docker_image: str | None = None
+    docker_host: str = 'unix:///var/run/docker.sock'
 
     def __post_init__(self) -> None:
+        if self.backend not in {'bwrap', 'docker'}:
+            raise ValueError('Unknown worker backend')
+        if self.backend == 'docker':
+            if self.environment_roots or self.bwrap is not None or self.docker is None or self.docker_image is None:
+                raise ValueError('Docker needs an immutable image, client, and no host runtime mounts')
+            from eegfm.evaluation.docker_worker import DockerBackend
+            DockerBackend(self.docker, self.docker_image, self.docker_host, self.python)
+        elif self.bwrap is None or self.docker is not None or self.docker_image is not None:
+            raise ValueError('Bubblewrap needs its explicit binary and no Docker configuration')
         forbidden = {"/", "/data", "/mnt", "/mnt/dataset4", "/home", "/root", "/tmp", "/etc", "/proc", "/run", "/var", "/dev"}
         for root in self.environment_roots:
             if not root.is_absolute() or root.as_posix().rstrip("/") in forbidden or root == Path("/"):
@@ -199,8 +212,15 @@ class SandboxedWorkerEvaluator:
         self.aggregate_source_sha256 = digest_file(self.aggregate_source_path)
         callback_source = inspect.getsource(callback)
         self.aggregate_policy_sha256 = _sha(aggregate_policy_sha256) if aggregate_policy_sha256 else hashlib.sha256(callback_source.encode()).hexdigest()
-        self.runtime_hashes = {"bwrap": digest_file(runtime.bwrap.resolve(strict=True)),
-                               "python": digest_file(runtime.python.resolve(strict=True))}
+        self.docker = None
+        if runtime.backend == 'docker':
+            from eegfm.evaluation.docker_worker import DockerBackend
+            self.docker = DockerBackend(runtime.docker, runtime.docker_image, runtime.docker_host, runtime.python)
+            self.runtime_hashes = {'docker': digest_file(runtime.docker.resolve(strict=True))}
+            self.image_identity = self.docker.inspect_image()
+        else:
+            self.runtime_hashes = {"bwrap": digest_file(runtime.bwrap.resolve(strict=True)),
+                                   "python": digest_file(runtime.python.resolve(strict=True))}
         allowed = [Path("/usr").resolve(), Path("/lib").resolve(), Path("/lib64").resolve()]
         for root in runtime.environment_roots:
             _path(root, directory=True)
@@ -208,9 +228,10 @@ class SandboxedWorkerEvaluator:
                 if root == protected or root in protected.parents or protected in root.parents:
                     raise ValueError("Environment mount overlaps protected material")
             allowed.append(root.resolve())
-        binary = runtime.python.resolve(strict=True)
-        if not any(binary == root or root in binary.parents for root in allowed):
-            raise ValueError("Python is outside explicit runtime mounts")
+        if self.docker is None:
+            binary = runtime.python.resolve(strict=True)
+            if not any(binary == root or root in binary.parents for root in allowed):
+                raise ValueError("Python is outside explicit runtime mounts")
         self.db_path = self.private / "worker.sqlite3"
         with closing(sqlite3.connect(self.db_path)) as db, db:
             db.execute("CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, spec TEXT NOT NULL, result TEXT, owner_pid INTEGER, owner_start INTEGER)")
@@ -233,9 +254,12 @@ class SandboxedWorkerEvaluator:
             return {'path':str(path),'sha256':binding.sha256}
         if digest_file(self.aggregate_source_path) != self.aggregate_source_sha256:
             raise ValueError('Aggregator source changed after enrollment')
-        for name,path in (('python',self.runtime.python),('bwrap',self.runtime.bwrap)):
+        binaries = [('docker', self.runtime.docker)] if self.docker else [('python', self.runtime.python), ('bwrap', self.runtime.bwrap)]
+        for name,path in binaries:
             if digest_file(path.resolve(strict=True)) != self.runtime_hashes[name]:
                 raise ValueError('Runtime binary changed after enrollment')
+        if self.docker and self.docker.inspect_image() != self.image_identity:
+            raise ValueError('Docker runtime changed after enrollment')
         return {'inputs':{split:{'train':file_identity(pair.train),'evaluation':file_identity(pair.evaluation)}
                           for split,pair in sorted(self.inputs.items())},
                 'aggregate_bindings':[file_identity(binding) for binding in self.aggregate_bindings],
@@ -244,6 +268,8 @@ class SandboxedWorkerEvaluator:
                 'worker_source_sha256':digest_file(Path(__file__)),
                 'released_metrics':sorted(self.released_metrics),
                 'runtime_binary_hashes':self.runtime_hashes,
+                'backend':self.runtime.backend,
+                'docker_image':self.image_identity if self.docker else None,
                 'runtime_roots':[str(path) for path in self.runtime.environment_roots],
                 'runtime_manifest':file_identity(self.runtime.manifest) if self.runtime.manifest else None,
                 'timeout_seconds':self.timeout,'minimum_free_bytes':self.free_floor,
@@ -260,8 +286,6 @@ class SandboxedWorkerEvaluator:
         if digest_file(_path(self.split_path)) != self.split_hash: raise ValueError("Split manifest changed")
         if candidate_digest(spec.candidate_dir) != spec.candidate_digest: raise ValueError("Candidate changed")
         _path(spec.candidate_dir / "main.py")
-        for key, path in (("python", self.runtime.python), ("bwrap", self.runtime.bwrap)):
-            if digest_file(path.resolve(strict=True)) != self.runtime_hashes[key]: raise ValueError("Runtime binary changed")
         selected = self.inputs[spec.split]
         train, evaluation = selected.train.verify(), selected.evaluation.verify()
         if train == evaluation: raise ValueError("Train and evaluation must be distinct")
@@ -275,6 +299,8 @@ class SandboxedWorkerEvaluator:
         return selected
 
     def build_command(self, spec: EvaluationSpec, candidate: Path, output: Path) -> list[str]:
+        if self.docker:
+            raise ValueError('Docker execution requires its staged job and owned-container lifecycle')
         selected = self.inputs.get(spec.split)
         if selected is None: raise ValueError("Unauthorized split")
         command = [str(self.runtime.bwrap), "--unshare-all", "--die-with-parent", "--new-session", "--cap-drop", "ALL", "--clearenv"]
@@ -333,24 +359,45 @@ class SandboxedWorkerEvaluator:
         job = self.job_directory(spec.job_id)
         diagnostic_code = "evaluation_setup_failed"
         try:
-            job.mkdir(exist_ok=False)
+            job.mkdir(mode=0o700, exist_ok=False)
             write_atomic(job / "request.json", {**record, "fingerprint": fingerprint, "runtime_binary_hashes": self.runtime_hashes})
             candidate = job / "candidate"
             shutil.copytree(spec.candidate_dir, candidate, symlinks=True)
             if candidate_digest(candidate) != spec.candidate_digest: raise ValueError("Snapshot changed")
             output = job / "out"
             output.mkdir()
-            # Bubblewrap 0.6.1 lacks --size. Keep private scratch on the owned
-            # data volume and inside the same monitored 2 GiB job allocation.
-            (job / "tmp").mkdir(mode=0o700)
-            command = self.build_command(spec, candidate, output)
-            status = run_bounded(command, cwd=job, output_dir=job / "execution", timeout_seconds=self.timeout,
-                env={"PATH": "/usr/bin:/bin", "LANG": "C.UTF-8", "CUDA_VISIBLE_DEVICES": "", "PYTHONDONTWRITEBYTECODE": "1"},
-                threads=4, memory_limit_bytes=12 * 1024**3, storage_scope=job, storage_limit_bytes=2 * 1024**3,
-                stdout_limit_bytes=16 * 1024**2, minimum_free_bytes=self.free_floor)
+            if self.docker:
+                selected = self.inputs[spec.split]
+                shutil.copytree(self.public, job / 'public')
+                (job / 'inputs').mkdir()
+                shutil.copyfile(selected.train.verify(), job / 'inputs/train.npz')
+                shutil.copyfile(selected.evaluation.verify(), job / 'inputs/evaluation.npz')
+                verify_public_bundle(job / 'public')
+                if (digest_file(job / 'public/PUBLIC_MANIFEST.json') != self.public_hash
+                        or digest_file(job / 'inputs/train.npz') != selected.train.sha256
+                        or digest_file(job / 'inputs/evaluation.npz') != selected.evaluation.sha256):
+                    raise ValueError('Staged scientific input changed')
+                # Only these per-job copies cross the UID boundary. The 0700
+                # parent prevents other host users reaching the writable out.
+                for root in (candidate, job / 'public', job / 'inputs'):
+                    for entry in root.rglob('*'):
+                        entry.chmod(0o555 if entry.is_dir() else 0o444)
+                    root.chmod(0o555)
+                output.chmod(0o777)
+                status = self.docker.execute(job, fingerprint, spec.split, self.timeout, self.free_floor)
+            else:
+                # bwrap 0.6.1 lacks --size: scratch stays in monitored job.
+                (job / "tmp").mkdir(mode=0o700)
+                command = self.build_command(spec, candidate, output)
+                status = run_bounded(command, cwd=job, output_dir=job / "execution", timeout_seconds=self.timeout,
+                    env={"PATH": "/usr/bin:/bin", "LANG": "C.UTF-8", "CUDA_VISIBLE_DEVICES": "", "PYTHONDONTWRITEBYTECODE": "1"},
+                    threads=4, memory_limit_bytes=12 * 1024**3, storage_scope=job, storage_limit_bytes=2 * 1024**3,
+                    stdout_limit_bytes=16 * 1024**2, minimum_free_bytes=self.free_floor)
             diagnostic_code = "evaluation_integrity_failed"
             if status.get("process_cleanup", {}).get("surviving_owned_pids") != []:
                 raise RuntimeError("Worker process cleanup was not confirmed")
+            if self.docker and status.get('container_cleanup') != 'verified_removed':
+                raise RuntimeError('Container cleanup was not confirmed')
             diagnostic_code = "candidate_execution_failed"
             if status["status"] != "completed" or status["exit_code"] != 0:
                 raise RuntimeError("Worker did not complete cleanly")
@@ -370,7 +417,7 @@ class SandboxedWorkerEvaluator:
             result.update(metrics=aggregated["metrics"], artifacts=[{"path": "released_metrics.json", "sha256": digest_file(metrics_file)}])
             write_atomic(job / "receipt.json", {"status": "succeeded", "request_fingerprint": fingerprint,
                 "execution": str(job / "execution"), "aggregate_manifest_sha256": digest_file(job / "aggregation-private.json"),
-                "result": result, "isolation": "bwrap-unshare-all", "raw_outputs_public": False})
+                "result": result, "isolation": "docker-single-process" if self.docker else "bwrap-unshare-all", "raw_outputs_public": False})
             self._finish(spec.job_id, result)
             return result
         except BaseException as error:
@@ -401,6 +448,14 @@ class SandboxedWorkerEvaluator:
             return self._base_result(record, "waiting")
         result = self._base_result(record, "failed")
         result["diagnostic_code"] = "evaluation_interrupted"
+        if self.docker:
+            identity = self.job_directory(job_id) / 'container.json'
+            if identity.exists():
+                container = json.loads(_path(identity).read_text())
+                fingerprint = hashlib.sha256(canonical_bytes(record)).hexdigest()
+                if container['owner'] != fingerprint or container['image'] != self.runtime.docker_image:
+                    raise ValueError('Interrupted container identity changed')
+                self.docker.remove_owned(container['id'], fingerprint)
         self._finish(job_id, result)
         return result
 

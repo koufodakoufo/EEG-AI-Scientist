@@ -73,7 +73,11 @@ python -B /candidate/main.py --split validation|test --input /inputs/evaluation.
 `main.py` and every fit artifact must be inside the submitted directory. The
 worker starts in `/candidate`. Import the helper by adding the supplied
 `--public` path to `sys.path`; use no host absolute paths. `--input` contains only
-`x`, `sample_ids`, and `subject_ids`. Public validation resources remain allowed
+`x`, `sample_ids`, and `subject_ids`. Scientific workers support one process
+with up to four active CPU threads; use in-process or threading backends, not
+subprocesses, multiprocessing, or joblib process backends. Scratch `/tmp` is
+limited to 64 MiB; put persistent result files under `--output`.
+Public validation resources remain allowed
 for frozen choices; test truth is never available to submitted code. Preserve
 input row order exactly. Write result files under `--output`; consult the frozen
 result schema for mandatory arrays and supported optional analyses. Do not

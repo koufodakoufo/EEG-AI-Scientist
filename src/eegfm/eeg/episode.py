@@ -19,6 +19,7 @@ from typing import Any
 from eegfm.agent.actor import prepare_control
 from eegfm.agent.actor import launch_actor
 from eegfm.agent.actor import profile_template_sha256
+from eegfm.agent.actor import readonly_transport_sha256
 from eegfm.agent.actor import validate_isolation_gate
 from eegfm.agent.budget import BudgetExceeded
 from eegfm.agent.budget import mark_call
@@ -33,19 +34,38 @@ from eegfm.agent.controller import ResearchController
 from eegfm.agent.controller import ResearchDriver
 from eegfm.agent.controller import EvaluationSpec
 from eegfm.agent.controller import RECOVERY_POLICIES
+from eegfm.agent.controller import ControllerAlreadyRunning
 from eegfm.agent.driver import Adapter
 from eegfm.evaluation.worker import FileBinding
 from eegfm.evaluation.worker import RuntimeConfig
 from eegfm.evaluation.worker import SandboxedWorkerEvaluator
 from eegfm.evaluation.worker import SplitInputs
 from eegfm.improvement.trace import collect_visible_trace
+from eegfm.improvement.trace import cli_usage
 
 MODEL = "gpt-6.1-sol"
+DEFAULT_TASK = "eegmat-representation-analysis-v1"
 SCOPE = {"task": "eegmat-arithmetic-background", "public_resources_only": True,
          "backbone_frozen": True, "head_frozen": True, "selection_split": "validation",
          "test_after_lock_only": True, "gpu": 0}
 DOCS = ("TASK.md", "INTERFACE.md", "API_README.md", "PUBLIC_RESULT_SCHEMA.md")
 POLICY_HASH = hashlib.sha256(canonical_bytes({"scope": SCOPE, "review": "scope-json-and-substantive-plan-v1"})).hexdigest()
+TASKS = {
+    DEFAULT_TASK: ("representation_analysis", "eegmat-arithmetic-background"),
+    "eegmat-attribute-dependence-v1": ("representation_analysis", "eegmat-arithmetic-background"),
+    "eegmmidb-attribute-dependence-v1": ("eegmmidb", "eegmmidb-eyes-open-closed-baseline"),
+}
+
+
+def task_scope(task_id: str = DEFAULT_TASK) -> dict[str, Any]:
+    if not isinstance(task_id, str) or task_id not in TASKS:
+        raise ValueError("Unregistered public task identity")
+    return {**SCOPE, "task": TASKS[task_id][1]}
+
+
+def review_policy_hash(task_id: str = DEFAULT_TASK) -> str:
+    return hashlib.sha256(canonical_bytes({"scope": task_scope(task_id),
+        "review": "scope-json-and-substantive-plan-v1"})).hexdigest()
 
 
 def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -93,19 +113,24 @@ def parse_requests(path: Path, episode_id: str) -> list[dict[str, Any]]:
     return requests
 
 
-def validate_scope(value: Any) -> None:
+def validate_scope(value: Any, task_id: str = DEFAULT_TASK) -> None:
     if not isinstance(value, dict) or any(type(value.get(key)) is not type(expected) or value.get(key) != expected
-                                           for key, expected in SCOPE.items()):
+                                           for key, expected in task_scope(task_id).items()):
         raise ValueError("Protocol scope differs from frozen public task")
 
 
 class EpisodeController(ResearchController):
+    def __init__(self, *, task_id: str = DEFAULT_TASK, **kwargs: Any) -> None:
+        task_scope(task_id)
+        self.task_id = task_id
+        super().__init__(**kwargs)
+
     def handle(self, request: dict[str, Any]) -> dict[str, Any]:
         if isinstance(request, dict) and request.get("operation") == "contract":
             payload = request.get("payload")
             if not isinstance(payload, dict):
                 raise ValueError("Contract payload must be an object")
-            validate_scope(payload.get("protocol"))
+            validate_scope(payload.get("protocol"), self.task_id)
         return super().handle(request)
 
     def _completion_ready(self, state: dict[str, Any]) -> None:
@@ -122,7 +147,7 @@ class EpisodeController(ResearchController):
         super().validate_done()
 
 
-def review_brief(controller: ResearchController, projection: dict[str, Any]) -> dict[str, Any]:
+def review_brief(controller: EpisodeController, projection: dict[str, Any]) -> dict[str, Any]:
     if projection["episode_id"] != controller.episode_id:
         raise ValueError("Review episode mismatch")
     content = (controller.run / "RESEARCH_BRIEF.md").read_text(encoding="utf-8")
@@ -130,15 +155,18 @@ def review_brief(controller: ResearchController, projection: dict[str, Any]) -> 
     approved = False
     try:
         if match and len(match.group(2).strip()) >= 40:
-            validate_scope(json.loads(match.group(1), object_pairs_hook=_unique_object))
+            validate_scope(json.loads(match.group(1), object_pairs_hook=_unique_object), controller.task_id)
             approved = True
     except (ValueError, TypeError):
         pass
-    return {"approved": approved, "reviewer_id": "frozen-scope-reviewer", "policy_sha256": POLICY_HASH}
+    return {"approved": approved, "reviewer_id": "frozen-scope-reviewer",
+            "policy_sha256": review_policy_hash(controller.task_id)}
 
 
 def prepare_public(config: dict[str, Any], case: Path, private: Path) -> Path:
     """Explicit public export; only an optional skill changes condition content."""
+    task_id = config.get("task_id", DEFAULT_TASK)
+    task_scope(task_id)
     source, public = Path(config["public_source"]), case / "public"
     condition = config["condition"]
     if condition not in {"no_skill", "skill"} or (condition == "skill") != bool(config.get("skill")):
@@ -155,13 +183,15 @@ def prepare_public(config: dict[str, Any], case: Path, private: Path) -> Path:
     if not {"train.npz", "validation.npz", "eeg_api.py"} <= set(names):
         raise ValueError("Missing train/validation/API public resources")
     from eegfm.common import ROOT
-    docs = ROOT / "tasks" / "representation_analysis"
+    docs = ROOT / "tasks" / TASKS[task_id][0]
     expected = {name: digest_file(source / name) for name in names}
     expected.update({name: digest_file(docs / name) for name in DOCS})
     if condition == "skill":
         expected["SKILL.md"] = binding(config["skill"]).sha256
     if public.exists():
         manifest = verify_public_bundle(public)
+        if manifest["task_id"] != task_id:
+            raise ValueError("Existing public task identity differs from enrollment")
         if {item["path"]: item["sha256"] for item in manifest["files"]} != expected:
             raise ValueError("Existing public bundle differs from frozen enrollment")
         return public
@@ -178,9 +208,6 @@ def prepare_public(config: dict[str, Any], case: Path, private: Path) -> Path:
         shutil.copyfile(binding(config["skill"]).path, stage / "SKILL.md")
     if any(digest_file(stage / name) != value for name, value in expected.items()):
         raise ValueError("Public source changed during export")
-    task_id = config.get("task_id", "eegmat-representation-analysis-v1")
-    if not isinstance(task_id, str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,79}", task_id):
-        raise ValueError("Invalid public task identity")
     create_public_bundle(stage, public, expected, task_id=task_id, tier="real_eeg")
     return public
 
@@ -203,10 +230,11 @@ def frozen_skill_context(config: dict[str, Any], public: Path) -> tuple[str, str
 
 
 def session_prompt(projection: dict[str, Any], number: int, scientific_python: Path,
-                   history: list[dict[str, Any]]) -> str:
+                   history: list[dict[str, Any]], *, task_id: str = DEFAULT_TASK) -> str:
+    task_scope(task_id)
     if not 1 <= number <= 6:
         raise ValueError("Session limit exceeded")
-    return ("You are the isolated research Actor for this single EEGMAT episode. "
+    return (f"You are the isolated research Actor for this single EEG episode ({task_id}). "
             "Read public/TASK.md, public/INTERFACE.md, public/API_README.md and "
             "public/PUBLIC_RESULT_SCHEMA.md; read public/SKILL.md if present. "
             "Use only these materials and your own case/output history. No other conversation is available.\n"
@@ -241,7 +269,8 @@ class NativeEpisodeLaunch:
         call_id = config["call_ids"][number - 1]
         budget = Path(config["budget_path"])
         skill_context, injected_skill_sha256 = frozen_skill_context(config, self.public)
-        prompt = session_prompt(projection, number, Path(config["scientific_python"]), self.history) + skill_context
+        prompt = session_prompt(projection, number, Path(config["scientific_python"]), self.history,
+                                task_id=config.get("task_id", DEFAULT_TASK)) + skill_context
         reserve_call(budget, call_id, "actor", timeout)
         output = self.private / "launches" / f"session-{number:02d}-{call_id}"
         report: dict[str, Any] = {"status": "failed", "exit_code": -1, "stdout": "", "stderr": "",
@@ -255,7 +284,8 @@ class NativeEpisodeLaunch:
                 control_home=self.private / "controls" / f"session-{number:02d}-{call_id}",
                 native_binary=Path(config["native_binary"]), bwrap_dir=Path(config["bwrap"]).parent,
                 auth_source=Path(config["auth_source"]), model=MODEL,
-                read_only_roots=tuple(Path(path) for path in config["scientific_roots"]))
+                read_only_roots=tuple(Path(path) for path in config["scientific_roots"]),
+                auth_mode="readonly_bind")
             validate_isolation_gate(metadata, gate)
             mark_call(budget, call_id, "running", episode_id=self.controller.episode_id,
                       session=number, prompt_sha256=hashlib.sha256(prompt.encode()).hexdigest(),
@@ -285,11 +315,13 @@ class NativeEpisodeLaunch:
                          {"error_type": type(error).__name__, "session": number, "call_id": call_id})
         clean, _, _ = Adapter("codex").classify(report["exit_code"], report["stdout"], report["stderr"], report["status"] == "timed_out")
         status = "timed_out" if report["status"] == "timed_out" else "completed" if report["status"] == "completed" and clean else "failed"
+        usage = cli_usage(report["stdout"])
         mark_call(budget, call_id, status if running else "blocked", evidence=str(output),
-                  episode_id=self.controller.episode_id, session=number)
+                  episode_id=self.controller.episode_id, session=number, usage=usage)
         self.history.append({"session": number, "status": status, "actual_native_invocation": invoked,
                              "injected_skill_sha256": injected_skill_sha256,
                              "verified_model_turn": verified_turn and clean,
+                             "usage": usage,
                              "request_count": len(report["requests"]),
                              "feedback": report["stderr"] if report["stderr"].startswith("Trusted launch/") else ""})
         write_atomic(self.history_path, self.history)
@@ -298,14 +330,46 @@ class NativeEpisodeLaunch:
         return report
 
 
+def validate_cloud_bindings(remote: dict[str, Any], train: FileBinding,
+                            validation: FileBinding, test: FileBinding,
+                            expected_identity: dict[str, Any], aggregate_source_sha256: str) -> None:
+    """Cloud paths may differ; the data and trusted aggregation must not."""
+    expected = {"validation": validation, "test": test}
+    try:
+        worker = remote["worker"]
+        matches = all(worker["inputs"][name]["train"]["sha256"] == train.sha256
+                      and worker["inputs"][name]["evaluation"]["sha256"] == value.sha256
+                      for name, value in expected.items())
+        matches = (matches and all(remote[key] == value for key, value in expected_identity.items())
+                   and worker["aggregate_source_sha256"] == aggregate_source_sha256)
+    except (KeyError, TypeError):
+        matches = False
+    if not matches:
+        raise ValueError("Trusted cloud data/aggregation differs from episode enrollment")
+
+
+def validate_private_boundaries(case: Path, protected: list[Path], roots: tuple[Path, ...]) -> None:
+    case = case.resolve()
+    roots = tuple(root.resolve(strict=True) for root in roots)
+    for path in protected:
+        path = path.resolve()
+        if path == case or case in path.parents:
+            raise ValueError("Private bindings cannot be mounted inside Actor case")
+        if any(root == path or root in path.parents or path in root.parents for root in roots):
+            raise ValueError("Private bindings cannot overlap Actor scientific runtime")
+
+
 class DeadlineEvaluator:
     sandboxed = True
 
-    def __init__(self, evaluator: SandboxedWorkerEvaluator, started_at: float) -> None:
+    def __init__(self, evaluator: Any, started_at: float) -> None:
         self.evaluator, self.started_at = evaluator, started_at
+        if hasattr(evaluator, "deadline_epoch"):
+            evaluator.deadline_epoch = started_at + 5400
 
     def submit(self, spec: EvaluationSpec) -> dict[str, Any]:
-        if time.time() + self.evaluator.timeout + 30 > self.started_at + 5400:
+        operation_timeout = getattr(self.evaluator, "operation_timeout_seconds", self.evaluator.timeout)
+        if time.time() + operation_timeout + 30 > self.started_at + 5400:
             raise BudgetExceeded("Insufficient episode time for allocated worker")
         return self.evaluator.submit(spec)
 
@@ -335,6 +399,10 @@ def run_episode(config: dict[str, Any]) -> dict[str, Any]:
 
     if config.get("schema_version") != "real_episode_config_v1":
         raise ValueError("Unsupported episode enrollment")
+    if config.get("auth_mode", "readonly_bind") != "readonly_bind":
+        raise ValueError("Research episodes require read-only authentication binding")
+    task_id = config.get("task_id", DEFAULT_TASK)
+    scope = task_scope(task_id)
     recovery_policy = config.get("recovery_policy", "strict-v1")
     if not isinstance(recovery_policy, str) or recovery_policy not in RECOVERY_POLICIES:
         raise ValueError("Unsupported recovery policy")
@@ -363,7 +431,7 @@ def run_episode(config: dict[str, Any]) -> dict[str, Any]:
     gate = binding(config["isolation_report"])
     # Fail before enrollment or a model reservation when live certification is
     # absent/stale. prepare_control and launch_actor independently check again.
-    roots = tuple(Path(path) for path in config["scientific_roots"])
+    roots = tuple(Path(path).resolve(strict=True) for path in config["scientific_roots"])
     if not roots:
         raise ValueError("The read-only scientific runtime must be explicit")
     native_binary = Path(config["native_binary"])
@@ -372,35 +440,53 @@ def run_episode(config: dict[str, Any]) -> dict[str, Any]:
         "code_mode_host_sha256": digest_file(native_binary.parent / "codex-code-mode-host"),
         "bwrap_sha256": digest_file(Path(config["bwrap"])),
         "profile_template_sha256": profile_template_sha256(MODEL, read_only_roots=roots),
-        "read_only_roots": [str(path) for path in roots]}, live_report)
+        "read_only_roots": [str(path) for path in roots],
+        "auth_mode": "readonly_bind",
+        "transport_template_sha256": readonly_transport_sha256()}, live_report)
     if any(live_report.get("probes", {}).get(name, {}).get("allowed") is not False
            for name in ("test_features", "split_manifest", "driver_state")):
         raise ValueError("Live certificate lacks sealed-test/controller denial evidence")
     truth = {name: binding(value) for name, value in config["truth_by_split"].items()}
     train_truth = binding(config["train_truth"])
-    for protected in (private, split.path, validation.path, test.path, runtime_manifest.path,
+    validate_private_boundaries(case, [private, split.path, validation.path, test.path, runtime_manifest.path,
                       gate.path, Path(config["auth_source"]), Path(config["budget_path"]),
-                      *(value.path for value in truth.values()), train_truth.path):
-        if protected == case or case in protected.parents:
-            raise ValueError("Private bindings cannot be mounted inside Actor case")
+                      *(value.path for value in truth.values()), train_truth.path], roots)
     if train.sha256 != digest_file(public / "train.npz"):
         raise ValueError("Worker training view differs from Actor training view")
     aggregate = ScientificAggregator(truth, train_truth, bootstrap_resamples=config.get("bootstrap_resamples", 2000))
-    runtime = RuntimeConfig(bwrap=Path(config["bwrap"]), python=Path(config["scientific_python"]),
-        environment_roots=tuple(Path(path) for path in config["scientific_roots"]), manifest=runtime_manifest)
     public_hash = digest_file(public / "PUBLIC_MANIFEST.json")
-    worker = SandboxedWorkerEvaluator(private_root=private / "worker-evidence", public_root=public,
-        public_manifest_sha256=public_hash, split_manifest_path=split.path, split_manifest_sha256=split.sha256,
-        inputs_by_split={"validation": SplitInputs(train, validation), "test": SplitInputs(train, test)},
-        runtime=runtime, aggregate=aggregate, released_metrics=aggregate.released_metrics,
-        aggregate_bindings=aggregate.bindings, aggregate_policy_sha256=aggregate.policy_sha256,
-        timeout_seconds=config.get("worker_timeout_seconds", 900))
+    if config.get("cloud_worker"):
+        from eegfm.evaluation.ssh_worker import SshWorkerEvaluator, scientific_identity
+        cloud = config["cloud_worker"]
+        remote_config = cloud["config"]
+        if set(remote_config) != {"path", "sha256"} or not Path(remote_config["path"]).is_absolute():
+            raise ValueError("Explicit absolute cloud config binding required")
+        worker = SshWorkerEvaluator(host=cloud["host"], port=cloud["port"], user=cloud["user"],
+            known_hosts=binding(cloud["known_hosts"]), remote_python=Path(cloud["python"]),
+            remote_code=Path(cloud["code"]),
+            remote_config=FileBinding(Path(remote_config["path"]), remote_config["sha256"]),
+            journal_root=private / "cloud-worker-journal")
+        expected_identity = scientific_identity(config, aggregate=aggregate,
+            public_manifest_sha256=public_hash, split_manifest_sha256=split.sha256)
+        validate_cloud_bindings(worker.identity, train, validation, test, expected_identity,
+                                digest_file(Path(__file__).with_name("aggregation.py")))
+    else:
+        runtime = RuntimeConfig(bwrap=Path(config["bwrap"]), python=Path(config["scientific_python"]),
+            environment_roots=tuple(Path(path) for path in config["scientific_roots"]), manifest=runtime_manifest)
+        worker = SandboxedWorkerEvaluator(private_root=private / "worker-evidence", public_root=public,
+            public_manifest_sha256=public_hash, split_manifest_path=split.path, split_manifest_sha256=split.sha256,
+            inputs_by_split={"validation": SplitInputs(train, validation), "test": SplitInputs(train, test)},
+            runtime=runtime, aggregate=aggregate, released_metrics=aggregate.released_metrics,
+            aggregate_bindings=aggregate.bindings, aggregate_policy_sha256=aggregate.policy_sha256,
+            timeout_seconds=config.get("worker_timeout_seconds", 900))
     if worker.timeout > 900:
         raise ValueError("Episode worker limit is 900 seconds")
     identity = {"config_sha256": hashlib.sha256(canonical_bytes(config)).hexdigest(),
                 "public_manifest_sha256": public_hash, "worker_enrollment": worker._enrollment(),
                 "model": MODEL, "effort": "medium", "session_limit": len(call_ids), "wall_seconds": 5400,
-                "review_policy_sha256": POLICY_HASH,
+                "auth_mode": "readonly_bind",
+                "task_id": task_id, "task_scope": scope,
+                "review_policy_sha256": review_policy_hash(task_id),
                 "runner_sha256": digest_file(Path(__file__)),
                 "actor_source_sha256": digest_file(Path(__file__).resolve().parents[1] / "agent/actor.py"),
                 "bridge_source_sha256": digest_file(Path(__file__).resolve().parents[1] / "agent/controller.py"),
@@ -422,13 +508,16 @@ def run_episode(config: dict[str, Any]) -> dict[str, Any]:
         episode_id=config["episode_id"], run_id=config["run_id"], public_manifest_sha256=public_hash,
         split_manifest_sha256=split.sha256, evaluator=DeadlineEvaluator(worker, enrolled["started_at_epoch"]),
         max_attempts=config.get("max_attempts", 2),
-        recovery_policy=recovery_policy)
+        recovery_policy=recovery_policy, task_id=task_id)
     launcher = NativeEpisodeLaunch(config, controller, private, public, enrolled["started_at_epoch"])
     driver = EpisodeDriver(controller, launch=launcher, reviewer=lambda projection: review_brief(controller, projection),
                           max_sessions=len(call_ids), poll=1.0)
     driver.episode_deadline = enrolled["started_at_epoch"] + 5400
     try:
         exit_code = driver.loop()
+    except ControllerAlreadyRunning:
+        # A second observer must not block or overwrite the healthy owner's run.
+        raise
     except Exception as error:
         if controller.projection()["state"]["status"] != "done":
             controller.block("Trusted orchestration stopped: " + type(error).__name__)

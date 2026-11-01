@@ -5,10 +5,26 @@ import tempfile
 import unittest
 from eegfm.improvement.trace import collect_visible_trace
 from eegfm.improvement.trace import visible_payload
+from eegfm.improvement import trace
 from eegfm.agent.actor import validate_isolation_gate
 
 
 class TraceTests(unittest.TestCase):
+    def test_cli_usage_keeps_actual_counts_without_account_fields(self) -> None:
+        rows = [{"type": "item.completed", "usage": {"input_tokens": 999}},
+                {"type": "turn.completed", "usage": {"input_tokens": 120,
+                 "cached_input_tokens": 30, "output_tokens": 25,
+                 "reasoning_output_tokens": 5, "account_id": "PRIVATE"}}]
+        assert trace.cli_usage("\n".join(json.dumps(row) for row in rows)) == {
+            "input_tokens": 120, "cached_input_tokens": 30,
+            "output_tokens": 25, "reasoning_output_tokens": 5}
+
+    def test_missing_or_invalid_cli_usage_stays_unknown(self) -> None:
+        for value in ('{"type":"turn.failed"}',
+                      '{"type":"turn.completed","usage":{"input_tokens":true,"output_tokens":1}}',
+                      '{"type":"turn.completed","usage":{"input_tokens":-1,"output_tokens":1}}'):
+            assert trace.cli_usage(value) is None
+
     def test_reasoning_and_developer_context_excluded(self) -> None:
         for payload in [{'type':'reasoning','encrypted_content':'secret'},{'type':'message','role':'assistant','channel':'analysis','content':'private'},
                         {'type':'message','role':'developer','content':'builder private'}]:

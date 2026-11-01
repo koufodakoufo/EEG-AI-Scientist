@@ -6,6 +6,7 @@ assert isolation merely because config parses: require a passing live report.
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
 import os
 from pathlib import Path
@@ -124,10 +125,17 @@ def profile_template_sha256(model: str | None, *, read_only_roots: tuple[Path, .
 
 def prepare_control(*, case: Path, public: Path, control_home: Path, native_binary: Path,
                     bwrap_dir: Path, auth_source: Path, model: str | None = None,
-                    read_only_roots: tuple[Path, ...] = ()) -> dict[str, Any]:
-    """Copy only explicitly authorized authentication bytes; never log contents."""
+                    read_only_roots: tuple[Path, ...] = (), auth_mode: str = 'readonly_bind') -> dict[str, Any]:
+    """Fresh control state; readonly_bind never reads or copies credential bytes.
+
+    The historical copy mode requires an explicit, authorized opt-in.
+    In bind mode only the trusted native client sees the original file through a
+    read-only mount; model tools are separately denied the whole control home.
+    """
     if os.name != 'posix':
         raise RuntimeError('Linux control preparation only')
+    if auth_mode not in {'copy', 'readonly_bind'}:
+        raise ValueError('Unknown authentication mode')
     verify_public_bundle(public)
     case = case.resolve(strict=True)
     public = public.resolve(strict=True)
@@ -139,6 +147,9 @@ def prepare_control(*, case: Path, public: Path, control_home: Path, native_bina
         raise ValueError('Authentication must be an explicit regular file')
     if stat.S_IMODE(auth_source.stat().st_mode) & 0o077:
         raise ValueError('Authentication source must not be group/world accessible')
+    auth_source = auth_source.resolve(strict=True)
+    if auth_source.is_relative_to(case) or any(auth_source.is_relative_to(root) for root in read_only_roots):
+        raise ValueError('Authentication source cannot be inside Actor-accessible paths')
     control_home.mkdir(mode=0o700, parents=True)
     runtime = control_home.parent / (control_home.name + '-runtime')
     runtime.mkdir(mode=0o700)
@@ -150,8 +161,10 @@ def prepare_control(*, case: Path, public: Path, control_home: Path, native_bina
     os.chmod(control_home / 'actor.config.toml', 0o600)
     # No config, plugin, memory, session, hooks or old research directories copied.
     fd = os.open(control_home / 'auth.json', os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    with os.fdopen(fd, 'wb') as destination, auth_source.open('rb') as source:
-        shutil.copyfileobj(source, destination)
+    with os.fdopen(fd, 'wb') as destination:
+        if auth_mode == 'copy':
+            with auth_source.open('rb') as source:
+                shutil.copyfileobj(source, destination)
     for directory in (case / 'home', case / 'tmp', case / 'output'):
         directory.mkdir(mode=0o700, exist_ok=True)
     metadata = {'schema_version': 'actor_control_v1', 'case': str(case), 'public': str(public),
@@ -160,11 +173,58 @@ def prepare_control(*, case: Path, public: Path, control_home: Path, native_bina
                 'code_mode_host_sha256':digest_file(native_binary.parent/'codex-code-mode-host') if (native_binary.parent/'codex-code-mode-host').is_file() else None,
                 'bwrap_sha256':digest_file(bwrap_dir/'bwrap'),'profile_template_sha256':profile_template_sha256(model,read_only_roots=read_only_roots),
                 'read_only_roots':[str(path) for path in read_only_roots],
-                'model_requested': model, 'auth_copied': True, 'auth_contents_logged': False,
+                'model_requested': model, 'auth_mode':auth_mode, 'auth_copied':auth_mode=='copy', 'auth_contents_logged': False,
                 'context': 'fresh exec; no parent conversation; no resumed session',
                 'isolation_status': 'requires_live_canary_validation'}
+    if auth_mode == 'readonly_bind':
+        metadata.update(auth_source=str(auth_source), auth_source_identity=_auth_identity(auth_source),
+                        transport_template_sha256=readonly_transport_sha256())
     write_atomic(control_home / 'launcher-metadata.json', metadata)
     return metadata
+
+
+def _auth_identity(path: Path) -> dict[str, int]:
+    """Filesystem identity only. Never inspect, hash, or copy credential bytes."""
+    if path.is_symlink() or not path.is_file() or stat.S_IMODE(path.stat().st_mode) & 0o077:
+        raise ValueError('Authentication source must remain a private regular file')
+    value = path.stat()
+    return {name: getattr(value, name) for name in ('st_dev','st_ino','st_uid','st_size','st_mtime_ns','st_mode')}
+
+
+def readonly_transport_sha256() -> str:
+    return hashlib.sha256(inspect.getsource(readonly_auth_argv).encode()).hexdigest()
+
+
+def readonly_auth_argv(metadata: dict[str, Any], argv: list[str], output_dir: Path,
+                       bwrap_dir: Path) -> list[str]:
+    """Outer trusted-client namespace; the inner CLI profile governs Actor tools.
+
+    Explicit mounts omit the original home, repository, private evaluation files,
+    other cases and host processes. The native client retains network for its
+    scoped proxy; Actor tool network is disabled by the inner permission profile.
+    """
+    if metadata.get('auth_mode') != 'readonly_bind':
+        raise ValueError('Read-only authentication mode required')
+    source = Path(metadata['auth_source'])
+    if _auth_identity(source) != metadata.get('auth_source_identity'):
+        raise ValueError('Authentication source changed after preparation')
+    if metadata.get('transport_template_sha256') != readonly_transport_sha256():
+        raise ValueError('Read-only authentication transport changed after preparation')
+    control = Path(metadata['control_home'])
+    native = Path(metadata['native_binary'])
+    command = [str(bwrap_dir/'bwrap'),'--die-with-parent','--new-session','--unshare-pid',
+               '--ro-bind','/usr','/usr','--symlink','usr/bin','/bin','--symlink','usr/lib','/lib',
+               '--symlink','usr/lib64','/lib64','--proc','/proc','--dev','/dev','--tmpfs','/tmp']
+    for path in ('/etc/ssl','/etc/pki','/etc/resolv.conf','/etc/hosts','/etc/nsswitch.conf',
+                 '/etc/passwd','/etc/group','/etc/ld.so.cache'):
+        if Path(path).exists(): command += ['--ro-bind',path,path]
+    for path in dict.fromkeys([str(native.parent),str(bwrap_dir),metadata['runtime'],*metadata.get('read_only_roots',[])]):
+        command += ['--ro-bind',path,path]
+    for path in dict.fromkeys([metadata['case'],str(control),str(output_dir)]):
+        command += ['--bind',path,path]
+    command += ['--ro-bind',str(source),str(control/'auth.json'),
+                '--chdir',metadata['case'],'--',*argv]
+    return command
 
 
 def actor_argv(metadata: dict[str, Any], prompt: str, output_file: Path) -> list[str]:
@@ -208,6 +268,8 @@ def launch_actor(metadata: dict[str, Any], prompt: str, *, output_dir: Path, tim
         with input_path.open('x',encoding='utf-8') as handle: handle.write(prompt)
         os.chmod(input_path,0o600)
     argv = actor_argv(metadata, '-' if prompt_via_stdin else prompt, output_dir / 'final.txt')
+    if metadata.get('auth_mode') == 'readonly_bind':
+        argv = readonly_auth_argv(metadata, argv, output_dir, bwrap_dir)
     report = run_bounded(argv, cwd=Path(metadata['case']), output_dir=output_dir, timeout_seconds=timeout_seconds, env=env,
                          limit_address_space=False,storage_limit_bytes=case_storage_limit_bytes,stdin_path=input_path)
     report.update(role=role, profile_sha256=metadata['profile_sha256'], context=metadata['context'])
@@ -223,6 +285,12 @@ def validate_isolation_gate(metadata: dict[str,Any],report: dict[str,Any] | None
         if not metadata.get(key) or report.get(key)!=metadata[key]:
             raise RuntimeError(f'Blind launch blocked: isolation {key} mismatch')
     probes=report.get('probes',{})
+    if metadata.get('auth_mode') == 'readonly_bind':
+        if report.get('auth_mode') != 'readonly_bind' or report.get('transport_template_sha256') != metadata.get('transport_template_sha256'):
+            raise RuntimeError('Blind launch blocked: readonly authentication transport mismatch')
+        if any(probes.get(name,{}).get('allowed') is not False for name in
+               ('auth_source','auth_mounted','private_test','private_split','private_driver')):
+            raise RuntimeError('Authentication/private-data boundary has not passed live probes')
     if metadata.get('read_only_roots') and (
             probes.get('scientific_runtime_read',{}).get('allowed') is not True or
             probes.get('scientific_python',{}).get('allowed') is not True or

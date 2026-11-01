@@ -63,6 +63,10 @@ RECOVERABLE_FAILURES = frozenset({"candidate_execution_failed", "candidate_outpu
     "control_subspace_mismatch", "nonfinite_evidence"})
 
 
+class ControllerAlreadyRunning(RuntimeError):
+    """Lease contention is a non-mutating refusal, not an episode failure."""
+
+
 class SandboxedEvaluator(Protocol):
     """Trusted implementation; poll must have NO execution/submission side effect."""
     sandboxed: bool
@@ -697,7 +701,7 @@ class ResearchDriver(Driver):
             try:
                 fcntl.flock(lease,fcntl.LOCK_EX|fcntl.LOCK_NB)
             except BlockingIOError as error:
-                raise RuntimeError('Another controller owns this episode') from error
+                raise ControllerAlreadyRunning('Another controller owns this episode') from error
             try:
                 self.controller.guard_crash_resume()
                 return super().loop()

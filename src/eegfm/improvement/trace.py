@@ -7,6 +7,28 @@ from eegfm.agent.budget import write_atomic
 from eegfm.evaluation.bundle import digest_file
 
 
+def cli_usage(stdout: str) -> dict[str, int] | None:
+    """Retain reported terminal usage only; missing usage is not zero cost."""
+    usage = None
+    fields = {"input_tokens", "cached_input_tokens", "cache_write_input_tokens",
+              "output_tokens", "reasoning_output_tokens"}
+    for line in stdout.splitlines():
+        try:
+            row = json.loads(line)
+        except (ValueError, TypeError):
+            continue
+        if not isinstance(row, dict) or row.get("type") != "turn.completed":
+            continue
+        values = row.get("usage")
+        if not isinstance(values, dict):
+            continue
+        selected = {key: value for key, value in values.items() if key in fields}
+        if ({"input_tokens", "output_tokens"} <= selected.keys()
+                and all(type(value) is int and value >= 0 for value in selected.values())):
+            usage = selected
+    return usage
+
+
 def visible_payload(payload: dict[str,Any]) -> dict[str,Any] | None:
     kind=payload.get('type')
     if kind in {'function_call','custom_tool_call'}:

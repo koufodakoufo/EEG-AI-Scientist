@@ -322,12 +322,21 @@ class DriverBridgeTests(unittest.TestCase):
 
     def test_driver_lifetime_lease_prevents_second_controller_launch(self) -> None:
         import fcntl
+        # An active model launch owns this unfinished reservation. A competing
+        # driver must not run crash recovery or consume another session.
+        self.controller.reserve_session(2)
+        before = self.controller.projection()
+        state_bytes = (self.controller.run / 'STATE.json').read_bytes()
         called=[]
         with (self.controller.run/'bridge-driver.lock').open('a') as lease:
             fcntl.flock(lease,fcntl.LOCK_EX|fcntl.LOCK_NB)
-            with self.assertRaises(RuntimeError):
+            with self.assertRaises(RuntimeError) as raised:
                 self.mod.ResearchDriver(self.controller,launch=lambda p:called.append(p),once=True).loop()
         self.assertEqual(called,[])
+        self.assertEqual(self.evaluator.calls, [])
+        self.assertEqual(self.controller.projection(), before)
+        self.assertEqual((self.controller.run / 'STATE.json').read_bytes(), state_bytes)
+        self.assertEqual(type(raised.exception).__name__, 'ControllerAlreadyRunning')
 
     def test_crashed_launch_consumes_durable_session_budget(self) -> None:
         calls=[]
