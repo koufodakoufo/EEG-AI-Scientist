@@ -45,6 +45,7 @@ from eegfm.improvement.trace import cli_usage
 
 MODEL = "gpt-6.1-sol"
 DEFAULT_TASK = "eegmat-representation-analysis-v1"
+READOUT_TASK = "eegmmidb-readout-bottleneck-v1"
 SCOPE = {"task": "eegmat-arithmetic-background", "public_resources_only": True,
          "backbone_frozen": True, "head_frozen": True, "selection_split": "validation",
          "test_after_lock_only": True, "gpu": 0}
@@ -54,13 +55,17 @@ TASKS = {
     DEFAULT_TASK: ("representation_analysis", "eegmat-arithmetic-background"),
     "eegmat-attribute-dependence-v1": ("representation_analysis", "eegmat-arithmetic-background"),
     "eegmmidb-attribute-dependence-v1": ("eegmmidb", "eegmmidb-eyes-open-closed-baseline"),
+    READOUT_TASK: ("readout_bottleneck", "eegmmidb-cached-readout-bottleneck"),
 }
 
 
 def task_scope(task_id: str = DEFAULT_TASK) -> dict[str, Any]:
     if not isinstance(task_id, str) or task_id not in TASKS:
         raise ValueError("Unregistered public task identity")
-    return {**SCOPE, "task": TASKS[task_id][1]}
+    scope = {**SCOPE, "task": TASKS[task_id][1]}
+    if task_id == READOUT_TASK:
+        scope.update(cached_inputs_only=True, train_only_readouts=True)
+    return scope
 
 
 def review_policy_hash(task_id: str = DEFAULT_TASK) -> str:
@@ -101,6 +106,58 @@ def binding(value: dict[str, str]) -> FileBinding:
     return result
 
 
+def load_aggregator(config: dict[str, Any], *, public_root: Path | None = None,
+                    verify_runtime: bool = False) -> Any:
+    """Dispatch only enrolled scientific tasks, identically on both machines."""
+    task_id = config.get("task_id", DEFAULT_TASK)
+    task_scope(task_id)
+    truth = {name: binding(value) for name, value in config["truth_by_split"].items()}
+    train_truth = binding(config["train_truth"])
+    if task_id == READOUT_TASK:
+        from eegfm.eeg.readout_aggregation import ReadoutAggregator
+        from eegfm.evaluation.ssh_worker import readout_runtime_record, verify_readout_runtime
+        runtime = readout_runtime_record(config.get("aggregate_runtime"))
+        if verify_runtime:
+            verify_readout_runtime(runtime)
+        public = public_root if public_root is not None else Path(config["public_root"])
+        manifest = verify_public_bundle(public)
+        if manifest["task_id"] != READOUT_TASK:
+            raise ValueError("Readout scorer requires its actual enrolled public task bundle")
+        if (config.get("public_manifest_sha256") is not None
+                and digest_file(public / "PUBLIC_MANIFEST.json") != config["public_manifest_sha256"]):
+            raise ValueError("Readout public manifest differs from enrollment")
+        files = {item["path"]: item["sha256"] for item in manifest["files"]}
+        public_inputs = {name: FileBinding(public / f"{name}.npz", files[f"{name}.npz"])
+                         for name in ("train", "validation")}
+        inference = {name: binding(value) for name, value in config["inference_by_split"].items()}
+        return ReadoutAggregator(truth, train_truth, inference,
+            test_cohort=binding(config["test_cohort"]),
+            public_by_split=public_inputs,
+            runtime_identity=runtime,
+            verify_runtime=(lambda: verify_readout_runtime(runtime)) if verify_runtime else None,
+            bootstrap_resamples=config.get("bootstrap_resamples", 10000), seed=config.get("seed", 161803))
+    from eegfm.eeg.aggregation import ScientificAggregator
+    return ScientificAggregator(truth, train_truth, bootstrap_resamples=config.get("bootstrap_resamples", 2000))
+
+
+def aggregator_source_sha256(task_id: str = DEFAULT_TASK) -> str:
+    task_scope(task_id)
+    name = "readout_aggregation.py" if task_id == READOUT_TASK else "aggregation.py"
+    return digest_file(Path(__file__).with_name(name))
+
+
+def episode_time_limits(config: dict[str, Any]) -> tuple[int, int]:
+    task_id = config.get("task_id", DEFAULT_TASK)
+    task_scope(task_id)
+    wall_cap, session_cap = (2700, 600) if task_id == READOUT_TASK else (5400, 900)
+    wall = config.get("episode_timeout_seconds", wall_cap)
+    session = config.get("session_timeout_seconds", session_cap)
+    if (type(wall) is not int or not 0 < wall <= wall_cap
+            or type(session) is not int or not 0 < session <= session_cap):
+        raise ValueError("Invalid episode/session timeout")
+    return wall, session
+
+
 def parse_requests(path: Path, episode_id: str) -> list[dict[str, Any]]:
     requests = read_json(path)
     if not isinstance(requests, list) or len(requests) > 16:
@@ -137,6 +194,12 @@ class EpisodeController(ResearchController):
         super()._completion_ready(state)
         locked = next(attempt for attempt in state["attempts"] if attempt["id"] == state["lock"]["attempt_id"])
         final = state["jobs"][state["test_job"]].get("result", {}).get("metrics", {})
+        if self.task_id == READOUT_TASK:
+            if (locked["kind"] != "iteration" or any(
+                    metrics.get("readout_count", 0) < 2 or metrics.get("representation_readouts", 0) < 1
+                    for metrics in (locked.get("metrics", {}), final))):
+                raise ValueError("Completion requires multiple readouts including representation in locked validation and final test")
+            return
         if (locked["kind"] != "iteration" or locked.get("metrics", {}).get("q1_groups", 0) <= 0
                 or final.get("q1_groups", 0) <= 0):
             raise ValueError("Completion requires Q1 evidence from the locked validation iteration and final test")
@@ -174,6 +237,9 @@ def prepare_public(config: dict[str, Any], case: Path, private: Path) -> Path:
     names = config["public_files"]
     if not isinstance(names, list) or len(set(names)) != len(names):
         raise ValueError("Explicit unique public allowlist required")
+    if task_id == READOUT_TASK and set(names) != {
+            "train.npz", "validation.npz", "eeg_api.py", "resources/CACHE_SCHEMA.json"}:
+        raise ValueError("Readout public allowlist must contain only data, schema API and CACHE_SCHEMA")
     for name in names:
         safe_relative(name)
         if name not in {"train.npz", "validation.npz", "eeg_api.py"} and not name.startswith("resources/"):
@@ -252,6 +318,7 @@ class NativeEpisodeLaunch:
     def __init__(self, config: dict[str, Any], controller: ResearchController, private: Path,
                  public: Path, started_at: float) -> None:
         self.config, self.controller, self.private, self.public = config, controller, private, public
+        self.wall_seconds, self.session_seconds = episode_time_limits(config)
         self.started_at = started_at
         self.history_path = private / "own-session-receipts.json"
         self.history = read_json(self.history_path) if self.history_path.exists() else []
@@ -262,10 +329,10 @@ class NativeEpisodeLaunch:
         number = len(sessions)
         if not 1 <= number <= min(6, len(config["call_ids"])):
             raise BudgetExceeded("Episode call allocation exhausted")
-        remaining = int(self.started_at + 5400 - time.time()) - 30
+        remaining = int(self.started_at + self.wall_seconds - time.time()) - 30
         if remaining < 1:
             raise BudgetExceeded("Episode wall deadline reached")
-        timeout = min(900, remaining)
+        timeout = min(self.session_seconds, remaining)
         call_id = config["call_ids"][number - 1]
         budget = Path(config["budget_path"])
         skill_context, injected_skill_sha256 = frozen_skill_context(config, self.public)
@@ -342,6 +409,8 @@ def validate_cloud_bindings(remote: dict[str, Any], train: FileBinding,
                       for name, value in expected.items())
         matches = (matches and all(remote[key] == value for key, value in expected_identity.items())
                    and worker["aggregate_source_sha256"] == aggregate_source_sha256)
+        if expected_identity.get("task_id") == READOUT_TASK:
+            matches = matches and worker["aggregate_policy_sha256"] == expected_identity["aggregate_policy_sha256"]
     except (KeyError, TypeError):
         matches = False
     if not matches:
@@ -362,14 +431,17 @@ def validate_private_boundaries(case: Path, protected: list[Path], roots: tuple[
 class DeadlineEvaluator:
     sandboxed = True
 
-    def __init__(self, evaluator: Any, started_at: float) -> None:
+    def __init__(self, evaluator: Any, started_at: float, *, timeout_seconds: int = 5400) -> None:
+        if type(timeout_seconds) is not int or not 0 < timeout_seconds <= 5400:
+            raise ValueError("Invalid episode timeout")
         self.evaluator, self.started_at = evaluator, started_at
+        self.deadline_epoch = started_at + timeout_seconds
         if hasattr(evaluator, "deadline_epoch"):
-            evaluator.deadline_epoch = started_at + 5400
+            evaluator.deadline_epoch = self.deadline_epoch
 
     def submit(self, spec: EvaluationSpec) -> dict[str, Any]:
         operation_timeout = getattr(self.evaluator, "operation_timeout_seconds", self.evaluator.timeout)
-        if time.time() + operation_timeout + 30 > self.started_at + 5400:
+        if time.time() + operation_timeout + 30 > self.deadline_epoch:
             raise BudgetExceeded("Insufficient episode time for allocated worker")
         return self.evaluator.submit(spec)
 
@@ -395,14 +467,13 @@ def run_episode(config: dict[str, Any]) -> dict[str, Any]:
     """Linux native entrypoint; no production scripted-hook or synthetic mode."""
     if os.name != "posix":
         raise RuntimeError("Native isolated episodes require Linux")
-    from eegfm.eeg.aggregation import ScientificAggregator
-
     if config.get("schema_version") != "real_episode_config_v1":
         raise ValueError("Unsupported episode enrollment")
     if config.get("auth_mode", "readonly_bind") != "readonly_bind":
         raise ValueError("Research episodes require read-only authentication binding")
     task_id = config.get("task_id", DEFAULT_TASK)
     scope = task_scope(task_id)
+    wall_seconds, _ = episode_time_limits(config)
     recovery_policy = config.get("recovery_policy", "strict-v1")
     if not isinstance(recovery_policy, str) or recovery_policy not in RECOVERY_POLICIES:
         raise ValueError("Unsupported recovery policy")
@@ -446,14 +517,19 @@ def run_episode(config: dict[str, Any]) -> dict[str, Any]:
     if any(live_report.get("probes", {}).get(name, {}).get("allowed") is not False
            for name in ("test_features", "split_manifest", "driver_state")):
         raise ValueError("Live certificate lacks sealed-test/controller denial evidence")
-    truth = {name: binding(value) for name, value in config["truth_by_split"].items()}
-    train_truth = binding(config["train_truth"])
+    aggregate = load_aggregator(config, public_root=public, verify_runtime=not bool(config.get("cloud_worker")))
+    truth, train_truth = aggregate.truth, aggregate.train_truth
+    readout_private = []
+    if task_id == READOUT_TASK:
+        readout_private = [*(value.path for value in aggregate.inference.values()), aggregate.test_cohort.path]
+        if (aggregate.inference["validation"].sha256 != validation.sha256
+                or aggregate.inference["test"].sha256 != test.sha256):
+            raise ValueError("Readout scorer inference differs from worker inputs")
     validate_private_boundaries(case, [private, split.path, validation.path, test.path, runtime_manifest.path,
                       gate.path, Path(config["auth_source"]), Path(config["budget_path"]),
-                      *(value.path for value in truth.values()), train_truth.path], roots)
+                      *(value.path for value in truth.values()), train_truth.path, *readout_private], roots)
     if train.sha256 != digest_file(public / "train.npz"):
         raise ValueError("Worker training view differs from Actor training view")
-    aggregate = ScientificAggregator(truth, train_truth, bootstrap_resamples=config.get("bootstrap_resamples", 2000))
     public_hash = digest_file(public / "PUBLIC_MANIFEST.json")
     if config.get("cloud_worker"):
         from eegfm.evaluation.ssh_worker import SshWorkerEvaluator, scientific_identity
@@ -469,7 +545,7 @@ def run_episode(config: dict[str, Any]) -> dict[str, Any]:
         expected_identity = scientific_identity(config, aggregate=aggregate,
             public_manifest_sha256=public_hash, split_manifest_sha256=split.sha256)
         validate_cloud_bindings(worker.identity, train, validation, test, expected_identity,
-                                digest_file(Path(__file__).with_name("aggregation.py")))
+                                aggregator_source_sha256(task_id))
     else:
         runtime = RuntimeConfig(bwrap=Path(config["bwrap"]), python=Path(config["scientific_python"]),
             environment_roots=tuple(Path(path) for path in config["scientific_roots"]), manifest=runtime_manifest)
@@ -483,7 +559,7 @@ def run_episode(config: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("Episode worker limit is 900 seconds")
     identity = {"config_sha256": hashlib.sha256(canonical_bytes(config)).hexdigest(),
                 "public_manifest_sha256": public_hash, "worker_enrollment": worker._enrollment(),
-                "model": MODEL, "effort": "medium", "session_limit": len(call_ids), "wall_seconds": 5400,
+                "model": MODEL, "effort": "medium", "session_limit": len(call_ids), "wall_seconds": wall_seconds,
                 "auth_mode": "readonly_bind",
                 "task_id": task_id, "task_scope": scope,
                 "review_policy_sha256": review_policy_hash(task_id),
@@ -506,13 +582,13 @@ def run_episode(config: dict[str, Any]) -> dict[str, Any]:
             handle.write(canonical_bytes(enrolled))
     controller = EpisodeController(trusted_root=private / "controller", case_root=case,
         episode_id=config["episode_id"], run_id=config["run_id"], public_manifest_sha256=public_hash,
-        split_manifest_sha256=split.sha256, evaluator=DeadlineEvaluator(worker, enrolled["started_at_epoch"]),
+        split_manifest_sha256=split.sha256, evaluator=DeadlineEvaluator(worker, enrolled["started_at_epoch"], timeout_seconds=wall_seconds),
         max_attempts=config.get("max_attempts", 2),
         recovery_policy=recovery_policy, task_id=task_id)
     launcher = NativeEpisodeLaunch(config, controller, private, public, enrolled["started_at_epoch"])
     driver = EpisodeDriver(controller, launch=launcher, reviewer=lambda projection: review_brief(controller, projection),
                           max_sessions=len(call_ids), poll=1.0)
-    driver.episode_deadline = enrolled["started_at_epoch"] + 5400
+    driver.episode_deadline = enrolled["started_at_epoch"] + wall_seconds
     try:
         exit_code = driver.loop()
     except ControllerAlreadyRunning:

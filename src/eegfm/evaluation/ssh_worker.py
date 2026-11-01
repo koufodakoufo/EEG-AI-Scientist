@@ -246,9 +246,105 @@ class SshWorkerEvaluator:
         return result
 
 
+def readout_runtime_identity() -> dict[str, Any]:
+    """Fingerprint the host numerical process, separately from candidate Docker."""
+    import importlib
+    import platform
+    from threadpoolctl import threadpool_info
+
+    packages = {name: importlib.import_module(name) for name in ('numpy', 'scipy', 'sklearn')}
+    modules = {}
+    aliases = {
+        'numpy.core._multiarray_umath': ('numpy._core._multiarray_umath', 'numpy.core._multiarray_umath'),
+        'numpy.lib.function_base': ('numpy.lib._function_base_impl', 'numpy.lib.function_base'),
+        'numpy.random._generator': ('numpy.random._generator',),
+        'numpy.random._pcg64': ('numpy.random._pcg64',),
+        'scipy.linalg._fblas': ('scipy.linalg._fblas',),
+        'scipy.special._ufuncs': ('scipy.special._ufuncs',),
+        'sklearn.utils._openmp_helpers': ('sklearn.utils._openmp_helpers',),
+        'threadpoolctl': ('threadpoolctl',),
+    }
+    for name, choices in aliases.items():
+        for choice in choices:
+            try:
+                module = importlib.import_module(choice)
+                break
+            except ModuleNotFoundError:
+                if choice == choices[-1]:
+                    raise
+        modules[name] = digest_file(Path(module.__file__).resolve(strict=True))
+    modules.update({name: digest_file(Path(module.__file__).resolve(strict=True))
+                    for name, module in packages.items()})
+    # Initialize lazy numerical/OpenMP dependencies before freezing their set.
+    # Querying MKL itself can load its OpenMP library on the first inspection.
+    numpy = packages['numpy']
+    numpy.dot(numpy.eye(2), numpy.eye(2))
+    numpy.quantile(numpy.random.default_rng(0).normal(size=4), [.025, .975])
+    threadpool_info()
+    libraries = [{'name': Path(row['filepath']).name, 'internal_api': row['internal_api'],
+                  'version': str(row['version']),
+                  'sha256': digest_file(Path(row['filepath']).resolve(strict=True))}
+                 for row in threadpool_info()]
+    return {'schema_version': 'readout_host_runtime_v1',
+            'python': {'implementation': platform.python_implementation(), 'version': sys.version,
+                       'executable_sha256': digest_file(Path(sys.executable).resolve(strict=True))},
+            'packages': {name: str(module.__version__) for name, module in packages.items()},
+            'modules': dict(sorted(modules.items())),
+            'libraries': sorted(libraries, key=lambda row: (row['name'], row['sha256'])),
+            'verifier_source_sha256': digest_file(Path(__file__))}
+
+
+def readout_runtime_record(value: Any) -> dict[str, Any]:
+    """Validate enrollment syntax without substituting the controller's runtime."""
+    if (not isinstance(value, dict) or set(value) != {
+            'schema_version', 'python', 'packages', 'modules', 'libraries', 'verifier_source_sha256'}
+            or value['schema_version'] != 'readout_host_runtime_v1'):
+        raise ValueError('Explicit readout aggregate runtime enrollment required')
+    python = value['python']
+    if (not isinstance(python, dict) or set(python) != {'implementation', 'version', 'executable_sha256'}
+            or not isinstance(value['packages'], dict) or set(value['packages']) != {'numpy', 'scipy', 'sklearn'}
+            or not isinstance(value['modules'], dict) or not value['modules']
+            or not isinstance(value['libraries'], list)):
+        raise ValueError('Invalid readout aggregate runtime record')
+    for item in (python['implementation'], python['version'], *value['packages'].values()):
+        if not isinstance(item, str) or not item:
+            raise ValueError('Invalid readout aggregate runtime version')
+    for digest in (python['executable_sha256'], value['verifier_source_sha256'], *value['modules'].values()):
+        _sha(digest)
+    for row in value['libraries']:
+        if (not isinstance(row, dict) or set(row) != {'name', 'internal_api', 'version', 'sha256'}
+                or any(not isinstance(row[key], str) or not row[key] for key in ('name', 'internal_api', 'version'))):
+            raise ValueError('Invalid readout aggregate runtime library')
+        _sha(row['sha256'])
+    return json.loads(canonical_bytes(value))
+
+
+def verify_readout_runtime(expected: Any) -> None:
+    expected = readout_runtime_record(expected)
+    if readout_runtime_identity() != expected:
+        raise ValueError('Readout aggregate host runtime differs from frozen enrollment')
+
+
 def scientific_identity(config: dict[str, Any], *, aggregate: Any,
                         public_manifest_sha256: str, split_manifest_sha256: str) -> dict[str, Any]:
     """Bind roles and scoring semantics across machines, independently of paths."""
+    from eegfm.eeg.episode import DEFAULT_TASK, READOUT_TASK, task_scope
+    task_id = config.get('task_id', DEFAULT_TASK)
+    task_scope(task_id)
+    if task_id == READOUT_TASK:
+        from eegfm.eeg.readout_aggregation import ReadoutAggregator
+        if not isinstance(aggregate, ReadoutAggregator):
+            raise ValueError('Readout task requires its registered scorer')
+        return {'task_id': task_id, 'episode_id': config['episode_id'], 'run_id': config['run_id'],
+                'public_manifest_sha256': public_manifest_sha256, 'split_manifest_sha256': split_manifest_sha256,
+                'truth_roles': {'train_truth': aggregate.train_truth.sha256,
+                    'truth_by_split': {name: binding.sha256 for name, binding in sorted(aggregate.truth.items())}},
+                'inference_roles': {name: binding.sha256 for name, binding in sorted(aggregate.inference.items())},
+                'public_roles': {name: binding.sha256 for name, binding in sorted(aggregate.public.items())},
+                'test_cohort_sha256': aggregate.test_cohort.sha256,
+                'aggregate_runtime': readout_runtime_record(config.get('aggregate_runtime')),
+                'scoring_policy': aggregate.scoring_policy,
+                'aggregate_policy_sha256': aggregate.policy_sha256}
     from eegfm.eeg.aggregation import LAYERS, FEATURE_COLUMNS
     return {'episode_id': config['episode_id'], 'run_id': config['run_id'],
             'public_manifest_sha256': public_manifest_sha256, 'split_manifest_sha256': split_manifest_sha256,
@@ -263,12 +359,15 @@ def scientific_identity(config: dict[str, Any], *, aggregate: Any,
 
 def load_worker(config_binding: FileBinding) -> tuple[dict[str, Any], SandboxedWorkerEvaluator]:
     """Config is fixed by trusted CLI arguments and independently hash-bound."""
-    from eegfm.eeg.aggregation import ScientificAggregator
+    from eegfm.eeg.episode import DEFAULT_TASK, READOUT_TASK, load_aggregator, task_scope
     path = config_binding.verify()
     if path.stat().st_size > 1024**2:
         raise ValueError('Cloud config byte limit exceeded')
     config = json.loads(path.read_text())
-    if config.get('schema_version') != 'ssh_scientific_worker_v1':
+    task_id = config.get('task_id', DEFAULT_TASK)
+    task_scope(task_id)
+    expected_schema = 'ssh_readout_worker_v1' if task_id == READOUT_TASK else 'ssh_scientific_worker_v1'
+    if config.get('schema_version') != expected_schema:
         raise ValueError('Unknown cloud worker configuration')
     for key in ('episode_id', 'run_id'):
         _id(config[key])
@@ -281,15 +380,20 @@ def load_worker(config_binding: FileBinding) -> tuple[dict[str, Any], SandboxedW
     for key in ('staging_root', 'private_root', 'public_root'):
         if not Path(config[key]).is_absolute():
             raise ValueError('Absolute cloud root required')
-    truth = {name: binding(value) for name, value in config['truth_by_split'].items()}
-    aggregate = ScientificAggregator(truth, binding(config['train_truth']),
-                                    bootstrap_resamples=config.get('bootstrap_resamples', 2000))
+    aggregate = load_aggregator(config, verify_runtime=True)
     runtime = config['runtime']
     split = binding(config['split_manifest'])
+    inputs = {name: SplitInputs(binding(pair['train']), binding(pair['evaluation']))
+              for name, pair in config['inputs_by_split'].items()}
+    if task_id == READOUT_TASK and (set(inputs) != {'validation', 'test'} or any(
+            aggregate.inference[name].sha256 != pair.evaluation.sha256 for name, pair in inputs.items())):
+        raise ValueError('Readout scorer inference differs from worker inputs')
+    if task_id == READOUT_TASK and any(pair.train.sha256 != aggregate.public['train'].sha256
+                                      for pair in inputs.values()):
+        raise ValueError('Readout worker training input differs from enrolled public training data')
     worker = SandboxedWorkerEvaluator(private_root=Path(config['private_root']), public_root=Path(config['public_root']),
         public_manifest_sha256=config['public_manifest_sha256'], split_manifest_path=split.path, split_manifest_sha256=split.sha256,
-        inputs_by_split={name: SplitInputs(binding(pair['train']), binding(pair['evaluation']))
-                        for name, pair in config['inputs_by_split'].items()},
+        inputs_by_split=inputs,
         runtime=RuntimeConfig(bwrap=None, python=Path(runtime['python']), backend='docker',
             docker=Path(runtime['docker']), docker_image=runtime['image'], docker_host=runtime['host']),
         aggregate=aggregate, released_metrics=aggregate.released_metrics, aggregate_bindings=aggregate.bindings,
