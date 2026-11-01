@@ -7,6 +7,9 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $settings = Get-Content -LiteralPath (Join-Path $projectRoot 'config/workspaces.json') -Raw | ConvertFrom-Json
 $hosts = if ($Target -eq 'all') { @('huoshanyun', 'nccserver0') } else { @($Target) }
+# Git for Windows may find its bundled SSH instead of the client used above.
+# Resolve the system application so both paths use the same keys and SSH agent.
+$sshExecutable = (Get-Command ssh -CommandType Application | Select-Object -First 1).Source.Replace('\', '/')
 
 function Invoke-CheckedGit([string[]]$GitArguments) {
     & git -C $projectRoot @GitArguments
@@ -60,7 +63,7 @@ foreach ($machine in $hosts) {
     $workspace = $settings.workspaces.$machine
     $previousSshCommand = $env:GIT_SSH_COMMAND
     try {
-        $env:GIT_SSH_COMMAND = 'ssh -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=yes'
+        $env:GIT_SSH_COMMAND = '"' + $sshExecutable + '" -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=yes'
         if ($machine -eq 'nccserver0') { $env:GIT_SSH_COMMAND += " -b $CampusAddress" }
         # Git's updateInstead refuses dirty server checkouts; no force/reset/copy overlay.
         Invoke-CheckedGit @('push', ('ssh://' + $machine + $workspace.code), ($settings.branch + ':' + $settings.branch), '--follow-tags')
