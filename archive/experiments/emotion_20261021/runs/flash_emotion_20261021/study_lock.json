@@ -1,9 +1,0 @@
-{
-  "study_id": "emotion_state_trait_20261021",
-  "created_at": "2026-10-21T09:29:40+08:00",
-  "question_sha256": "2a6f21a0495f231b3688ade2f502ddc3a8a76598112c254b3e5f142502647ef3",
-  "material_manifest_sha256": "0158adaeff9ea88d82602de43a8f316dd133a5aecef9bb5baaabd2c1696c9bcc",
-  "rubric_sha256": "a6d1b456e2a95a368f7df455fc98024b572ac44fb5f6328eca1f7f3fe7c133d9",
-  "baseline_rule_sha256": "affbcb429083a1f08156fa412b0b148043b5f3a6ffa9a4d1f61c4aa916e2a702",
-  "system_prompt_sha256": "76706dcbdded6dd5ed7fad86ba8407633e5f0a804f9836106566a56c0299dc95"
-}

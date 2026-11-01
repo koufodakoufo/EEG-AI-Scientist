@@ -1,1 +1,0 @@
-pid=38684 started=2026-10-20T01:11:44.8045655+08:00 command=python -m eeg_scientist.cli overnight-flash research --name literature_v1

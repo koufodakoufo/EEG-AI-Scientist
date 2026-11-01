@@ -11,7 +11,7 @@
 - Prefer huoshanyun for new execution after resource/storage preflight. Keep ncc available for verified CPU runtime and original evidence. GPU visibility does not establish allocation.
 - Inspect only relevant, readable collaborator project material. Preserve attribution. Never access authentication or unrelated personal files. Copy reusable material only when needed; never move, delete, chmod or chown others' or shared files.
 - Do not read, print, move or upload credentials/. Do not commit authentication, raw/participant data, model weights, hidden truth, runtime state or private reference materials.
-- Preserve archive/ originals and frozen research evidence. Historical runs use original tagged code and recorded environment; do not update their hashes, budgets, reservations or results to fit new paths.
+- Preserve historical originals in .local/history and archive/ Git tags, and keep server frozen evidence at its original paths. Historical runs use original tagged code and recorded environment; do not update their hashes, budgets, reservations or results to fit new paths. See docs/history/README.md for restoration.
 - Researcher contexts must not inherit builder answers or private evaluation material. Shared memory and skills are not automatically visible to a tested researcher.
 - Keep task and final-test boundaries fixed. Fit on training data, choose on selection/validation, freeze before held-out evaluation. Already viewed data stays exploratory.
 - Before moving an owned directory, verify source/destination scope, ownership, active use and recovery route. No destructive cleanup for a visually clean tree.

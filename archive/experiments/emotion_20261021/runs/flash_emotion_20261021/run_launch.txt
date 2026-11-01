@@ -1,1 +1,0 @@
-pid=9104 started=2026-10-21T09:32:08.9402001+08:00 command=python -m eeg_scientist.cli emotion-study run

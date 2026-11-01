@@ -1,9 +1,0 @@
-{
-  "pid": 36696,
-  "at": "2026-10-21T01:42:47Z",
-  "local_time": "2026-10-21T09:42:47+08:00",
-  "phase": "running",
-  "model_calls": 5,
-  "tool_calls": 10,
-  "pending_attempt": "call_006"
-}

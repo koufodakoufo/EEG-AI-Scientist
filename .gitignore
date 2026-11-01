@@ -17,7 +17,6 @@ artifacts/checkpoints/
 artifacts/logs/
 artifacts/predictions/
 
-
 #-----------------------Data-----------------------------
 data/raw/
 data/interim/
@@ -44,7 +43,6 @@ dist/
 #-------------------------Jupyter--------------------
 .ipynb_checkpoints/
 
-
 #------------------------IDE------------------------
 # .vscode/
 .idea/
@@ -53,18 +51,12 @@ dist/
 .DS_Store
 Thumbs.db
 
-
-
-
 #-----------------------Reference-----------------------------
 ref/
-
-
 
 #-------------------------credentials-----------------------
 *.secrets.*
 /credentials/
-
 
 #------------------------Others--------------------------
 temp/
@@ -91,7 +83,6 @@ review_only/
 /framework/examples/demo_claude_001/
 /framework/tasks/reve_isa/src/split_manifest.json
 
-
 # Local coordination locks are runtime state, not checkpoint artifacts.
 /docs/overnight/**/*.lock
 /docs/research/**/*.lock
@@ -111,3 +102,6 @@ review_only/
 
 # Frozen local framework leftovers are preserved, not current source.
 /framework/
+
+# Historical payloads live in archive tags and .local/history, not current checkout.
+/archive/

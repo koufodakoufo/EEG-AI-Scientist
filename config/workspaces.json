@@ -7,7 +7,7 @@
       "code": "/vePFS-0x0d/home/duandh/projects/EEG-AI-Scientist/code",
       "runs": "/vePFS-0x0d/home/duandh/projects/EEG-AI-Scientist/runs",
       "python": "/home/duandh/projects/EEG-AI-Scientist/envs/cpu/bin/python",
-      "registration_status": "pending"
+      "registration_status": "user_handling"
     },
     "nccserver0": {
       "code": "/data/duandh/EEG-AI-Scientist/code",

@@ -1,8 +1,0 @@
-{
-  "created_at": "2026-10-19T17:09:11Z",
-  "warning": "EVALUATOR-ONLY. Never place this mapping or family labels in a Scientist prompt.",
-  "aliases": {
-    "case_c41a": "case_001",
-    "case_a72e": "case_002"
-  }
-}

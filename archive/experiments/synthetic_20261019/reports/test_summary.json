@@ -1,7 +1,0 @@
-﻿{
-    "command":  "C:\\Users\\14090\\anaconda3\\python.exe -m pytest -q (PYTHONPATH=src)",
-    "exit_code":  0,
-    "status":  "passed",
-    "output_path":  "reports/test_output.txt",
-    "ran_at_utc":  "2026-10-18T17:57:22.3543782Z"
-}
