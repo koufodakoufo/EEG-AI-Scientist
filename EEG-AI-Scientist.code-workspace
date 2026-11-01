@@ -1,0 +1,23 @@
+{
+  "folders": [
+    {
+      "name": "EEG-AI-Scientist · 当前工程",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      ".local": true,
+      "archive": true,
+      "credentials": true,
+      "**/__pycache__": true,
+      "**/.pytest_cache": true
+    },
+    "search.exclude": {
+      ".local": true,
+      "archive": true,
+      "credentials": true
+    },
+    "explorer.compactFolders": false
+  }
+}

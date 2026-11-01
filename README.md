@@ -2,6 +2,8 @@
 
 唯一正式本地工作区是 **X:\projects\EEG-AI-Scientist**，沿用根目录原有Git与github remote。当前维护分支为research/brainpec-real-20261029。
 
+**简洁浏览：**用 VS Code 打开 [EEG-AI-Scientist.code-workspace](EEG-AI-Scientist.code-workspace)。此视图隐藏本地私有材料、历史归档、凭据目录和缓存；文件仍在原处，直接“打开文件夹”可恢复完整树。隐藏不等于权限隔离。
+
 先读[中文入口](START_HERE.zh-CN.md)和[一页简报](MORNING_SUMMARY.md)；详细结果见[本轮报告](docs/research/2026-10-30-extension/DETAILED_REPORT.zh-CN.md)。
 
 本轮完成真实EEG参考分析、两条真实Codex Actor经wzf driver的生命周期及一对skill案例。**Actor仅完成Q1；未证明skill提高科研能力，未完成真实任务间技能迁移。** 用户已要求收尾，不继续后台研究。
