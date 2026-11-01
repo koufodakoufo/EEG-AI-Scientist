@@ -49,4 +49,30 @@ Windows 状态检查：
 
 `config/workspaces.json` 是本人机器路径清单，不含认证；同步脚本读取其中的 code 路径，包不会自动把 runs/python 字段当成运行配置。实际运行显式设置 `EEGFM_ROOT`（其下包含任务、运行和允许的知识），或使用 checkout 默认值。新代码可 `pip install -e`，科学包和 Linux 沙箱能力分别验收；CPU PyTorch 应先从 CPU wheel 安装，避免普通依赖解析安装整套 CUDA 库。
 
-本文件最后一轮环境与测试结果将在部署验收后更新；准备状态不等于研究作业已启动。
+火山云 Python 3.12.16、CPU Torch 2.6.0、NumPy 2.2.6、SciPy 1.15.3、scikit-learn 1.6.1 已安装并检查。基础解释器也在新根的 `runtime/python`，不依赖旧日期目录。完整依赖版本在 [cpu-requirements.txt](../config/cpu-requirements.txt)，仅描述这套 Linux CPU 环境；不要求 Windows 复制全部包。
+
+使用已配置的火山云环境：
+
+```bash
+source /home/duandh/projects/EEG-AI-Scientist/environment.sh
+cd /vePFS-0x0d/home/duandh/projects/EEG-AI-Scientist/code
+python -m eegfm --help
+```
+
+包以 editable 方式安装；环境设置独立缓存、临时目录及4线程。重建时先从 PyTorch 官方 CPU wheel 源安装 `torch==2.6.0+cpu`，再安装版本清单和项目；不把环境目录当源码同步。服务器证据位于各新工程根的 `evidence/`。
+
+ncc 只读复用原科学 venv；验证新代码时显式设 `PYTHONPATH=/data/duandh/EEG-AI-Scientist/code/src`。既有环境和冻结实验不被新包安装覆盖。
+
+### 本轮验收（2026-11-01）
+
+| 环境 | 完整套件结果 | 解释 |
+|---|---|---|
+| Windows | 225通过，57跳过 | 跳过 Linux 进程/隔离和本机无法创建的链接；同步脚本回归通过 |
+| ncc Linux | 280通过，2跳过 | 两项需 PowerShell；全部 Linux 生命周期与真实隔离测试通过 |
+| 火山云 Linux | 269通过，2失败，11跳过 | 两项真实沙箱执行失败；9项私有校准样例未提供、2项需 PowerShell |
+
+源码候选 `2ea2ef2` 已分别在两台服务器核验；后续说明修订不改变该源码。旧 ncc 基线另有266项全通过。三项独立复核问题均已修复：远端实际 checkout 校验、无科学依赖的命令帮助、当前研究者启动指令。
+
+火山云 `bwrap` 存在，但普通用户命名空间探针失败；默认 PATH 也未发现原生研究者 CLI。此环境目前可执行 CPU 科学工具，**尚不满足受测研究者的完整隔离运行条件**。不得跳过隔离检查来启动正式对照。ncc 保留为经过验证的执行后备。GPU仍未分配，九小时研究尚未开始。
+
+旧环境中独立小程序复现了 OpenBLAS 线程池从2扩到4时的原生崩溃；本轮统一初始 `OPENBLAS_NUM_THREADS=4`、`OMP_NUM_THREADS=4` 后完成测试。该记录描述已观察到的触发条件，不声称已修复上游数值库。

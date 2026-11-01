@@ -13,15 +13,15 @@
 
 ## 日常使用
 
-从仓库根安装开发环境：
+已配置环境中，从仓库根安装当前项目：
 
 ```bash
-python -m pip install -e ".[dev]"
+python -m pip install --no-deps -e .
 python -m eegfm --help
 python -m pytest -q
 ```
 
-`dev` 已包含测试与科学依赖；最小安装可用 `pip install -e .`，按需添加 `science`、`plots` 或 `reve`。Linux 负责受限 Agent、进程和沙箱执行。Windows 可编辑代码、阅读结果并运行可移植检查。完整安装与平台验证结果见机器说明。
+新环境先按[机器说明](docs/workspaces.md)安装 CPU 科学依赖；`dev` 包含测试与科学依赖，`plots` 和 `reve` 按需添加。Linux 负责受限 Agent、进程和沙箱执行。Windows 可编辑代码、阅读结果并运行可移植检查。
 
 代码在 src/eegfm/，测试在 tests/，任务定义在 tasks/。运行产物、数据、权重和私有参考不进 Git。唯一正式本地工程为 X:/projects/EEG-AI-Scientist。
 
