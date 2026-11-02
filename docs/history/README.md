@@ -8,6 +8,7 @@
 | 合成科研与方法提示 | [结果](synthetic-pilot/RESULTS.md) | `archive/synthetic-pilot-v1` |
 | 真实 EEG 与受测 AI | [参考结果](brainpec-pilot/SCIENCE_RESULT.zh-CN.md)、[AI 对照](reference-expansion/AGENT_CASE_STUDY.zh-CN.md) | `archive/brainpec-pilot-v1` |
 | 表示基线和第二任务 | [基线比较](reference-expansion/REPRESENTATION_BASELINES.zh-CN.md)、[睁闭眼任务](reference-expansion/EEGMMIDB_REFERENCE.zh-CN.md) | `archive/brainpec-pilot-v1` |
+| 方法迁移与读出研究 | [迁移试点](../research/method-transfer-results.md)、[Builder参考](../research/readout-bottleneck-results.md)、[研究者对照](../research/readout-method-transfer-results.md) | `archive/method-transfer-v1` |
 
 旧报告位置变换：`docs/overnight/2026-10-29` → `synthetic-pilot`；`docs/research/2026-10-29-brainpec-real` → `brainpec-pilot`；`docs/research/2026-10-30-extension` → `reference-expansion`。移动不修改历史论断。
 
