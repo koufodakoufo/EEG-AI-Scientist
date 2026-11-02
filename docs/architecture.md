@@ -14,7 +14,17 @@
 | `tests/` | 行为、隔离、数值与迁移后接口回归 |
 | `scripts/` | 环境与同步等运维入口，科学算法优先作为包模块复用 |
 
-当前 EEG 回合有 EEGMAT 任务约束，留在 `eeg/episode.py`。新任务须显式接入数据、scope 和评价要求，不能仅换任务名。
+`eeg/episode.py`显式登记EEGMAT、EEGMMIDB属性依赖分析和新的EEGMMIDB缓存读出任务，分别绑定题面、scope、评分器和完成条件。未知任务名拒绝执行，不能只换名称复用旧评分规则。
+
+| 具体接口 | 当前职责与边界 |
+| --- | --- |
+| `eeg/aggregation.py` | 属性读出、表示干预与残余探针的可信聚合；机械完成不代表三个科学分项均完成 |
+| `eeg/readout_data.py`、`eeg/readout_study.py` | Builder私有缓存准备、固定读出拟合及统计；参考方法和答案不进入Actor |
+| `eeg/readout_aggregation.py`、`tasks/readout_bottleneck/` | 新读出任务的声明、绑定输入、逐行预测及可信统计；合法拟合与科学判别仍需源码和重放审计 |
+| `evaluation/ssh_worker.py` | 可信控制器将冻结候选提交至已登记云端执行器，核验返回身份；认证留在控制层 |
+| `evaluation/worker.py`、`evaluation/docker_worker.py` | 受限科学候选执行，支持bwrap或Docker；当前火山云实际使用Docker |
+
+实际研究链是NCC模型会话与控制器 → SSH传输 → 火山云Docker候选执行 → 宿主可信评分。Builder原生CPU分析使用单独的资源限额，不与Actor沙箱混称。冻结的输入、源码、模型、评分依赖和预算按运行登记；不能用当前checkout替换旧证据绑定。
 
 内环：问题 → 假设及预测 → 实验 → 证据 → 结论。
 
@@ -22,6 +32,6 @@
 
 可信评价器不能被正在改进的策略修改。隔离落实到题包、文件可见性和会话输入，不能靠目录命名实现。
 
-旧 `framework/` 是源码导入的包装层，`research_bench/` 后来混入多个职责。安装包消除手工路径注入，分组只分开已有代码，没有添加新的流程平台。
+第一项研究的六次目标Actor均完成有效Q1 `24/24`，Q2/Q3未执行，没有方法组覆盖增益；见[方法迁移结果](research/method-transfer-results.md)。[Builder读出分析](research/readout-bottleneck-results.md)也已完成并经缓存、拟合和统计审计，但不是受测Actor成果。[第二组读出对照](research/readout-method-transfer-results.md)的六份候选均通过独立拟合、全1008行预测及统计复核；四份最终报告完成，两份因总结阶段后端不可用而缺失。实验有效性与报告完成分开记录，同起点updater比较及ignition未准入。
 
-原 `integration/` 是用于接入原框架的历史 checkout。新代码目录统一称 `code`；旧 checkout 只服务封存实验。历史锁绑定原路径和哈希，旧实验继续使用原标签及目录，新运行记录新源码身份。[历史索引](history/README.md)
+论文问题与当前任务的对应见[BrainPEC主张索引](research/brainpec-claim-map.md)：本地残余探针Q3不等于论文closure，改编参考也不等于原论文复现。旧`framework/`、`research_bench/`和`integration/`的演变留在Git历史及[历史索引](history/README.md)，当前源码入口统一为安装包与各机器的`code`目录。

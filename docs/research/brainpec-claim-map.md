@@ -1,9 +1,11 @@
 # BrainPEC：原论文问题与主张索引
 
-这份索引在目标首批于 **19:04:47 UTC 启动之后**补写，依据官方
+这份索引初版在目标首批于 **19:04:47 UTC 启动之后**补写，依据官方
 [BrainPEC v2 全文](https://arxiv.org/html/2605.11410v2)，未读取目标运行或结果。
 它是 Builder 侧的论文阅读目录，**不是目标前冻结的参考集合，不可据此补算预注册 F1**，
 也不改变已冻结的目标评价规约。下文数值均为作者报告，未由本项目复现；本页不得进入 Actor/updater 上下文。
+
+**范围说明：**下表的“当前试点”“未做closure”指第一项 EEGMAT→EEGMMIDB 方法迁移研究。后续 [Builder 读出研究](readout-bottleneck-results.md)计算了新条件下的改编比值，[独立研究者读出对照](readout-method-transfer-results.md)也评估了属性预测充分性；两者都没有匹配原论文的完整确认属性、任务和指标条件，不能补算成原论文 closure 的复现。
 
 ## 论文问了什么
 

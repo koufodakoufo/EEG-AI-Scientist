@@ -5,9 +5,11 @@ GitHub 的 `main` 是已验证代码的共同主线。本地与服务器各有�
 | 位置 | 代码入口 | 用途 |
 |---|---|---|
 | Windows | `X:/projects/EEG-AI-Scientist` | 开发、阅读、发布 |
-| 火山云 | `/vePFS-0x0d/home/duandh/projects/EEG-AI-Scientist/code` | 优先执行位置；目录登记由用户办理 |
-| nccserver0 | `/data/duandh/EEG-AI-Scientist/code` | CPU 验证和备用执行 |
+| 火山云 | `/vePFS-0x0d/home/duandh/projects/EEG-AI-Scientist/code` | Docker科学候选执行、可信评分及原生Builder分析；目录登记由用户办理 |
+| nccserver0 | `/data/duandh/EEG-AI-Scientist/code` | 模型会话、可信研究控制器、调用账本及CPU验证 |
 | GitHub | `koufodakoufo/EEG-AI-Scientist`，`main` | 版本化源码与可公开文档 |
+
+当前实际路径是“NCC控制器 → SSH传输冻结候选 → 火山云Docker执行 → 可信评分返回”。SSH认证留在可信控制层，不进入候选容器。第一项研究的六个目标episode已沿此路径完成；Builder读出分析使用火山云原生CPU进程及资源限制，不冒充Actor隔离运行。[方法迁移结果](research/method-transfer-results.md)和[Builder读出结果](research/readout-bottleneck-results.md)分别记录证据。
 
 ## 火山云存储
 
@@ -63,20 +65,22 @@ python -m eegfm --help
 
 ncc 只读复用原科学 venv；验证新代码时显式设 `PYTHONPATH=/data/duandh/EEG-AI-Scientist/code/src`。既有环境和冻结实验不被新包安装覆盖。
 
-### 本轮验收（2026-11-01）
+### 当前验收（维护源码 `0206182`，2026-11-02）
 
 | 环境 | 完整套件结果 | 解释 |
 |---|---|---|
-| Windows | 225通过，57跳过 | 跳过 Linux 进程/隔离和本机无法创建的链接；同步脚本回归通过 |
-| ncc Linux | 280通过，2跳过 | 两项需 PowerShell；全部 Linux 生命周期与真实隔离测试通过 |
-| 火山云 Linux | 269通过，2失败，11跳过 | 两项真实沙箱执行失败；9项私有校准样例未提供、2项需 PowerShell |
+| Windows | 380通过，83跳过 | 可移植检查；Linux专属能力另在服务器验证 |
+| NCC Linux | 445通过，18跳过 | 使用已部署源码和科学环境；跳过项单独保留 |
+| 火山云 Linux | 443通过，20跳过 | 用户命名空间受限；受测候选实际使用Docker后端 |
 
-源码候选 `2ea2ef2` 已分别在两台服务器核验；后续说明修订不改变该源码。旧 ncc 基线另有266项全通过。三项独立复核问题均已修复：远端实际 checkout 校验、无科学依赖的命令帮助、当前研究者启动指令。
+以上是完整pytest套件结果，依据本地`.local/method-transfer/postrun-maintenance-verification.json`及三份逐端日志。显式Docker/SSH资格检查和未提供的私有校准样例不由这些通过数替代；读出任务的Docker资格另行执行。维护修复统一Windows/Linux的候选文件清单排序，保留原Linux顺序和哈希语义；只在全部科学运行及数值复放结束后应用，没有改变已冻结的实验。
 
-火山云 `bwrap` 存在，但普通用户命名空间探针失败；默认 PATH 也未发现原生研究者 CLI。此环境目前可执行 CPU 科学工具，**尚不满足受测研究者的完整隔离运行条件**。不得跳过隔离检查来启动正式对照。ncc 保留为经过验证的执行后备。GPU仍未分配，九小时研究尚未开始。
+第二组读出对照始终绑定原源码`5f2beb8`：当时完整套件为Windows 374/83、NCC 439/18、云端437/20（通过/跳过）。六份候选均已完成独立拟合、完整预测与统计复核；四份最终报告完成，两次总结会话因后端不可用而中断，未重跑。原验收、失败与追加记录保留，ignition未准入。
 
-2026-11-02复查：本地Full Access下再次SSH实测，`unshare`与`bwrap`仍被远端拒绝，属于服务器执行环境限制。已有rootless Docker可访问；使用现有Python小镜像、无网络、只读根目录、非root用户、无额外能力、128MB/1CPU的小型临时容器成功启动，检查了临时写入、根目录写入受阻、外连受阻、宿主项目路径不可见，退出后容器自动移除。没有挂载共享目录或凭据、没有使用GPU。**Docker已通过最小可行性检查，但尚未接入项目worker，也未通过完整科研隔离验收**。后续优先实现这个替代执行后端，不需要为了旧bwrap方案放宽服务器全局限制。
+火山云`unshare`/`bwrap`用户命名空间仍受环境限制；Docker替代后端已接入`worker.py`并用于实际科学候选执行。其边界包括无网络、只读根目录、非root用户、只挂载准入材料及退出清理。CPU亲和性和地址空间限制、数值库线程限制、磁盘采样监测分别记录；不把命令接受某个参数写成已具备cgroup资源保证。GPU作业仍为0。
+
+每项研究继续使用其准入清单绑定的源码、依赖、输入及预算。新checkout通过测试不能改写旧运行身份；旧探针、失败和修复经过保留在Git历史及运行证据，不在入口文档重复累积日志。
 
 登记标记是项目台账，不是平台权限开关。当前由用户办理，具体安排见上方“火山云存储”，无需为登记重复暂停准备工作。
 
-旧环境中独立小程序复现了 OpenBLAS 线程池从2扩到4时的原生崩溃；本轮统一初始 `OPENBLAS_NUM_THREADS=4`、`OMP_NUM_THREADS=4` 后完成测试。该记录描述已观察到的触发条件，不声称已修复上游数值库。
+本轮保持初始`OPENBLAS_NUM_THREADS=4`、`OMP_NUM_THREADS=4`；历史OpenBLAS线程池切换故障的复现记录仍保留，不声称已修复上游数值库。
