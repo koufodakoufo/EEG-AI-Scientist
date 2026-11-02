@@ -129,7 +129,7 @@ def _manifest(root: Path) -> tuple[list[dict[str, Any]], str]:
         raise ValueError("Candidate root must be a regular directory")
     entries: list[dict[str, Any]] = []
     total = 0
-    for path in sorted(root.rglob("*")):
+    for path in sorted(root.rglob("*"), key=lambda path: path.relative_to(root).parts):
         info = path.lstat()
         if stat.S_ISLNK(info.st_mode) or any(part.startswith(".") for part in path.relative_to(root).parts):
             raise ValueError("Links and hidden candidate paths are forbidden")

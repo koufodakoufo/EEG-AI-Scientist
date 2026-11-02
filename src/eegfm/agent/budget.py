@@ -144,11 +144,11 @@ def run_bounded(argv: Sequence[str], *, cwd: Path, output_dir: Path, timeout_sec
     if sys.platform != 'linux':
         raise RuntimeError('Bounded compute launcher requires Linux; fail closed')
     if not argv or not 0 < timeout_seconds <= 1800 or not 0 < threads <= 4 or not 0 < memory_limit_bytes <= 12 * 1024**3:
-        raise ValueError('Requested resources exceed nightly limits')
+        raise ValueError('Requested resources exceed run limits')
     if output_dir.exists():
         raise FileExistsError('Run evidence directory already exists; no silent retry')
     if not 0 < storage_limit_bytes <= 10 * 1024**3:
-        raise ValueError('Storage cap exceeds nightly allocation')
+        raise ValueError('Storage cap exceeds run allocation')
     if shutil.disk_usage(cwd).free < minimum_free_bytes:
         raise BudgetExceeded('Working disk below free-space safety floor')
     scope = (storage_scope or cwd).resolve(strict=True)

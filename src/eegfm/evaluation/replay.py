@@ -54,7 +54,7 @@ def validate_commands(value: Any) -> list[dict[str,Any]]:
 def freeze_submission(output: Path,destination: Path) -> dict[str,Any]:
     if output.is_symlink() or destination.exists(): raise ValueError('Submission source/destination is unsafe or already frozen')
     files=[]; total=0
-    for path in sorted(output.rglob('*')):
+    for path in sorted(output.rglob('*'), key=lambda path: path.relative_to(output).parts):
         if path.is_symlink(): raise ValueError('Submission contains a symlink')
         if not path.is_file(): continue
         if path.stat().st_nlink!=1: raise ValueError('Submission contains a hardlink')

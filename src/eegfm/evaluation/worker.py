@@ -112,7 +112,7 @@ def _tree(root: Path, *, maximum_bytes: int = 64 * 1024**2, maximum_files: int =
     _path(root, directory=True)
     entries: list[dict[str, Any]] = []
     total = 0
-    for file in sorted(root.rglob("*")):
+    for file in sorted(root.rglob("*"), key=lambda file: file.relative_to(root).parts):
         relative = file.relative_to(root)
         if file.is_symlink() or (not hidden and any(part.startswith(".") for part in relative.parts)):
             raise ValueError("Unsafe tree entry")
