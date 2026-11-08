@@ -1,6 +1,19 @@
 """Deterministic adapter tests, explicitly not semantic model calibration."""
 from __future__ import annotations
 
+
+def test_model_contract_explicitly_requires_flat_payload():
+    from eegfm.evaluation.assessment import extract_report
+    seen = []
+    def capture(request):
+        seen.append(request)
+        return '{"segment_id":"s0001","status":"complete","claims":[],"notes":""}'
+    extract_report('A reported number.', 'contract-check', capture, provider_id='synthetic')
+    payload = seen[0]['response_contract']['claims'][0]['payload']
+    assert isinstance(payload, str)
+    assert 'flat' in payload and 'not' in payload
+    assert 'Do not wrap the payload' in seen[0]['instructions']
+
 import copy
 import json
 

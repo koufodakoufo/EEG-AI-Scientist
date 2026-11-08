@@ -16,7 +16,7 @@ from typing import Any, Callable, Iterable, Mapping
 from eegfm.evaluation import claims
 from eegfm.evaluation.paper import CONDITION_FIELDS, validate_private_task
 
-VERSION = 'paper_assessment_v1'
+VERSION = 'paper_assessment_v1.1'
 Provider = Callable[[dict[str, Any]], str]
 MAX_RAW_RESPONSE_CHARS = 2_000_000
 MAX_RESPONSE_DEPTH = 32
@@ -29,10 +29,11 @@ CLAIM_CONTRACT = {
     'scope': {'dataset': 'string; unspecified if absent', 'model': 'string; unspecified if absent',
               'split': 'string; unspecified if absent', 'conditions': 'JSON object, preserve exact experimental conditions'},
     'subject': 'string', 'predicate': 'string', 'direction': 'string', 'qualifiers': ['strings'],
-    'payload': {'point': {'metric': 'string', 'estimate': 'finite number', 'unit': 'string'},
-                'interval': {'metric': 'string', 'low': 'number', 'high': 'number', 'level': 'number strictly between 0 and 1',
-                             'method': 'string', 'unit': 'string'},
-                'mechanism': {'relation': 'string'}, 'qualitative': {'statement': 'string'}},
+    'payload': ('One flat object, not an object nested under the kind name. '
+                'point fields: metric, estimate (finite number), unit. '
+                'interval fields: metric, low, high, level (0 < level < 1), method, unit. '
+                'mechanism fields: relation. qualitative fields: statement. '
+                'All fields except explicitly numeric fields are strings.'),
     'source_spans': [{'start': 'global Unicode integer offset inclusive', 'end': 'global Unicode integer offset exclusive', 'quote': 'exact source substring'}],
     'evidence_ids': ['strings; do not invent evidence'],
 }
@@ -171,7 +172,10 @@ def _request(operation: str, request_id: str, data: dict[str, Any], provider_id:
                'provider_id': provider_id, 'provider_metadata': copy.deepcopy(dict(provider_metadata or {})),
                'timeout_seconds': timeout_seconds,
                'prompt_version': claims.EXTRACTION_PROMPT_VERSION if extracting else claims.JUDGE_PROMPT_VERSION,
-               'instructions': claims.EXTRACTION_PROMPT if extracting else claims.JUDGE_PROMPT,
+               'instructions': (claims.EXTRACTION_PROMPT + '\nDo not wrap the payload in a kind key. '
+                   'For kind="point", use payload={"metric":"accuracy","estimate":0.75,"unit":"fraction"}, '
+                   'NOT payload={"point":{...}}. Each other kind likewise uses its direct fields.')
+                   if extracting else claims.JUDGE_PROMPT,
                'data': copy.deepcopy(data), 'response_contract': contract}
     request['request_sha256'] = claims.canonical_sha256(request)
     return request
