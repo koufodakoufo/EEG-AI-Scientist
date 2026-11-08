@@ -328,6 +328,13 @@ def verify_readout_runtime(expected: Any) -> None:
 def scientific_identity(config: dict[str, Any], *, aggregate: Any,
                         public_manifest_sha256: str, split_manifest_sha256: str) -> dict[str, Any]:
     """Bind roles and scoring semantics across machines, independently of paths."""
+    if config.get('schema_version') == 'ssh_public_fit_worker_v1':
+        from eegfm.evaluation.public_workbench import MODE, PublicFitAggregator
+        if type(aggregate) is not PublicFitAggregator:
+            raise ValueError('Public fitting requires its registered collector')
+        return {'task_id': 'public-fit-v1', 'episode_id': config['episode_id'], 'run_id': config['run_id'],
+                'public_manifest_sha256': public_manifest_sha256, 'split_manifest_sha256': split_manifest_sha256,
+                'capability': MODE, 'aggregate_policy_sha256': aggregate.policy_sha256}
     from eegfm.eeg.episode import DEFAULT_TASK, READOUT_TASK, task_scope
     task_id = config.get('task_id', DEFAULT_TASK)
     task_scope(task_id)
@@ -364,6 +371,9 @@ def load_worker(config_binding: FileBinding) -> tuple[dict[str, Any], SandboxedW
     if path.stat().st_size > 1024**2:
         raise ValueError('Cloud config byte limit exceeded')
     config = json.loads(path.read_text())
+    if config.get('schema_version') == 'ssh_public_fit_worker_v1':
+        from eegfm.evaluation.public_workbench import load_public_worker
+        return config, load_public_worker(config)
     task_id = config.get('task_id', DEFAULT_TASK)
     task_scope(task_id)
     expected_schema = 'ssh_readout_worker_v1' if task_id == READOUT_TASK else 'ssh_scientific_worker_v1'
@@ -426,7 +436,7 @@ def handle_request(config_binding: FileBinding, request: dict[str, Any]) -> dict
         _id(record[name])
     if record['episode_id'] != config['episode_id'] or record['run_id'] != config['run_id']:
         raise ValueError('Evaluation belongs to a different enrolled episode')
-    if (record['split'] not in {'validation', 'test'}
+    if (record['split'] not in worker.allowed_splits
             or record['public_manifest_sha256'] != worker.public_hash
             or record['split_manifest_sha256'] != worker.split_hash):
         raise ValueError('Evaluation differs from fixed cloud data binding')

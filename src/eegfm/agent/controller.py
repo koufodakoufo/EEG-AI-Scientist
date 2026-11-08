@@ -536,7 +536,11 @@ class ResearchController:
         finally:
             Path(name).unlink(missing_ok=True)
 
-    def reserve_session(self, maximum: int) -> str:
+    def reserve_session(self, maximum: int, *, provider: str | None = None, timeout_seconds: int = 900) -> str:
+        if provider is not None:
+            from eegfm.agent.provider import PROVIDER
+            if provider != PROVIDER or type(timeout_seconds) is not int or not 1 <= timeout_seconds <= 240:
+                raise ValueError('Invalid delegated provider/session allocation')
         with self._transaction() as db:
             state = self._load(db)
             if any(item.get('status') == 'reserved' for item in state['sessions']):
@@ -547,7 +551,9 @@ class ResearchController:
             state['sessions'].append({'reservation_id':identifier,'status':'reserved',
                 'ok':False,'error':'interrupted','summary':{'reason':'reserved before model launch'},
                 'started':time.time(),'progressed':False,'episode_id':self.episode_id,'run_id':self.run_id,
-                'allocated_timeout_seconds':900})
+                'allocated_timeout_seconds':timeout_seconds if provider is not None else 900})
+            if provider is not None:
+                state['sessions'][-1]['provider'] = provider
             self._save(db,state)
             self._session_history(state)
             return identifier
@@ -564,13 +570,28 @@ class ResearchController:
                 self._event('crash_resume_blocked',unresolved_reservations=unresolved)
 
     def record_session(self, receipt: dict[str, Any], *, reservation_id: str | None = None) -> dict[str, Any]:
-        ok, error, summary = Adapter("codex").classify(receipt.get("exit_code", -1), receipt.get("stdout", ""),
-            receipt.get("stderr", ""), receipt.get("status") == "timed_out")
-        ok = bool(ok and receipt.get("status") == "completed" and receipt.get("process_cleanup", {}).get("surviving_owned_pids") == [])
+        delegated = None
+        if receipt.get('provider') is not None:
+            from eegfm.agent.provider import read_trusted_receipt
+            if reservation_id is None:
+                raise ValueError('Delegated receipt needs its existing reservation')
+            delegated = read_trusted_receipt(receipt, controller_run=self.run, reservation_id=reservation_id,
+                                            episode_id=self.episode_id, run_id=self.run_id)
+            ok = delegated['status'] == 'completed'
+            error = None if ok else 'transient' if delegated['status'] == 'timed_out' else 'failed'
+            summary = {'provider': delegated['provider'], 'model': delegated['model'], 'effort': delegated['effort'],
+                       'model_context_id': delegated.get('model_context_id'),
+                       'trusted_audit_sha256': delegated.get('trusted_audit_sha256')}
+        else:
+            ok, error, summary = Adapter("codex").classify(receipt.get("exit_code", -1), receipt.get("stdout", ""),
+                receipt.get("stderr", ""), receipt.get("status") == "timed_out")
+            ok = bool(ok and receipt.get("status") == "completed" and receipt.get("process_cleanup", {}).get("surviving_owned_pids") == [])
         if not ok and error is None:
             error = "failed"
         record = {"ok": ok, "error": error, "summary": summary, "started": time.time(), "progressed": False,
                   "episode_id": self.episode_id, "run_id": self.run_id}
+        if delegated is not None:
+            record['provider'] = delegated['provider']
         with self._transaction() as db:
             state = self._load(db)
             if reservation_id is None:
@@ -580,12 +601,17 @@ class ResearchController:
                 if index is None or state['sessions'][index].get('status') != 'reserved':
                     raise ValueError('Session reservation missing or already completed')
                 original = state['sessions'][index]
+                if delegated is not None and (original.get('provider') != delegated['provider']
+                        or original['allocated_timeout_seconds'] != delegated['allocated_timeout_seconds']):
+                    raise ValueError('Delegated receipt changed its reserved provider/budget')
+                if delegated is None and original.get('provider') is not None:
+                    raise ValueError('Delegated reservation cannot use native receipt events')
                 record.update(reservation_id=reservation_id,status='finished',started=original['started'],
                               allocated_timeout_seconds=original['allocated_timeout_seconds'])
                 state['sessions'][index] = record
             self._save(db, state)
             self._session_history(state)
-        return record
+        return {**record, 'requests': delegated['requests']} if delegated is not None else record
 
     def _validated_attempt(self, state: dict[str, Any], attempt: dict[str, Any]) -> bool:
         jobs = [state["jobs"][key] for key in attempt["jobs"] if state["jobs"][key]["split"] == "validation"]
@@ -686,11 +712,19 @@ class ResearchDriver(Driver):
     """
     def __init__(self, controller: ResearchController, *, launch: Callable[[dict[str, Any]], dict[str, Any]],
                  reviewer: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
-                 max_sessions: int = 6, once: bool = False, poll: float = 1.0) -> None:
+                 max_sessions: int = 6, once: bool = False, poll: float = 1.0,
+                 session_provider: str | None = None, provider_model: str | None = None,
+                 provider_timeout_seconds: int = 240) -> None:
         self.controller, self.launch, self.reviewer = controller, launch, reviewer
         if type(max_sessions) is not int or not 1 <= max_sessions <= 6:
             raise ValueError('Blind episode permits one to six model sessions')
-        super().__init__(controller.run_id, _AdapterIdentity(), run_path=controller.run,
+        if session_provider is not None:
+            from eegfm.agent.provider import PROVIDER
+            if session_provider != PROVIDER or provider_model != 'gpt-6.1-sol' or type(provider_timeout_seconds) is not int or not 1 <= provider_timeout_seconds <= 240:
+                raise ValueError('Explicit audited provider and bounded model required')
+        self.session_provider, self.provider_timeout_seconds = session_provider, provider_timeout_seconds
+        adapter = _AdapterIdentity('delegated-audited', provider_model) if session_provider else _AdapterIdentity()
+        super().__init__(controller.run_id, adapter, run_path=controller.run,
             task={"task_id": controller.episode_id, "compute": {"backend": "local"}},
             max_sessions=max_sessions, once=once, poll=poll, outage_max=600, session_timeout=900)
 
@@ -703,6 +737,9 @@ class ResearchDriver(Driver):
             except BlockingIOError as error:
                 raise ControllerAlreadyRunning('Another controller owns this episode') from error
             try:
+                if self.session_provider is not None:
+                    from eegfm.agent.provider import recover_completed_reservations
+                    recover_completed_reservations(self.controller)
                 self.controller.guard_crash_resume()
                 return super().loop()
             finally:
@@ -710,11 +747,16 @@ class ResearchDriver(Driver):
 
     def session(self, state: dict[str, Any]) -> dict[str, Any]:
         before = self.controller.projection()["state"]["version"]
-        reservation_id = self.controller.reserve_session(self.max_sessions)
-        receipt = self.launch(self.controller.projection())
+        reservation_id = self.controller.reserve_session(self.max_sessions, **(
+            {'provider': self.session_provider, 'timeout_seconds': self.provider_timeout_seconds} if self.session_provider else {}))
+        projection = self.controller.projection()
+        if self.session_provider:
+            projection['provider_session'] = {'reservation_id': reservation_id,
+                'timeout_seconds': self.provider_timeout_seconds, 'provider': self.session_provider}
+        receipt = self.launch(projection)
         record = self.controller.record_session(receipt,reservation_id=reservation_id)
         if record["ok"]:
-            requests = receipt.get("requests", [])
+            requests = record.get('requests', []) if self.session_provider else receipt.get("requests", [])
             if not isinstance(requests, list) or len(requests) > 16:
                 raise ValueError("Invalid request batch")
             for request in requests:

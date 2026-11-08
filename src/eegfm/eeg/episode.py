@@ -548,6 +548,8 @@ class EpisodeDriver(ResearchDriver):
 
 def run_episode(config: dict[str, Any]) -> dict[str, Any]:
     """Linux native entrypoint; no production scripted-hook or synthetic mode."""
+    if config.get('schema_version') == 'audited_coding_episode_v1':
+        return run_delegated_episode(config)
     if os.name != "posix":
         raise RuntimeError("Native isolated episodes require Linux")
     if config.get("schema_version") != "real_episode_config_v1":
@@ -695,4 +697,161 @@ def run_episode(config: dict[str, Any]) -> dict[str, Any]:
               "actual_model_run": any(row.get("verified_model_turn") for row in launcher.history),
               "scientific_completion": "requires independent evidence review; lifecycle completion alone is insufficient"}
     write_atomic(private / "EPISODE_RESULT.json", result)
+    return result
+
+
+def validate_delegated_config(config: dict[str, Any]) -> dict[str, Any]:
+    """Explicit historical-readout admission; never inspect native credentials."""
+    if (config.get('schema_version') != 'audited_coding_episode_v1' or config.get('task_id') != READOUT_TASK
+            or config.get('model') != MODEL or config.get('reasoning_effort') not in {'medium', 'high'}):
+        raise ValueError('Explicit audited historical-readout provider required')
+    if any(name in config for name in ('auth_source', 'auth_mode', 'native_binary', 'isolation_report', 'proxy_url', 'bwrap')):
+        raise ValueError('Audited provider config must not carry native authentication/isolation fields')
+    wall, timeout = episode_time_limits(config)
+    if not 180 <= timeout <= 240 or wall > 2700:
+        raise ValueError('Audited session allocation must be 180-240 seconds within 2700 seconds')
+    calls = config.get('call_ids')
+    if (not isinstance(calls, list) or not 1 <= len(calls) <= 6 or len(set(calls)) != len(calls)
+            or any(not isinstance(item, str) or re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,99}', item) is None for item in calls)):
+        raise ValueError('One to six unique declared model calls required')
+    proof_binding = binding(config['historical_data_qualification'])
+    proof = read_json(proof_binding.path)
+    if (proof.get('status') != 'exact_historical_readout_inputs_qualified_for_development_replay'
+            or proof.get('not_project_unseen_confirmation') is not True or not proof.get('previous_successful_test_job')):
+        raise ValueError('A successful exact historical test provenance receipt is required')
+    roles = {row['role']: row['sha256'] for row in proof['bindings']}
+    expected = {'public_train': config['train_input'], 'public_validation': config['public_validation_input'],
+                **{'inference_' + name: item for name, item in config['inference_by_split'].items()},
+                'truth_train': config['train_truth'], **{'truth_' + name: item for name, item in config['truth_by_split'].items()},
+                'cohort': config['test_cohort'], 'split_manifest': config['split_manifest']}
+    if len(roles) != len(proof['bindings']) or set(roles) != set(expected):
+        raise ValueError('Historical data roles are incomplete or duplicated')
+    for role, value in expected.items():
+        if binding(value).sha256 != roles[role]:
+            raise ValueError('Episode data differs from exact historical role: ' + role)
+    if (binding(config['validation_input']).sha256 != roles['inference_validation']
+            or binding(config['test_input']).sha256 != roles['inference_test']):
+        raise ValueError('Worker inference differs from historical replay inputs')
+    return proof
+
+
+def run_delegated_episode(config: dict[str, Any]) -> dict[str, Any]:
+    """Opt-in audited model provider; retain existing scientific lifecycle gates."""
+    from eegfm.agent.provider import PROVIDER, ProviderMailbox, ProviderLaunch, read_trusted_receipt
+    from eegfm.evaluation.public_workbench import PublicWorkbench
+    from eegfm.evaluation.ssh_worker import SshWorkerEvaluator, scientific_identity
+    validate_delegated_config(config)
+    if os.name != 'posix':
+        raise RuntimeError('The trusted ResearchDriver controller remains on Linux')
+    case, private = Path(config['case_root']), Path(config['trusted_root'])
+    if not case.is_absolute() or not private.is_absolute() or case == private or case in private.parents or private in case.parents:
+        raise ValueError('Absolute disjoint provider case and trusted roots required')
+    if case.exists() and any(case.iterdir()) and not (private / 'ENROLLMENT.json').is_file():
+        raise ValueError('Fresh provider enrollment requires a fresh case')
+    for path in (case, private):
+        if any(parent.is_symlink() for parent in (path, *path.parents)):
+            raise ValueError('Provider roots cannot contain links')
+        path.mkdir(parents=True, exist_ok=True)
+    (case / 'output').mkdir(exist_ok=True)
+    public = prepare_public(config, case, private)
+    train, validation, test = (binding(config[name]) for name in ('train_input', 'validation_input', 'test_input'))
+    split = binding(config['split_manifest'])
+    aggregate = load_aggregator(config, public_root=public, verify_runtime=False)
+    public_hash = digest_file(public / 'PUBLIC_MANIFEST.json')
+    if digest_file(public / 'train.npz') != train.sha256 or digest_file(public / 'validation.npz') != binding(config['public_validation_input']).sha256:
+        raise ValueError('Provider public resources differ from bound historical data')
+    protected = [private, split.path, validation.path, test.path, Path(config['budget_path']),
+                 *(item.path for item in aggregate.bindings)]
+    validate_private_boundaries(case, protected, ())
+
+    def cloud_worker(value: dict, journal: Path) -> SshWorkerEvaluator:
+        remote = value['config']
+        if set(remote) != {'path', 'sha256'} or not Path(remote['path']).is_absolute():
+            raise ValueError('Fixed remote worker config required')
+        return SshWorkerEvaluator(host=value['host'], port=value['port'], user=value['user'],
+            known_hosts=binding(value['known_hosts']), remote_python=Path(value['python']), remote_code=Path(value['code']),
+            remote_config=FileBinding(Path(remote['path']), remote['sha256']), journal_root=journal)
+
+    worker = cloud_worker(config['cloud_worker'], private / 'cloud-worker-journal')
+    expected = scientific_identity(config, aggregate=aggregate, public_manifest_sha256=public_hash, split_manifest_sha256=split.sha256)
+    validate_cloud_bindings(worker.identity, train, validation, test, expected, aggregator_source_sha256(READOUT_TASK))
+    fit_worker = cloud_worker(config['public_fit_worker'], private / 'public-fit-worker-journal')
+    from eegfm.evaluation.public_workbench import MODE
+    fit_identity = fit_worker.identity
+    if (fit_identity.get('episode_id') != config['episode_id'] or fit_identity.get('run_id') != config['run_id']
+            or fit_identity.get('public_manifest_sha256') != public_hash
+            or fit_identity.get('worker', {}).get('public_artifact_mode') != MODE
+            or fit_identity.get('worker', {}).get('allowed_splits') != ['validation']):
+        raise ValueError('Public fit worker is not bound to this case/public-only capability')
+    if worker.timeout > 180 or fit_worker.timeout > 120:
+        raise ValueError('Initial audited replay caps scientific work at 180s and public fits at 120s')
+    identity = {'schema_version': 'audited_coding_enrollment_v1', 'config_sha256': hashlib.sha256(canonical_bytes(config)).hexdigest(),
+                'execution_mode': PROVIDER, 'public_manifest_sha256': public_hash, 'worker': worker._enrollment(),
+                'public_fit_worker': fit_worker._enrollment(), 'runner_sha256': digest_file(Path(__file__)),
+                'controller_source_sha256': digest_file(Path(__file__).resolve().parents[1] / 'agent/controller.py'),
+                'historical_provenance_sha256': config['historical_data_qualification']['sha256'],
+                **evidence_guidance_identity(config, public)}
+    enrollment_path = private / 'ENROLLMENT.json'
+    if enrollment_path.exists():
+        enrollment = read_json(enrollment_path, maximum_bytes=8 * 1024**2)
+        if enrollment['identity'] != identity:
+            raise ValueError('Audited coding enrollment drift')
+    else:
+        enrollment = {'identity': identity, 'started_at_epoch': time.time()}
+        with enrollment_path.open('xb') as stream:
+            stream.write(canonical_bytes(enrollment))
+    wall, timeout = episode_time_limits(config)
+    controller = EpisodeController(trusted_root=private / 'controller', case_root=case,
+        episode_id=config['episode_id'], run_id=config['run_id'], public_manifest_sha256=public_hash,
+        split_manifest_sha256=split.sha256, evaluator=DeadlineEvaluator(worker, enrollment['started_at_epoch'], timeout_seconds=wall),
+        max_attempts=config.get('max_attempts', 2), task_id=READOUT_TASK,
+        recovery_policy=config.get('recovery_policy', 'strict-v1'), session_guidance=config.get('session_guidance', 'fixed_stages_v1'))
+
+    def workbench(pending_case: Path) -> PublicWorkbench:
+        relative = pending_case.resolve().relative_to((controller.run / 'provider/sessions').resolve())
+        if len(relative.parts) != 2 or relative.parts[-1] != 'case':
+            raise ValueError('Public fitting belongs to a declared provider session')
+        fit_worker.deadline_epoch = enrollment['started_at_epoch'] + wall
+        return PublicWorkbench(evaluator=fit_worker, private_root=controller.run / 'provider/fit-journals' / relative.parts[0],
+            case_root=pending_case, episode_id=config['episode_id'], run_id=config['run_id'],
+            public_manifest_sha256=public_hash, split_manifest_sha256=fit_worker.identity['split_manifest_sha256'])
+
+    provider = config['provider']
+    provider_enrollment = {**provider, 'episode_id': config['episode_id'], 'run_id': config['run_id'],
+        'model': MODEL, 'effort': config['reasoning_effort'], 'session_limit': len(config['call_ids']),
+        'session_timeout_seconds': timeout,
+        'study_disclosure': 'Historical readout train/validation/test bytes have previously been used by this project. Test is withheld from this researcher until lock for workflow replay only; it is not project-unseen confirmation. Common inherited project history may include high-level prior readout findings. No blind capability or research-gain claim follows.'}
+    mailbox = ProviderMailbox(root=controller.run / 'provider', case_root=case, public_root=public,
+                              enrollment=provider_enrollment, workbench_factory=workbench)
+    service = {'schema_version': 'audited_provider_service_v1', 'mailbox_root': str(mailbox.root),
+               'case_root': str(case), 'public_root': str(public), 'enrollment': provider_enrollment,
+               'public_fit_worker': config['public_fit_worker'], 'public_fit_journal': str(private / 'public-fit-worker-journal'),
+               'episode_deadline_epoch': enrollment['started_at_epoch'] + wall}
+    service_path = mailbox.root / 'SERVICE.json'
+    if service_path.exists() and read_json(service_path) != service:
+        raise ValueError('Frozen provider service changed')
+    if not service_path.exists():
+        write_atomic(service_path, service)
+    launcher = ProviderLaunch(mailbox, budget_path=Path(config['budget_path']), call_ids=config['call_ids'])
+    driver = EpisodeDriver(controller, launch=launcher, reviewer=lambda projection: review_brief(controller, projection),
+        max_sessions=len(config['call_ids']), session_provider=PROVIDER, provider_model=MODEL, provider_timeout_seconds=timeout, poll=1.)
+    driver.episode_deadline = enrollment['started_at_epoch'] + wall
+    try:
+        exit_code = driver.loop()
+    except ControllerAlreadyRunning:
+        raise
+    except Exception as error:
+        if controller.projection()['state']['status'] != 'done':
+            controller.block('Audited provider orchestration stopped: ' + type(error).__name__)
+        write_atomic(private / 'orchestration-error.json', {'error_type': type(error).__name__})
+        exit_code = 3
+    projection = controller.projection()
+    write_atomic(private / 'FINAL_PUBLIC_PROJECTION.json', projection)
+    result = {'schema_version': 'audited_coding_result_v1', 'execution_mode': PROVIDER,
+              'episode_id': config['episode_id'], 'run_id': config['run_id'], 'exit_code': exit_code,
+              'state': projection['state'], 'actual_native_isolated_invocations': 0,
+              'historical_development_replay': True,
+              'scientific_completion': 'Existing full lifecycle gates retained; source/refit/prediction/claim review remains separate.',
+              'boundary': 'Audited delegated context with declared inherited history, separate scientific Docker; not native model OS isolation or blind confirmation.'}
+    write_atomic(private / 'EPISODE_RESULT.json', result)
     return result

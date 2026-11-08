@@ -186,9 +186,13 @@ class SandboxedWorkerEvaluator:
                  released_metrics: frozenset[str], timeout_seconds: int = 900,
                  minimum_free_bytes: int = 20 * 1024**3,
                  aggregate_bindings: tuple[FileBinding, ...] = (),
-                 aggregate_policy_sha256: str | None = None) -> None:
+                 aggregate_policy_sha256: str | None = None,
+                 allowed_splits: frozenset[str] = frozenset({"validation", "test"}),
+                 public_artifact_mode: str | None = None) -> None:
         if sys.platform != "linux": raise RuntimeError("Worker execution requires Linux")
-        if set(inputs_by_split) != {"validation", "test"}: raise ValueError("Explicit validation/test bindings required")
+        if allowed_splits not in (frozenset({"validation", "test"}), frozenset({"validation"})) or set(inputs_by_split) != allowed_splits:
+            raise ValueError("Explicit authorized split bindings required")
+        self.allowed_splits, self.public_artifact_mode = frozenset(allowed_splits), public_artifact_mode
         if type(timeout_seconds) is not int or not 0 < timeout_seconds <= 1800: raise ValueError("Invalid timeout")
         if not released_metrics or any(not isinstance(name, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.-]{0,119}", name) for name in released_metrics):
             raise ValueError("Finite public metric names must be predeclared")
@@ -201,6 +205,16 @@ class SandboxedWorkerEvaluator:
         self.public_hash = _sha(public_manifest_sha256)
         self.split_path, self.split_hash = Path(split_manifest_path), _sha(split_manifest_sha256)
         self.inputs, self.runtime, self.aggregate = dict(inputs_by_split), runtime, aggregate
+        if public_artifact_mode is not None:
+            from eegfm.evaluation.public_workbench import MODE, PublicFitAggregator
+            if (public_artifact_mode != MODE or allowed_splits != frozenset({"validation"})
+                    or type(aggregate) is not PublicFitAggregator or aggregate.public != self.public
+                    or aggregate.public_hash != self.public_hash):
+                raise ValueError("Public artifact export requires its explicit public-only collector")
+            pair = inputs_by_split["validation"]
+            if (pair.train.sha256 != digest_file(self.public / "train.npz")
+                    or pair.evaluation.sha256 != digest_file(self.public / "validation.npz")):
+                raise ValueError("Public fit worker cannot mount private evaluation inputs")
         self.released_metrics = frozenset(released_metrics)
         self.timeout, self.free_floor = timeout_seconds, minimum_free_bytes
         self.aggregate_bindings = aggregate_bindings
@@ -260,7 +274,7 @@ class SandboxedWorkerEvaluator:
                 raise ValueError('Runtime binary changed after enrollment')
         if self.docker and self.docker.inspect_image() != self.image_identity:
             raise ValueError('Docker runtime changed after enrollment')
-        return {'inputs':{split:{'train':file_identity(pair.train),'evaluation':file_identity(pair.evaluation)}
+        result = {'inputs':{split:{'train':file_identity(pair.train),'evaluation':file_identity(pair.evaluation)}
                           for split,pair in sorted(self.inputs.items())},
                 'aggregate_bindings':[file_identity(binding) for binding in self.aggregate_bindings],
                 'aggregate_source_sha256':self.aggregate_source_sha256,
@@ -274,10 +288,15 @@ class SandboxedWorkerEvaluator:
                 'runtime_manifest':file_identity(self.runtime.manifest) if self.runtime.manifest else None,
                 'timeout_seconds':self.timeout,'minimum_free_bytes':self.free_floor,
                 'threads':4,'memory_limit_bytes':12*1024**3,'output_limit_bytes':16*1024**2}
+        if self.allowed_splits != frozenset({"validation", "test"}) or self.public_artifact_mode is not None:
+            result.update(allowed_splits=sorted(self.allowed_splits), public_artifact_mode=self.public_artifact_mode)
+            if self.public_artifact_mode is not None:
+                result['public_artifact_manifest_sha256'] = self.public_hash
+        return result
 
     def _verify(self, spec: EvaluationSpec) -> SplitInputs:
         self._spec_record(spec)
-        if spec.split not in {"validation", "test"}: raise ValueError("Unauthorized split")
+        if spec.split not in self.allowed_splits: raise ValueError("Unauthorized split")
         if spec.public_manifest_sha256 != self.public_hash or spec.split_manifest_sha256 != self.split_hash:
             raise ValueError("Episode manifest identity mismatch")
         verify_public_bundle(self.public)
@@ -289,6 +308,11 @@ class SandboxedWorkerEvaluator:
         selected = self.inputs[spec.split]
         train, evaluation = selected.train.verify(), selected.evaluation.verify()
         if train == evaluation: raise ValueError("Train and evaluation must be distinct")
+        if self.public_artifact_mode is not None:
+            if (digest_file(train) != digest_file(self.public / 'train.npz')
+                    or digest_file(evaluation) != digest_file(self.public / 'validation.npz')):
+                raise ValueError('Public fit inputs differ from the bound public bundle')
+            return selected  # Its already-public labels are explicitly permitted.
         # Exact prepared-view schema prevents hidden targets or renamed label
         # arrays from entering the candidate mount through trusted misconfiguration.
         expected = {"x.npy", "sample_ids.npy", "subject_ids.npy"}
@@ -415,6 +439,9 @@ class SandboxedWorkerEvaluator:
             write_atomic(metrics_file, aggregated["metrics"])
             result = self._base_result(record, "succeeded")
             result.update(metrics=aggregated["metrics"], artifacts=[{"path": "released_metrics.json", "sha256": digest_file(metrics_file)}])
+            if self.public_artifact_mode is not None:
+                from eegfm.evaluation.public_workbench import encode_parameters
+                result['public_artifacts'] = [encode_parameters(output / 'parameters.npz')]
             write_atomic(job / "receipt.json", {"status": "succeeded", "request_fingerprint": fingerprint,
                 "execution": str(job / "execution"), "aggregate_manifest_sha256": digest_file(job / "aggregation-private.json"),
                 "result": result, "isolation": "docker-single-process" if self.docker else "bwrap-unshare-all", "raw_outputs_public": False})
