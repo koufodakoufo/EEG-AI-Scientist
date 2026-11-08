@@ -1,8 +1,10 @@
-"""Train/validation-only EEGMMIDB imagined left/right fist preparation.
+"""Scoped EEGMMIDB imagined left/right fist preparation.
 
 PhysioNet EEGMMIDB 1.0.0 and official MNE EEGBCI documentation identify
 runs 4/8/12 as imagined unilateral fists, T1=left and T2=right. This
-adapter never fits, scores, or admits reserved final-test participants.
+default entry points never admit reserved final-test participants. A separate
+trusted entry requires an explicit immutable protocol admission. Admission is
+not isolation: the trusted controller owns review, freezes and file access.
 
 Generic feature adaptation copyright (c) 2026 Kian Chen, MIT License:
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,8 +26,10 @@ SOFTWARE.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 import math
 from pathlib import Path
+import re
 from typing import Any
 
 import numpy as np
@@ -35,6 +39,49 @@ from eegfm.eeg.eegmmidb import CHANNELS, read_header, select_channels
 
 RUNS = (4, 8, 12)
 EVENT_LABELS = {'T1': 0, 'T2': 1}
+
+
+@dataclass(frozen=True)
+class TrustedRecordAdmission:
+    """Immutable declared protocol inventory, not permission inferred from a path.
+
+    Construction does no filesystem I/O. The trusted controller must bind this
+    exact inventory/root and the preparer bytes before admitting held-out access.
+    Development defaults are unchanged and do not consult this inventory.
+    """
+    protocol_sha256: str
+    raw_root: Path
+    records: tuple[tuple[int, int, str], ...]
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.protocol_sha256,str) or not re.fullmatch('[0-9a-f]{64}',self.protocol_sha256):
+            raise ValueError('Trusted admission requires a frozen protocol SHA256')
+        if not isinstance(self.raw_root,Path) or not self.raw_root.is_absolute() or '..' in self.raw_root.parts:
+            raise ValueError('Trusted raw root must be an absolute lexical path without parent traversal')
+        if type(self.records) is not tuple or not self.records:
+            raise ValueError('Trusted inventory must be a nonempty immutable tuple')
+        seen: set[tuple[int,int,str]] = set()
+        for entry in self.records:
+            if type(entry) is not tuple or len(entry)!=3:
+                raise ValueError('Trusted record entries must be immutable triples')
+            subject,run,split=entry
+            if type(subject) is not int or not 1<=subject<=60 or type(run) is not int or run not in RUNS:
+                raise ValueError('Trusted record outside supported participant/run bounds')
+            expected='train' if subject<=24 else ('validation' if subject<=30 else 'test')
+            if split!=expected or entry in seen:
+                raise ValueError('Trusted split mismatch or duplicate record')
+            seen.add(entry)
+
+    def authorize(self,subject: int,run: int,split: str) -> None:
+        if type(subject) is not int or type(run) is not int or (subject,run,split) not in self.records:
+            raise ValueError('Record not in immutable trusted protocol inventory')
+
+    def authorize_path(self,path: Path,*,subject: int,run: int,split: str) -> None:
+        """Lexical admission check before open, hash, stat or header decoding."""
+        self.authorize(subject,run,split)
+        expected=self.raw_root/f'S{subject:03d}'/f'S{subject:03d}R{run:02d}.edf'
+        if '..' in path.parts or path!=expected:
+            raise ValueError('Trusted path/root/participant/run mismatch')
 
 
 def admitted_split(subject: int, run: int, split: str) -> None:
@@ -58,6 +105,24 @@ def prepare_record(signal_uv: np.ndarray, annotations: Sequence[Mapping[str, Any
     record; there is no silent event dropping, replacement or truncation.
     """
     admitted_split(subject, run, split)
+    return _prepare_record_core(signal_uv,annotations,subject=subject,run=run,split=split,sample_rate=sample_rate)
+
+
+def prepare_record_trusted(signal_uv: np.ndarray,annotations: Sequence[Mapping[str,Any]],*,
+                           subject: int,run: int,split: str,admission: TrustedRecordAdmission,
+                           sample_rate: float=160.0) -> dict[str,Any]:
+    """Pure shared preparation after explicit trusted protocol inventory check."""
+    if type(admission) is not TrustedRecordAdmission:
+        raise ValueError('Explicit immutable trusted admission required')
+    admission.authorize(subject,run,split)
+    prepared=_prepare_record_core(signal_uv,annotations,subject=subject,run=run,split=split,sample_rate=sample_rate)
+    prepared['metadata']['admission_protocol_sha256']=admission.protocol_sha256
+    return prepared
+
+
+def _prepare_record_core(signal_uv: np.ndarray,annotations: Sequence[Mapping[str,Any]],*,
+                         subject: int,run: int,split: str,sample_rate: float) -> dict[str,Any]:
+    """Identical signal/annotation core shared by separately guarded entries."""
     signal = np.asarray(signal_uv)
     if sample_rate != 160 or signal.ndim != 2 or signal.shape[0] != len(CHANNELS):
         raise ValueError('Expected 20 ordered measured channels at native 160 Hz')
@@ -129,6 +194,22 @@ def read_record(path: Path, *, subject: int, run: int, split: str) -> dict[str, 
     admitted_split(subject, run, split)
     if path.name != f'S{subject:03d}R{run:02d}.edf' or path.parent.name != f'S{subject:03d}':
         raise ValueError('Record path does not match declared participant/run')
+    return _read_record_core(path,subject=subject,run=run,split=split)
+
+
+def read_record_trusted(path: Path,*,subject: int,run: int,split: str,
+                        admission: TrustedRecordAdmission) -> dict[str,Any]:
+    """Read only an explicitly admitted exact raw path; no I/O before guards."""
+    if type(admission) is not TrustedRecordAdmission:
+        raise ValueError('Explicit immutable trusted admission required')
+    admission.authorize_path(path,subject=subject,run=run,split=split)
+    prepared=_read_record_core(path,subject=subject,run=run,split=split)
+    prepared['metadata']['admission_protocol_sha256']=admission.protocol_sha256
+    return prepared
+
+
+def _read_record_core(path: Path,*,subject: int,run: int,split: str) -> dict[str,Any]:
+    """Read/decode only after a caller-specific inventory and path check."""
     header = read_header(path)
     import mne
     raw = mne.io.read_raw_edf(path, preload=False, verbose='ERROR')
@@ -138,7 +219,7 @@ def read_record(path: Path, *, subject: int, run: int, split: str) -> dict[str, 
                        for onset, duration, description in zip(raw.annotations.onset,
                                                              raw.annotations.duration,
                                                              raw.annotations.description)]
-        prepared = prepare_record(raw.get_data(picks=labels, units='uV'), annotations,
+        prepared = _prepare_record_core(raw.get_data(picks=labels, units='uV'), annotations,
                                   subject=subject, run=run, split=split,
                                   sample_rate=raw.info['sfreq'])
     finally:

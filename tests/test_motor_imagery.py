@@ -5,6 +5,8 @@ import pytest
 
 from eegfm.eeg.motor_imagery import admitted_split, prepare_record, read_record
 
+TEST_RAW_ROOT=Path(__file__).resolve().parent/"synthetic-raw"
+
 
 def annotation(onset=0., duration=4., description='T1'):
     return {'onset': onset, 'duration': duration, 'description': description}
@@ -106,3 +108,72 @@ def test_duration_panel_rejects_unknown_duration_and_nonfinite():
     for values in (np.ones((1,20,4,200)),np.full((1,20,3,200),np.nan)):
         with pytest.raises(ValueError):
             compute_duration_feature_panel(values)
+
+
+def test_trusted_admission_is_immutable_and_pure_preparation_preserves_identity():
+    from dataclasses import FrozenInstanceError
+    from eegfm.eeg.motor_imagery import TrustedRecordAdmission, prepare_record_trusted
+    admission=TrustedRecordAdmission(protocol_sha256='a'*64,raw_root=TEST_RAW_ROOT,
+        records=((31,4,'test'),(1,4,'train')))
+    with pytest.raises(FrozenInstanceError):
+        admission.records=((32,4,'test'),)
+    signal=np.ones((20,1600))*100
+    result=prepare_record_trusted(signal,[annotation()],subject=31,run=4,split='test',admission=admission)
+    assert result['metadata']['subject']=='S031'
+    assert result['metadata']['split']=='test'
+    assert result['metadata']['admission_protocol_sha256']=='a'*64
+    development=prepare_record(signal,[annotation()],subject=1,run=4,split='train')
+    trusted=prepare_record_trusted(signal,[annotation()],subject=1,run=4,split='train',admission=admission)
+    for key in ('windows','y','event_onsets_seconds','window_onsets_seconds'):
+        np.testing.assert_array_equal(trusted[key],development[key])
+    trusted['metadata'].pop('admission_protocol_sha256')
+    assert trusted['metadata']==development['metadata']
+
+
+@pytest.mark.parametrize('records', [((31,4,'train'),),((61,4,'test'),),((31,6,'test'),),
+    ((True,4,'train'),),((31,4,'test'),(31,4,'test')),[(31,4,'test')],([31,4,'test'],)])
+def test_trusted_admission_rejects_bad_or_mutable_inventory(records):
+    from eegfm.eeg.motor_imagery import TrustedRecordAdmission
+    with pytest.raises(ValueError):
+        TrustedRecordAdmission(protocol_sha256='a'*64,raw_root=TEST_RAW_ROOT,records=records)
+
+
+@pytest.mark.parametrize('subject,run,split,path', [
+    (32,4,'test','/raw/S032/S032R04.edf'),
+    (31,8,'test','/raw/S031/S031R08.edf'),
+    (31,4,'validation','/raw/S031/S031R04.edf'),
+    (31,4,'test','/different/S031/S031R04.edf'),
+    (31,4,'test','/raw/S031/S031R08.edf'),
+    (31,4,'test','/raw/S030/S031R04.edf'),
+    (31,4,'test','/raw/S031/../S031/S031R04.edf'),
+])
+def test_trusted_reader_rejects_before_file_io(monkeypatch,subject,run,split,path):
+    from eegfm.eeg import motor_imagery as module
+    admission=module.TrustedRecordAdmission(protocol_sha256='a'*64,raw_root=TEST_RAW_ROOT,records=((31,4,'test'),))
+    path=TEST_RAW_ROOT/path[5:] if path.startswith('/raw/') else TEST_RAW_ROOT.parent/'different'/path.lstrip('/')
+    def forbidden(*args,**kwargs):
+        pytest.fail('I/O occurred before immutable admission/path guard')
+    monkeypatch.setattr(Path,'open',forbidden)
+    monkeypatch.setattr(module,'read_header',forbidden)
+    with pytest.raises(ValueError):
+        module.read_record_trusted(Path(path),subject=subject,run=run,split=split,admission=admission)
+
+
+def test_trusted_reader_dispatches_only_exact_admitted_record(monkeypatch):
+    from eegfm.eeg import motor_imagery as module
+    admission=module.TrustedRecordAdmission(protocol_sha256='a'*64,raw_root=TEST_RAW_ROOT,records=((31,4,'test'),))
+    sentinel=object()
+    def core(path,*,subject,run,split):
+        assert path==TEST_RAW_ROOT/'S031/S031R04.edf'
+        assert (subject,run,split)==(31,4,'test')
+        return {'sentinel':sentinel,'metadata':{}}
+    monkeypatch.setattr(module,'_read_record_core',core)
+    result=module.read_record_trusted(TEST_RAW_ROOT/'S031/S031R04.edf',subject=31,run=4,split='test',admission=admission)
+    assert result['sentinel'] is sentinel
+
+
+def test_trusted_scope_requires_frozen_protocol_and_absolute_root():
+    from eegfm.eeg.motor_imagery import TrustedRecordAdmission
+    for sha,root in [('invalid',Path('/raw')),('a'*64,Path('relative')),('a'*64,TEST_RAW_ROOT/'../raw')]:
+        with pytest.raises(ValueError):
+            TrustedRecordAdmission(protocol_sha256=sha,raw_root=root,records=((31,4,'test'),))
