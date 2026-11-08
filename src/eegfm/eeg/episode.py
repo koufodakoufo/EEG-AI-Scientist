@@ -42,6 +42,7 @@ from eegfm.evaluation.worker import SandboxedWorkerEvaluator
 from eegfm.evaluation.worker import SplitInputs
 from eegfm.improvement.trace import collect_visible_trace
 from eegfm.improvement.trace import cli_usage
+from eegfm.eeg.evidence_policy import SESSION_GUIDANCE, validate_policy, validation_evidence_status
 
 MODEL = "gpt-6.1-sol"
 DEFAULT_TASK = "eegmat-representation-analysis-v1"
@@ -55,8 +56,11 @@ TASKS = {
     DEFAULT_TASK: ("representation_analysis", "eegmat-arithmetic-background"),
     "eegmat-attribute-dependence-v1": ("representation_analysis", "eegmat-arithmetic-background"),
     "eegmmidb-attribute-dependence-v1": ("eegmmidb", "eegmmidb-eyes-open-closed-baseline"),
+    "eegmat-attribute-dependence-v2": ("eegmat_attribute_dependence_v2", "eegmat-arithmetic-background"),
+    "eegmmidb-attribute-dependence-v2": ("eegmmidb_attribute_dependence_v2", "eegmmidb-eyes-open-closed-baseline"),
     READOUT_TASK: ("readout_bottleneck", "eegmmidb-cached-readout-bottleneck"),
 }
+EVIDENCE_TASKS = frozenset({"eegmat-attribute-dependence-v2", "eegmmidb-attribute-dependence-v2"})
 
 
 def task_scope(task_id: str = DEFAULT_TASK) -> dict[str, Any]:
@@ -68,9 +72,43 @@ def task_scope(task_id: str = DEFAULT_TASK) -> dict[str, Any]:
     return scope
 
 
-def review_policy_hash(task_id: str = DEFAULT_TASK) -> str:
-    return hashlib.sha256(canonical_bytes({"scope": task_scope(task_id),
-        "review": "scope-json-and-substantive-plan-v1"})).hexdigest()
+def review_policy_hash(task_id: str = DEFAULT_TASK, *, session_guidance: str = "fixed_stages_v1") -> str:
+    policy = {"scope": task_scope(task_id), "review": "scope-json-and-substantive-plan-v1"}
+    policy.update(evidence_guidance_identity({"task_id": task_id, "session_guidance": session_guidance}))
+    return hashlib.sha256(canonical_bytes(policy)).hexdigest()
+
+
+def task_evidence_policy(task_id: str) -> dict[str, Any] | None:
+    task_scope(task_id)
+    if task_id not in EVIDENCE_TASKS:
+        return None
+    from eegfm.common import ROOT
+    return validate_policy(read_json(ROOT / "tasks" / TASKS[task_id][0] / "EVIDENCE_POLICY.json"))
+
+
+def evidence_guidance_identity(config: dict[str, Any], public_root: Path | None = None) -> dict[str, Any]:
+    """Freeze the one guidance switch and canonical task-policy bytes."""
+    task_id = config.get("task_id", DEFAULT_TASK)
+    policy = task_evidence_policy(task_id)
+    guidance = config.get("session_guidance", "fixed_stages_v1")
+    if (not isinstance(guidance, str) or guidance not in SESSION_GUIDANCE
+            or (policy is None and guidance != "fixed_stages_v1")):
+        raise ValueError("Unsupported task session guidance")
+    if policy is None:
+        return {}  # Preserve historical enrollment identity and default behavior.
+    maximum = config.get("max_attempts", 2)
+    if type(maximum) is not int or not 1 <= maximum <= 2:
+        raise ValueError("Evidence tasks permit at most two scientific iterations")
+    if config.get("recovery_policy", "validation-recovery-v1") != "validation-recovery-v1":
+        raise ValueError("Evidence task recovery policy must match validation-recovery-v1")
+    if public_root is not None:
+        manifest = verify_public_bundle(public_root)
+        if manifest["task_id"] != task_id or canonical_bytes(validate_policy(
+                read_json(public_root / "EVIDENCE_POLICY.json"))) != canonical_bytes(policy):
+            raise ValueError("Public evidence policy differs from frozen task policy")
+    return {"session_guidance": guidance,
+            "evidence_policy_sha256": hashlib.sha256(canonical_bytes(policy)).hexdigest(),
+            "evidence_feedback_source_sha256": digest_file(Path(__file__).with_name("evidence_policy.py"))}
 
 
 def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -177,10 +215,40 @@ def validate_scope(value: Any, task_id: str = DEFAULT_TASK) -> None:
 
 
 class EpisodeController(ResearchController):
-    def __init__(self, *, task_id: str = DEFAULT_TASK, **kwargs: Any) -> None:
+    def __init__(self, *, task_id: str = DEFAULT_TASK,
+                 session_guidance: str = "fixed_stages_v1", **kwargs: Any) -> None:
         task_scope(task_id)
         self.task_id = task_id
+        self.session_guidance = session_guidance
+        self.evidence_policy = task_evidence_policy(task_id)
+        if self.evidence_policy is not None:
+            kwargs.setdefault("max_attempts", 2)
+            kwargs.setdefault("recovery_policy", "validation-recovery-v1")
+        guidance_identity = evidence_guidance_identity({"task_id": task_id, "session_guidance": session_guidance,
+                                                       "max_attempts": kwargs.get("max_attempts", 2),
+                                                       "recovery_policy": kwargs.get("recovery_policy", "strict-v1")})
+        # A separate task-bound enrollment preserves the base controller's v1
+        # journal format while rejecting treatment drift even in direct use.
+        guidance_path = Path(kwargs["trusted_root"]) / "runs" / kwargs["run_id"] / "EVIDENCE_GUIDANCE.json"
+        if guidance_path.exists() and read_json(guidance_path) != {"task_id": task_id, **guidance_identity}:
+            raise ValueError("Frozen evidence guidance identity changed")
         super().__init__(**kwargs)
+        if guidance_identity:
+            try:
+                with guidance_path.open("xb") as handle:
+                    handle.write(canonical_bytes({"task_id": task_id, **guidance_identity}))
+            except FileExistsError:
+                if read_json(guidance_path) != {"task_id": task_id, **guidance_identity}:
+                    raise ValueError("Frozen evidence guidance identity changed")
+
+    def projection(self) -> dict[str, Any]:
+        projection = super().projection()
+        if self.session_guidance == "adaptive_evidence_v1":
+            with self._transaction() as db:
+                maximum = self._load(db)["identity"]["max_attempts"]
+            projection["evidence_status"] = validation_evidence_status(
+                self.evidence_policy, projection, max_iterations=maximum)
+        return projection
 
     def handle(self, request: dict[str, Any]) -> dict[str, Any]:
         if isinstance(request, dict) and request.get("operation") == "contract":
@@ -223,13 +291,14 @@ def review_brief(controller: EpisodeController, projection: dict[str, Any]) -> d
     except (ValueError, TypeError):
         pass
     return {"approved": approved, "reviewer_id": "frozen-scope-reviewer",
-            "policy_sha256": review_policy_hash(controller.task_id)}
+            "policy_sha256": review_policy_hash(controller.task_id, session_guidance=controller.session_guidance)}
 
 
 def prepare_public(config: dict[str, Any], case: Path, private: Path) -> Path:
     """Explicit public export; only an optional skill changes condition content."""
     task_id = config.get("task_id", DEFAULT_TASK)
     task_scope(task_id)
+    evidence_guidance_identity(config)
     source, public = Path(config["public_source"]), case / "public"
     condition = config["condition"]
     if condition not in {"no_skill", "skill"} or (condition == "skill") != bool(config.get("skill")):
@@ -250,8 +319,9 @@ def prepare_public(config: dict[str, Any], case: Path, private: Path) -> Path:
         raise ValueError("Missing train/validation/API public resources")
     from eegfm.common import ROOT
     docs = ROOT / "tasks" / TASKS[task_id][0]
+    task_docs = DOCS + (("EVIDENCE_POLICY.json",) if task_id in EVIDENCE_TASKS else ())
     expected = {name: digest_file(source / name) for name in names}
-    expected.update({name: digest_file(docs / name) for name in DOCS})
+    expected.update({name: digest_file(docs / name) for name in task_docs})
     if condition == "skill":
         expected["SKILL.md"] = binding(config["skill"]).sha256
     if public.exists():
@@ -268,7 +338,7 @@ def prepare_public(config: dict[str, Any], case: Path, private: Path) -> Path:
         target.parent.mkdir(parents=True, exist_ok=True)
         _regular(source / name)
         shutil.copyfile(source / name, target)
-    for name in DOCS:
+    for name in task_docs:
         shutil.copyfile(docs / name, stage / name)
     if condition == "skill":
         shutil.copyfile(binding(config["skill"]).path, stage / "SKILL.md")
@@ -296,18 +366,30 @@ def frozen_skill_context(config: dict[str, Any], public: Path) -> tuple[str, str
 
 
 def session_prompt(projection: dict[str, Any], number: int, scientific_python: Path,
-                   history: list[dict[str, Any]], *, task_id: str = DEFAULT_TASK) -> str:
+                   history: list[dict[str, Any]], *, task_id: str = DEFAULT_TASK,
+                   session_guidance: str = "fixed_stages_v1") -> str:
     task_scope(task_id)
+    evidence_guidance_identity({"task_id": task_id, "session_guidance": session_guidance})
     if not 1 <= number <= 6:
         raise ValueError("Session limit exceeded")
+    docs_advice = "Read public/EVIDENCE_POLICY.json. " if task_id in EVIDENCE_TASKS else ""
+    flow = ("The five-stage flow is brief; contract+baseline; attempt; lock+test; report. "
+            "The sixth session is a correction allowance. ")
+    if session_guidance == "adaptive_evidence_v1":
+        flow = "Follow the trusted journal state. "
+        if not projection.get("lock") and projection["state"]["status"] not in {"done", "blocked"}:
+            flow += ("After iteration validation, inspect evidence_status and remaining iterations; "
+                     "consider a useful revision before freezing within the same budget. "
+                     "If evidence cannot be produced, report the limitation. ")
+        flow += ("After lock, complete the frozen lifecycle and report without changing scientific choices or refitting. "
+                "Coverage is advisory and does not establish scientific validity. ")
     return (f"You are the isolated research Actor for this single EEG episode ({task_id}). "
             "Read public/TASK.md, public/INTERFACE.md, public/API_README.md and "
             "public/PUBLIC_RESULT_SCHEMA.md; read public/SKILL.md if present. "
             "Use only these materials and your own case/output history. No other conversation is available.\n"
             f"Scientific Python: {scientific_python}\nSession: {number}/6. "
             f"Write requests to output/requests-session-{number:02d}.json and end the session. "
-            "The five-stage flow is brief; contract+baseline; attempt; lock+test; report. "
-            "The sixth session is a correction allowance. Keep research notes in output/. "
+            + docs_advice + flow + "Keep research notes in output/. "
             "No request is executed before this session ends.\n"
             "TRUSTED_OWN_EPISODE_PROJECTION_JSON\n" + canonical_bytes(projection).decode()
             + "OWN_SESSION_RECEIPTS_JSON\n" + canonical_bytes(history).decode())
@@ -337,7 +419,8 @@ class NativeEpisodeLaunch:
         budget = Path(config["budget_path"])
         skill_context, injected_skill_sha256 = frozen_skill_context(config, self.public)
         prompt = session_prompt(projection, number, Path(config["scientific_python"]), self.history,
-                                task_id=config.get("task_id", DEFAULT_TASK)) + skill_context
+                                task_id=config.get("task_id", DEFAULT_TASK),
+                                session_guidance=config.get("session_guidance", "fixed_stages_v1")) + skill_context
         reserve_call(budget, call_id, "actor", timeout)
         output = self.private / "launches" / f"session-{number:02d}-{call_id}"
         report: dict[str, Any] = {"status": "failed", "exit_code": -1, "stdout": "", "stderr": "",
@@ -473,8 +556,9 @@ def run_episode(config: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("Research episodes require read-only authentication binding")
     task_id = config.get("task_id", DEFAULT_TASK)
     scope = task_scope(task_id)
+    evidence_guidance_identity(config)
     wall_seconds, _ = episode_time_limits(config)
-    recovery_policy = config.get("recovery_policy", "strict-v1")
+    recovery_policy = config.get("recovery_policy", "validation-recovery-v1" if task_id in EVIDENCE_TASKS else "strict-v1")
     if not isinstance(recovery_policy, str) or recovery_policy not in RECOVERY_POLICIES:
         raise ValueError("Unsupported recovery policy")
     if config.get("model", MODEL) != MODEL or config.get("reasoning_effort", "medium") != "medium":
@@ -562,13 +646,14 @@ def run_episode(config: dict[str, Any]) -> dict[str, Any]:
                 "model": MODEL, "effort": "medium", "session_limit": len(call_ids), "wall_seconds": wall_seconds,
                 "auth_mode": "readonly_bind",
                 "task_id": task_id, "task_scope": scope,
-                "review_policy_sha256": review_policy_hash(task_id),
+                "review_policy_sha256": review_policy_hash(task_id, session_guidance=config.get("session_guidance", "fixed_stages_v1")),
                 "runner_sha256": digest_file(Path(__file__)),
                 "actor_source_sha256": digest_file(Path(__file__).resolve().parents[1] / "agent/actor.py"),
                 "bridge_source_sha256": digest_file(Path(__file__).resolve().parents[1] / "agent/controller.py"),
                 "science_source_sha256": digest_file(Path(__file__).with_name("statistics.py")),
                 "data_source_sha256": digest_file(Path(__file__).with_name("data.py")),
                 "live_isolation_report_sha256": gate.sha256}
+    identity.update(evidence_guidance_identity(config, public))
     enrollment_path = private / "ENROLLMENT.json"
     if enrollment_path.exists():
         enrolled = read_json(enrollment_path, maximum_bytes=8 * 1024**2)
@@ -584,7 +669,8 @@ def run_episode(config: dict[str, Any]) -> dict[str, Any]:
         episode_id=config["episode_id"], run_id=config["run_id"], public_manifest_sha256=public_hash,
         split_manifest_sha256=split.sha256, evaluator=DeadlineEvaluator(worker, enrolled["started_at_epoch"], timeout_seconds=wall_seconds),
         max_attempts=config.get("max_attempts", 2),
-        recovery_policy=recovery_policy, task_id=task_id)
+        recovery_policy=recovery_policy, task_id=task_id,
+        session_guidance=config.get("session_guidance", "fixed_stages_v1"))
     launcher = NativeEpisodeLaunch(config, controller, private, public, enrolled["started_at_epoch"])
     driver = EpisodeDriver(controller, launch=launcher, reviewer=lambda projection: review_brief(controller, projection),
                           max_sessions=len(call_ids), poll=1.0)

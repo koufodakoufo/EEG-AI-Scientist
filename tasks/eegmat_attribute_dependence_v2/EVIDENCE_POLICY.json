@@ -1,0 +1,23 @@
+{
+  "schema_version": "scientific_evidence_policy_v1",
+  "policy_id": "attribute-dependence-evidence-v1",
+  "obligations": [
+    {
+      "id": "recoverability",
+      "metric": "q1_groups",
+      "minimum": 24
+    },
+    {
+      "id": "matched_intervention",
+      "metric": "q2_interventions",
+      "minimum": 2
+    },
+    {
+      "id": "residual_refit",
+      "metric": "q3_residual_groups",
+      "minimum": 2
+    }
+  ],
+  "lock_policy": "advisory",
+  "partial_reports_allowed": true
+}
