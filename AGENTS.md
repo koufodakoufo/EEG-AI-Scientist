@@ -7,7 +7,7 @@
 - Name new studies/runs by purpose, protocol, generation, condition and repeat. Do not use overnight/morning or execution dates as their meaning. Dates remain metadata.
 - Code lives in src/eegfm; tasks in tasks; tests in tests. Avoid generic abstractions until more than one real task needs them. Python code uses type annotations.
 - Keep README as the single daily entry. Prefer updating one relevant document over overlapping handoff/status/summary documents.
-- For this preparation, the user authorizes project reorganization, reversible refactoring, research preparation, Git consolidation and synchronization across owned workspaces. This preparation is separate from the later nine-hour research window; do not launch that study implicitly.
+- The user authorizes autonomous literature research, system improvements, EEG experiments, reversible refactoring, Git consolidation and synchronization across owned workspaces. There is no current nine-hour deadline or routine approval gate. New studies still need their own prospective questions, boundaries and resource limits; historical preparation instructions do not define a new study's protocol.
 - Prefer huoshanyun for new execution after resource/storage preflight. Keep ncc available for verified CPU runtime and original evidence. GPU visibility does not establish allocation.
 - Inspect only relevant, readable collaborator project material. Preserve attribution. Never access authentication or unrelated personal files. Copy reusable material only when needed; never move, delete, chmod or chown others' or shared files.
 - Do not read, print, move or upload credentials/. Do not commit authentication, raw/participant data, model weights, hidden truth, runtime state or private reference materials.

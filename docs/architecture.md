@@ -23,8 +23,13 @@
 | `eeg/readout_aggregation.py`、`tasks/readout_bottleneck/` | 新读出任务的声明、绑定输入、逐行预测及可信统计；合法拟合与科学判别仍需源码和重放审计 |
 | `evaluation/ssh_worker.py` | 可信控制器将冻结候选提交至已登记云端执行器，核验返回身份；认证留在控制层 |
 | `evaluation/worker.py`、`evaluation/docker_worker.py` | 受限科学候选执行，支持bwrap或Docker；当前火山云实际使用Docker |
+| `evaluation/paper.py`、`evaluation/assessment.py` | 论文问题、私有参考与公共题包分开；逐项比较报告主张，未知实验条件保留待评；保存真实模型请求与可重放响应 |
+| `eeg/evidence_policy.py` | 新 v2 任务的验证证据缺口提示；只读取当前验证结果，完成数量不等于科学有效性 |
+| `eeg/erasure.py` | 独立实现的线性概念移除；训练样本上的协方差约束不等于新样本中所有信息消失 |
+| `eeg/motor_imagery.py` | 明确时间窗、通道和标签的运动想象准备；旧开发入口保持训练/验证边界，可信新研究须显式登记准入记录 |
+| `improvement/decision.py`、`selection.py` | 有限实验请求、不可变结果账本和事前选择规则；允许更新器返回不修改，不强制产生新方法 |
 
-实际研究链是NCC模型会话与控制器 → SSH传输 → 火山云Docker候选执行 → 宿主可信评分。Builder原生CPU分析使用单独的资源限额，不与Actor沙箱混称。冻结的输入、源码、模型、评分依赖和预算按运行登记；不能用当前checkout替换旧证据绑定。
+已有完整研究链是 NCC 模型会话与控制器 → SSH 传输 → 火山云 Docker 候选执行 → 宿主可信评分。当前 NCC 原生模型授权失效；本轮另行检查独立上下文直接调用冻结实验接口的研究决策流程，并完整审计实际工具输入、输出和访问范围。这种流程不等于操作系统隔离，也不等于研究者自行编写和执行科学代码。Builder 原生 CPU 分析使用单独的资源限额。冻结的输入、源码、模型、评分依赖和预算按运行登记，不能用当前 checkout 替换旧证据绑定。
 
 内环：问题 → 假设及预测 → 实验 → 证据 → 结论。
 

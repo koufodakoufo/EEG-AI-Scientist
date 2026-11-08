@@ -1,6 +1,6 @@
 # Evidence-guided EEG research
 
-Status: implementation and development qualification, not a new scientific result.
+Status: implementation verified; Builder experiments and independent decision diagnostics underway. Completed evidence is tracked in [the results report](evidence-guided-results.md). These are separate from the native coding-track pilot, whose model authentication failed qualification.
 
 ## Design
 
@@ -58,19 +58,19 @@ After the capability pilot, propose at most two answer-stripped methods from dev
 
 Files: `src/eegfm/eeg/episode.py`, a focused `evidence_policy.py` if needed, new v2 task documents and `tests/test_evidence_guidance.py`.
 
-- [ ] Write failing tests for old behavior, policy validation, identity binding, latest-attempt selection, missing/failed/test metrics and post-lock advice.
-- [ ] Add task-specific evidence policy files and frozen `session_guidance` enum. Expose derived validation status only to the adaptive arm; bind it into enrollment/resume identity.
-- [ ] Run targeted regressions and inspect actual public projection. Advisory coverage never asserts scientific validity.
-- [ ] Obtain independent review, fix issues and commit.
+- [x] Write failing tests for old behavior, policy validation, identity binding, latest-attempt selection, missing/failed/test metrics and post-lock advice.
+- [x] Add task-specific evidence policy files and frozen `session_guidance` enum. Expose derived validation status only to the adaptive arm; bind it into enrollment/resume identity.
+- [x] Run targeted regressions and inspect actual public projection. Advisory coverage never asserts scientific validity.
+- [x] Obtain independent review, fix issues and commit.
 
 ### Task 2 — Paper task and operational assessment
 
 Files: `src/eegfm/evaluation/paper.py`, `assessment.py`, corresponding tests. Consume existing `claims.py`; do not modify the runner or CLI in this parallel task.
 
-- [ ] Write failing tests for allowlisted public export, anchors/provenance, scoped claims, incomplete output, exact spans and raw response retention.
-- [ ] Implement strict private-task validation/public export and provider-driven segmented extraction plus directional judging. Providers are callables with explicit request/response records, not embedded credentials.
-- [ ] Test deterministic boundaries with fixtures, then root connects the real isolated model provider and runs calibration. Fixture success is not live semantic calibration.
-- [ ] Obtain independent review, fix issues and commit.
+- [x] Write failing tests for allowlisted public export, anchors/provenance, scoped claims, incomplete output, exact spans and raw response retention.
+- [x] Implement strict private-task validation/public export and provider-driven segmented extraction plus directional judging. Providers are callables with explicit request/response records, not embedded credentials.
+- [x] Test deterministic boundaries and run an explicitly context-separated real-model development calibration. The OS-isolated provider remains unavailable; the calibration does not substitute for its qualification.
+- [x] Obtain independent review, fix issues and commit.
 
 ### Task 3 — Executable study and empirical selection
 
@@ -84,7 +84,7 @@ Files: a parameterized study entry under `scripts/`, `src/eegfm/improvement/sele
 
 ### Task 4 — Review and synchronize
 
-- [ ] Run supported tests on Windows, NCC and huoshanyun as relevant, with explicit skips.
+- [x] Run supported tests for `446e6a2` on Windows, NCC and huoshanyun with explicit skips; later source changes require relevant checks.
 - [ ] Obtain whole-branch review of boundary integrity and scientific claims.
 - [ ] Update README, architecture/workspaces and one results report with concrete entry points. Merge reviewed work into main; synchronize owned code and verified result copies without changing old artifacts.
 
@@ -124,3 +124,11 @@ Operators are `recovery` and `consequence`, each with exactly `method` (identity
 Score executed evidence and supported interpretation separately from fluent writing. A blinded audit receives each transcript and frozen rubric: supported bounded conclusion, discriminating comparison, unsupported extension, execution/protocol validity and actual requests. Root does not infer correctness from agreement with a paper. Candidate selection is validity-first: reject input/trace violations, maximize supported conclusions, minimize unsupported extensions, maximize discriminating comparisons, then minimize operator cost; ties retain baseline, otherwise prefer shorter method text. Preserve every cell and actual cost. This is researcher-method selection only, not updater improvement or ignition.
 
 Implementation addition: a small `improvement/decision.py` validates requests, serves only exact registered catalog entries, journals immutable request/result hashes, enforces four-request budget and validates supplied source bindings. `improvement/selection.py` deterministically selects from complete, declared selection-task results and rejects target/development leakage. Unit tests cover malformed actions, budgets, catalog identity drift, incomplete score matrices, ties and excluded task roles. Root keeps actual packets, catalogs, transcripts and rubric private. No new model transport or scientist hierarchy is introduced.
+
+Development execution completed: both baseline contexts used four operators and a final report, with zero actual tool calls in their complete traces. A condition-blinded independent audit rated both reports supported and discriminating, with no unsupported central extension. The fresh updater then returned **no_change**, explicitly because these successful traces did not establish a shared deficiency. Preserve that choice; do not request another candidate to force a change.
+
+Before selection enrollment, freeze the resulting eight-cell comparison: baseline and the already frozen expert recipe × delta/theta tasks × two contexts. A fixed shuffle (seed 230418) sets execution order. One trusted mechanical coordinator forwards the same registered packets and exact dispatcher receipts to fresh nested contexts; its parent identity and private wrapper bytes are bound before each enrollment. This changes neither the scientific interface nor the tested methods. Complete traces verify actual model/effort/tool calls; collaboration message contents are encrypted in both sender and recipient logs, so exact input delivery cannot be independently decoded. Retain the supplied source text and this limitation. There is no learned-method arm, and this comparison cannot establish updater gain or ignition.
+
+In parallel, a separate prospective Builder extension examines central and occipital mu/beta power contrasts in genuine motor-imagery windows. Its protocol and results stay outside every decision researcher/updater context. This adds domain-relevant measurements beyond the inherited global feature panel; it does not retroactively change the decision study or its selection rule.
+
+The first eight-cell comparison was terminated after two observed controller transcription errors. Final disposition: two completed, two transport-failed/interrupted, one interrupted on termination, three unstarted. No selector is applied to this incomplete comparison. Both known incorrect strings, original sources, partial contexts and all failures remain retained. A separate direct-tool protocol will serve the exact public task and action receipts through a trusted gateway, with command/request/output bindings checked against complete native traces. It permits only that declared tool path and does not claim OS isolation. Qualify its actual transport before a completely new balanced comparison; do not replace only the failed cells or pool versions into a method-gain estimate.

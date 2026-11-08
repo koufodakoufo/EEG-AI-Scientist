@@ -9,7 +9,9 @@ GitHub 的 `main` 是已验证代码的共同主线。本地与服务器各有�
 | nccserver0 | `/data/duandh/EEG-AI-Scientist/code` | 模型会话、可信研究控制器、调用账本及CPU验证 |
 | GitHub | `koufodakoufo/EEG-AI-Scientist`，`main` | 版本化源码与可公开文档 |
 
-当前实际路径是“NCC控制器 → SSH传输冻结候选 → 火山云Docker执行 → 可信评分返回”。SSH认证留在可信控制层，不进入候选容器。第一项研究的六个目标episode已沿此路径完成；Builder读出分析使用火山云原生CPU进程及资源限制，不冒充Actor隔离运行。[方法迁移结果](research/method-transfer-results.md)和[Builder读出结果](research/readout-bottleneck-results.md)分别记录证据。
+此前完整研究使用“NCC 控制器 → SSH 传输冻结候选 → 火山云 Docker 执行 → 可信评分返回”。SSH 认证留在可信控制层，不进入候选容器。第一项研究的六个目标 episode 已沿此路径完成；[方法迁移结果](research/method-transfer-results.md)和[Builder 读出结果](research/readout-bottleneck-results.md)保留原证据。
+
+2026-11-08 的新科学计算均在火山云个人工程根的 `runs/evidence-guided-research-v1/builder/`。本地 `.local/research-renewal/` 保存协议、审查和独立研究决策记录。NCC 原生模型通道的资格检查返回授权失效，不能把旧资格记录当成今天可运行的证明；没有读取或复制认证文件。新的八次决策通过本地独立上下文直接调用冻结实验工具，完整审计实际访问，但不称为模型进程的 OS 隔离。后续编码研究者接入仍在单独验证；科学候选的 Docker 边界继续保留。
 
 ## 火山云存储
 
