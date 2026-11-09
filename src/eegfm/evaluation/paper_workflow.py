@@ -6,6 +6,7 @@ import hashlib
 import json
 import math
 import re
+import stat
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any
@@ -136,6 +137,21 @@ def _replace_pending(path: Path, data: bytes) -> None:
             temporary.unlink(missing_ok=True)
 
 
+def _queue_entry_exists(path: Path, *, directory: bool = False) -> bool:
+    """Check the entry itself without following links, including Windows junctions."""
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        return False
+    except OSError as exc:
+        raise ReplayMismatch(f'Queue path could not be inspected: {path}') from exc
+    expected_type = stat.S_ISDIR if directory else stat.S_ISREG
+    reparse_point = getattr(info, 'st_file_attributes', 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT
+    if reparse_point or not expected_type(info.st_mode):
+        raise ReplayMismatch(f'Queue path is redirected or has an unexpected file type: {path}')
+    return True
+
+
 class AwaitingResponse(Exception):
     """The request is queued and no terminal response has been delivered."""
 
@@ -151,16 +167,29 @@ class FileProvider:
     def __init__(self, root: Path, *, max_requests: int):
         if type(max_requests) is not int or max_requests < 1:
             raise ValueError('Request budget must be a positive integer')
-        self.root = root
+        self.root = root.absolute()
         self.max_requests = max_requests
-        self._queued = {path.stem for path in (root / 'requests').glob('*.json')}
+        self._check_layout()
+        self._queued: set[str] = set()
+        for path in (self.root / 'requests').glob('*.json'):
+            if _queue_entry_exists(path):
+                self._queued.add(path.stem)
         if any(not _SHA256.fullmatch(key) for key in self._queued):
             raise ReplayMismatch('Queue contains a request without a canonical filename')
         if len(self._queued) > max_requests:
             raise ReplayMismatch('File provider request budget exceeded')
         self.pending = [self._pending_entry(digest) for digest in sorted(self._queued)
-                        if not (root / 'responses' / (digest + '.json')).exists()]
+                        if not _queue_entry_exists(self.root / 'responses' / (digest + '.json'))]
         self.response_file_hashes: dict[str, str] = {}
+
+    def _check_layout(self) -> None:
+        # Walk top down so a path under a redirect is never inspected. This
+        # checks the static tree used by the single-writer workflow.
+        directories = (*reversed(self.root.parents), self.root,
+                       self.root / 'requests', self.root / 'responses')
+        for directory in directories:
+            _queue_entry_exists(directory, directory=True)
+        _queue_entry_exists(self.root / 'pending.json')
 
     @staticmethod
     def _pending_entry(digest: str) -> dict[str, str]:
@@ -185,8 +214,11 @@ class FileProvider:
         if digest != canonical_sha256(unsigned):
             raise ReplayMismatch('Invalid canonical request hash')
         filename = digest + '.json'
+        self._check_layout()
         request_path = self.root / 'requests' / filename
-        if digest in self._queued and not request_path.exists():
+        request_exists = _queue_entry_exists(request_path)
+        _queue_entry_exists(self.root / 'responses' / filename)
+        if digest in self._queued and not request_exists:
             raise ReplayMismatch('Previously queued request disappeared')
         if digest not in self._queued and len(self._queued) >= self.max_requests:
             raise ReplayMismatch('File provider request budget exceeded')
@@ -216,6 +248,9 @@ class FileProvider:
             _fields(failure, {'type', 'message'}, 'Response failure')
             if not _is_text(failure['type']) or not isinstance(failure['message'], str):
                 raise ValueError('Invalid response failure type or message')
+            # JSON escapes can decode to lone surrogates even in a UTF-8 file.
+            failure['type'].encode('utf-8')
+            failure['message'].encode('utf-8')
         if raw is None and (status != 'service_failure' or failure is None):
             raise ValueError('Missing raw response requires an explicit terminal failure')
         if raw is not None and (status == 'invalid_output') != (failure is not None):

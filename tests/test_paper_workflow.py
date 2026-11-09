@@ -203,3 +203,81 @@ def test_queue_repeated_stage_is_idempotent_and_no_overwrite(tmp_path: Path) -> 
     with pytest.raises(assessment.ReplayMismatch, match='existing bytes'):
         paper_workflow.FileProvider(tmp_path, max_requests=1)(request)
     assert request_path.read_bytes() == conflict
+
+
+@pytest.mark.parametrize(('redirect', 'after_init'), [
+    ('root', False), ('parent', False), ('requests', False), ('responses', False),
+    ('requests', True), ('responses', True),
+])
+def test_queue_rejects_junction_redirects(tmp_path: Path, redirect: str, after_init: bool) -> None:
+    winapi = pytest.importorskip('_winapi', reason='Windows junction probe')
+    outside = tmp_path / 'outside'
+    outside.mkdir()
+    root = tmp_path / 'work'
+    request = _request()
+    filename = request['request_sha256'] + '.json'
+    if redirect == 'parent':
+        link = root
+        root = link / 'child'
+    elif redirect == 'root':
+        link = root
+    else:
+        root.mkdir()
+        link = root / redirect
+    if redirect == 'responses':
+        (outside / filename).write_bytes(json.dumps(_response_record(request)).encode())
+    provider = paper_workflow.FileProvider(root, max_requests=1) if after_init else None
+    winapi.CreateJunction(str(outside), str(link))
+
+    try:
+        with pytest.raises(assessment.ReplayMismatch, match='Queue path'):
+            provider = provider if provider is not None else paper_workflow.FileProvider(root, max_requests=1)
+            assessment._invoke(provider, request)
+        assert sorted(path.name for path in outside.iterdir()) == (
+            [filename] if redirect == 'responses' else []
+        )
+        if redirect in {'requests', 'responses'}:
+            assert not (root / 'pending.json').exists()
+    finally:
+        # Unlink the junction itself without traversing its target.
+        link.rmdir()
+
+
+@pytest.mark.parametrize('entry', ['request', 'response', 'pending'])
+def test_queue_rejects_nonregular_file_entries(tmp_path: Path, entry: str) -> None:
+    request = _request()
+    filename = request['request_sha256'] + '.json'
+    paths = {'request': tmp_path / 'requests' / filename,
+             'response': tmp_path / 'responses' / filename,
+             'pending': tmp_path / 'pending.json'}
+    paths[entry].mkdir(parents=True)
+    with pytest.raises(assessment.ReplayMismatch):
+        provider = paper_workflow.FileProvider(tmp_path, max_requests=1)
+        assessment._invoke(provider, request)
+    assert not paths['request'].is_file()
+    assert not paths['pending'].is_file()
+
+
+@pytest.mark.parametrize('field', ['type', 'message'])
+def test_lone_surrogate_in_terminal_failure_is_invalid_local_evidence(tmp_path: Path, field: str) -> None:
+    request = _request()
+    failure = {'type': 'TimeoutError', 'message': ''}
+    failure[field] = '\ud800'
+    record = _response_record(request, raw=None, failure=failure, status='service_failure')
+    _deliver(tmp_path, request, record)  # The UTF-8 envelope contains a JSON escape.
+    provider = paper_workflow.FileProvider(tmp_path, max_requests=1)
+
+    with pytest.raises(assessment.ReplayMismatch):
+        assessment._invoke(provider, request)
+    assert not provider.response_file_hashes
+
+
+@pytest.mark.parametrize('message', ['', 'External timeout \U0001f680'])
+def test_valid_terminal_failure_metadata_replays_exactly(tmp_path: Path, message: str) -> None:
+    request = _request()
+    record = _response_record(request, raw=None, status='service_failure',
+                              failure={'type': 'TimeoutError', 'message': message})
+    _deliver(tmp_path, request, record)
+    provider = paper_workflow.FileProvider(tmp_path, max_requests=1)
+
+    assert assessment._invoke(provider, request) == (record, None)
