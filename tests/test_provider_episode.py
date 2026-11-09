@@ -7,6 +7,7 @@ import pytest
 from eegfm.eeg import episode
 from eegfm.evaluation.bundle import digest_file
 from test_readout_aggregation import case
+from test_agent_provider import setup_provider, open_session, call
 
 
 def config(tmp_path):
@@ -25,6 +26,30 @@ def test_new_provider_schema_explicitly_routes_without_native_auth_path(tmp_path
     value=config(tmp_path)
     with patch.object(episode,'run_delegated_episode',return_value={'typed_provider':True}):
         assert episode.run_episode(value)=={'typed_provider':True}
+
+
+def test_shared_coding_provider_keeps_two_public_fit_reservations(setup_provider):
+    """The residual registration reuses this exact episode-wide provider gate."""
+    import hashlib
+    _, box, _ = setup_provider
+    open_session(box)
+    call(box, 'task')
+    text = '# synthetic fit source, not executed\n'
+    call(box, 'write_chunk', {'path': 'candidate/fit.py', 'offset': 0, 'text': text})
+    call(box, 'seal_file', {'path': 'candidate/fit.py', 'sha256': hashlib.sha256(text.encode()).hexdigest()})
+    submissions = []
+    class Bench:
+        def submit(self, job_id, path):
+            submissions.append(job_id)
+            return {'job_id': job_id, 'status': 'waiting'}
+    box.workbench_factory = lambda case: Bench()
+    for number in (1, 2):
+        assert call(box, 'fit_submit', {'job_id': f'fit-{number}', 'candidate_dir': 'candidate'})['status'] == 'ok'
+    denied = call(box, 'fit_submit', {'job_id': 'fit-3', 'candidate_dir': 'candidate'})
+    assert denied['status'] == 'rejected'
+    assert len(submissions) == 2
+    with box.transaction() as db:
+        assert db.execute('SELECT COUNT(*) FROM fits').fetchone()[0] == 2
 
 
 def test_historical_exact_roles_and_allocation_are_required(tmp_path):

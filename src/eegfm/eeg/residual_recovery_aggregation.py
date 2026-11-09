@@ -132,6 +132,7 @@ def _policy(roles: dict[str, str], qualification: FileBinding, receipt: dict[str
     return {
         "schema_version": POLICY_SCHEMA, "task_id": TASK_ID, "scorer_schema": SCORER_SCHEMA,
         "method_schema": METHOD_SCHEMA, "baseline_identity_schema": IDENTITY_SCHEMA,
+        "validation_identity_release": "residual_baseline_identity_hash_v1",
         "qualification": {"schema_version": QUALIFICATION_SCHEMA, "file_sha256": qualification.sha256,
                           "canonical_sha256": hashlib.sha256(canonical_bytes(receipt)).hexdigest(), "receipt": receipt},
         "role_sha256": roles, "source_sha256": {name: item.sha256 for name, item in zip(SOURCE_FILES, source_bindings)},
@@ -202,6 +203,29 @@ def _scalar_metrics(scored: dict[str, Any]) -> dict[str, float]:
     for view, scores in scored["views"].items():
         for model, summary in scores.items():
             metrics[f"{view}__{model}__r2"] = summary["r2"]
+            if model == "train_mean" and view != "identity":
+                continue
+            prefix = "train_mean" if model == "train_mean" else f"{view}__{model}"
+            for i, value in enumerate(summary["per_column_r2"]):
+                if value is not None:
+                    metrics[f"{prefix}__column{i}_r2"] = value
+    metrics.update({f"target_column{i}_included": value for i, value in enumerate(scored["target_mask"])})
+    for view, contrast in RELEASED_CONTRASTS:
+        summary = scored["contrasts"][view].get(contrast)
+        if summary is not None:
+            prefix = f"{view}__{contrast}"
+            metrics[f"{prefix}__delta"] = summary["delta"]
+            if summary["ci95"] is not None:
+                metrics[f"{prefix}__ci95_low"], metrics[f"{prefix}__ci95_high"] = summary["ci95"]
+    for item in scored["leave_one_participant_out"]:
+        prefix = f"loo_p{item['omission_index']}"
+        valid = item["status"] == "defined"
+        metrics[f"{prefix}__valid"] = valid
+        if valid:
+            metrics[f"{prefix}__leace_linear_r2"] = item["views"]["leace"]["linear"]
+            if "flexible" in models:
+                metrics[f"{prefix}__leace_flexible_r2"] = item["views"]["leace"]["flexible"]
+                metrics[f"{prefix}__primary_delta"] = item["contrasts"]["leace"]["flexible_minus_linear"]
     primary = scored["primary"]
     if primary is not None:
         metrics["primary_delta"] = primary["delta"]
@@ -210,10 +234,21 @@ def _scalar_metrics(scored: dict[str, Any]) -> dict[str, float]:
     return {name: float(value) for name, value in metrics.items()}
 
 
+RELEASED_CONTRASTS = (("leace", "linear_minus_shuffled"), ("leace", "flexible_minus_shuffled"),
+                      ("identity", "flexible_minus_shuffled"))
+
+
 class ResidualRecoveryAggregator:
     """Stateless worker callable bound to enrolled runtime, source and input files."""
 
     released_metrics = SCALARS | frozenset(f"{view}__{model}__r2" for view in VIEWS for model in (*MODELS, "train_mean"))
+    released_metrics |= frozenset(f"{view}__{model}__column{i}_r2" for view in VIEWS for model in MODELS for i in range(6))
+    released_metrics |= frozenset(f"train_mean__column{i}_r2" for i in range(6))
+    released_metrics |= frozenset(f"target_column{i}_included" for i in range(6))
+    released_metrics |= frozenset(f"{view}__{contrast}__{suffix}" for view, contrast in RELEASED_CONTRASTS
+                                  for suffix in ("delta", "ci95_low", "ci95_high"))
+    released_metrics |= frozenset(f"loo_p{i}__{suffix}" for i in range(6)
+                                  for suffix in ("valid", "leace_linear_r2", "leace_flexible_r2", "primary_delta"))
 
     def __init__(self, truth_by_split: Mapping[str, FileBinding], train_truth: FileBinding,
                  inference_by_split: Mapping[str, FileBinding], *, public_by_split: Mapping[str, FileBinding],

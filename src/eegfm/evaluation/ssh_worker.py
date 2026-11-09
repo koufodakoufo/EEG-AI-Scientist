@@ -338,9 +338,23 @@ def scientific_identity(config: dict[str, Any], *, aggregate: Any,
         if 'episode_deadline_epoch' in config:
             identity['episode_deadline_epoch'] = config['episode_deadline_epoch']
         return identity
-    from eegfm.eeg.episode import DEFAULT_TASK, READOUT_TASK, task_scope
+    from eegfm.eeg.episode import DEFAULT_TASK, READOUT_TASK, RESIDUAL_RECOVERY_TASK, task_scope
     task_id = config.get('task_id', DEFAULT_TASK)
     task_scope(task_id)
+    if task_id == RESIDUAL_RECOVERY_TASK:
+        from eegfm.eeg.residual_recovery_aggregation import ResidualRecoveryAggregator
+        if type(aggregate) is not ResidualRecoveryAggregator:
+            raise ValueError('Residual task requires its exact registered scorer')
+        return {'task_id': task_id, 'episode_id': config['episode_id'], 'run_id': config['run_id'],
+                'public_manifest_sha256': public_manifest_sha256, 'split_manifest_sha256': split_manifest_sha256,
+                'truth_roles': {'train_truth': aggregate.train_truth.sha256,
+                    'truth_by_split': {name: item.sha256 for name, item in sorted(aggregate.truth.items())}},
+                'inference_roles': {name: item.sha256 for name, item in sorted(aggregate.inference.items())},
+                'public_roles': {name: item.sha256 for name, item in sorted(aggregate.public.items())},
+                'residual_qualification_sha256': aggregate.qualification.sha256,
+                'aggregate_runtime': readout_runtime_record(config.get('aggregate_runtime')),
+                'validation_identity_release': 'residual_baseline_identity_hash_v1',
+                'scoring_policy': aggregate.scoring_policy, 'aggregate_policy_sha256': aggregate.policy_sha256}
     if task_id == READOUT_TASK:
         from eegfm.eeg.readout_aggregation import ReadoutAggregator
         if not isinstance(aggregate, ReadoutAggregator):
@@ -369,7 +383,7 @@ def scientific_identity(config: dict[str, Any], *, aggregate: Any,
 
 def load_worker(config_binding: FileBinding) -> tuple[dict[str, Any], SandboxedWorkerEvaluator]:
     """Config is fixed by trusted CLI arguments and independently hash-bound."""
-    from eegfm.eeg.episode import DEFAULT_TASK, READOUT_TASK, load_aggregator, task_scope
+    from eegfm.eeg.episode import DEFAULT_TASK, READOUT_TASK, RESIDUAL_RECOVERY_TASK, load_aggregator, task_scope
     path = config_binding.verify()
     if path.stat().st_size > 1024**2:
         raise ValueError('Cloud config byte limit exceeded')
@@ -380,6 +394,8 @@ def load_worker(config_binding: FileBinding) -> tuple[dict[str, Any], SandboxedW
     task_id = config.get('task_id', DEFAULT_TASK)
     task_scope(task_id)
     expected_schema = 'ssh_readout_worker_v1' if task_id == READOUT_TASK else 'ssh_scientific_worker_v1'
+    if task_id == RESIDUAL_RECOVERY_TASK:
+        expected_schema = 'ssh_residual_recovery_worker_v1'
     if config.get('schema_version') != expected_schema:
         raise ValueError('Unknown cloud worker configuration')
     for key in ('episode_id', 'run_id'):
@@ -398,19 +414,23 @@ def load_worker(config_binding: FileBinding) -> tuple[dict[str, Any], SandboxedW
     split = binding(config['split_manifest'])
     inputs = {name: SplitInputs(binding(pair['train']), binding(pair['evaluation']))
               for name, pair in config['inputs_by_split'].items()}
-    if task_id == READOUT_TASK and (set(inputs) != {'validation', 'test'} or any(
+    if task_id in {READOUT_TASK, RESIDUAL_RECOVERY_TASK} and (set(inputs) != {'validation', 'test'} or any(
             aggregate.inference[name].sha256 != pair.evaluation.sha256 for name, pair in inputs.items())):
         raise ValueError('Readout scorer inference differs from worker inputs')
-    if task_id == READOUT_TASK and any(pair.train.sha256 != aggregate.public['train'].sha256
+    if task_id in {READOUT_TASK, RESIDUAL_RECOVERY_TASK} and any(pair.train.sha256 != aggregate.public['train'].sha256
                                       for pair in inputs.values()):
         raise ValueError('Readout worker training input differs from enrolled public training data')
+    if task_id == RESIDUAL_RECOVERY_TASK and (type(config.get('timeout_seconds', 120)) is not int
+                                             or not 0 < config.get('timeout_seconds', 120) <= 120):
+        raise ValueError('Residual scientific worker is limited to 120 seconds')
     worker = SandboxedWorkerEvaluator(private_root=Path(config['private_root']), public_root=Path(config['public_root']),
         public_manifest_sha256=config['public_manifest_sha256'], split_manifest_path=split.path, split_manifest_sha256=split.sha256,
         inputs_by_split=inputs,
         runtime=RuntimeConfig(bwrap=None, python=Path(runtime['python']), backend='docker',
             docker=Path(runtime['docker']), docker_image=runtime['image'], docker_host=runtime['host']),
         aggregate=aggregate, released_metrics=aggregate.released_metrics, aggregate_bindings=aggregate.bindings,
-        aggregate_policy_sha256=aggregate.policy_sha256, timeout_seconds=config.get('timeout_seconds', 900),
+        aggregate_policy_sha256=aggregate.policy_sha256,
+        timeout_seconds=config.get('timeout_seconds', 120 if task_id == RESIDUAL_RECOVERY_TASK else 900),
         minimum_free_bytes=config.get('minimum_free_bytes', 20 * 1024**3))
     return config, worker
 
