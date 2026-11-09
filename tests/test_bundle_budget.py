@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+from textwrap import dedent
 import unittest
 
 from eegfm.evaluation.bundle import create_public_bundle
@@ -191,6 +192,43 @@ class BudgetTests(unittest.TestCase):
         self.assertTrue(result['denied'])
         self.assertLessEqual(len(result['cpus']),4)
         self.assertEqual(report['status'],'completed')
+
+    @unittest.skipUnless(sys.platform == 'linux', 'Linux inherited affinity enforcement')
+    def test_nested_launcher_reuses_exact_locked_affinity(self) -> None:
+        expected_cpus = [min(os.sched_getaffinity(0))]
+        nested_child = dedent("""\
+            import json
+            import os
+
+            try:
+                os.sched_setaffinity(0, set(range(os.cpu_count())))
+            except PermissionError:
+                denied = True
+            else:
+                denied = False
+            print(json.dumps({'denied': denied, 'cpus': sorted(os.sched_getaffinity(0))}))
+            """)
+        nested_launcher = dedent("""\
+            from pathlib import Path
+            import sys
+            from eegfm.agent.budget import run_bounded
+
+            run_bounded([sys.executable, '-B', '-c', sys.argv[1]], cwd=Path.cwd(),
+                        output_dir=Path('inner'), threads=1, timeout_seconds=4,
+                        minimum_free_bytes=0)
+            """)
+        env = {**os.environ, 'PYTHONPATH': str(Path(__file__).resolve().parents[1] / 'src')}
+        outer_dir = self.root / 'outer'
+        outer = run_bounded([sys.executable, '-B', '-c', nested_launcher, nested_child],
+                            cwd=self.root, output_dir=outer_dir, threads=1,
+                            timeout_seconds=8, minimum_free_bytes=0, env=env)
+        self.assertEqual(outer['status'], 'completed', (outer_dir / 'stderr.log').read_text())
+        inner_dir = self.root / 'inner'
+        inner = json.loads((inner_dir / 'status.json').read_text())
+        self.assertEqual(inner['status'], 'completed', (inner_dir / 'stderr.log').read_text())
+        self.assertEqual(inner['affinity_cpus'], expected_cpus)
+        observed = json.loads((inner_dir / 'stdout.jsonl').read_text())
+        self.assertEqual(observed, {'denied': True, 'cpus': expected_cpus})
 
 
 if __name__ == '__main__':
