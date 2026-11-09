@@ -8,7 +8,25 @@ def task_parser(command: str, *, description: str | None = None) -> argparse.Arg
     """Build task arguments without importing a scientific implementation."""
     parser = argparse.ArgumentParser(prog="eegfm " + command, description=description,
         epilog="Scientific execution requires optional dependencies. From the source checkout: python -m pip install -e '.[science]'.")
-    if command == 'driver':
+    if command == 'paper':
+        parser.description = 'Prepare, freeze and compare a paper-derived research task locally.'
+        parser.epilog = 'Requests are queued as files. Re-run the same command after an external bridge delivers responses.'
+        commands = parser.add_subparsers(dest='command', required=True)
+        prepare = commands.add_parser('prepare', help='draft a task and extract its private reference')
+        prepare.add_argument('--paper', type=Path, required=True, help='complete paper as UTF-8 text')
+        prepare.add_argument('--resources', type=Path, required=True, help='available resources and execution scope as JSON')
+        prepare.add_argument('--out', type=Path, required=True, help='preparation directory')
+        prepare.add_argument('--policy', type=Path, required=True, help='policy JSON outside the preparation directory')
+        prepare.add_argument('--parent', type=Path, help='previous work directory when starting a new revision')
+        freeze = commands.add_parser('freeze', help='bind an independent review and export the public task')
+        freeze.add_argument('--work', type=Path, required=True, help='prepared work directory')
+        freeze.add_argument('--review', type=Path, required=True, help='independent review JSON')
+        compare = commands.add_parser('compare', help='assess a complete report against a frozen reference')
+        compare.add_argument('--work', type=Path, required=True, help='frozen work directory')
+        compare.add_argument('--report', type=Path, required=True, help='complete final report as UTF-8 text')
+        compare.add_argument('--out', type=Path, required=True, help='separate comparison directory')
+        compare.add_argument('--evidence', type=Path, help='trusted numerical verdicts and process checks as JSON')
+    elif command == 'driver':
         parser.add_argument('command', choices=['run', 'start'])
         parser.add_argument('--run', required=True)
         parser.add_argument('--agent', choices=['claude', 'codex', 'script'], required=True)

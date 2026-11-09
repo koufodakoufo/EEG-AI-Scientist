@@ -1,6 +1,9 @@
 import hashlib
 import json
+import os
 from pathlib import Path
+import subprocess
+import sys
 
 import pytest
 
@@ -1242,3 +1245,159 @@ def test_comparison_process_completion_requires_explicit_complete_status(tmp_pat
     assert result['scientific_assessment_complete'] is False
     assessed = paper_workflow.read_json(output / 'assessment.json')
     assert assessed['dimensions']['process_quality'] == process_checks
+
+
+def _paper_cli(cwd: Path, *args: str | Path) -> subprocess.CompletedProcess[str]:
+    src = Path(__file__).resolve().parents[1] / 'src'
+    return subprocess.run(
+        [sys.executable, '-S', '-m', 'eegfm', 'paper', *map(str, args)],
+        cwd=cwd, env={**os.environ, 'PYTHONPATH': str(src)},
+        capture_output=True, encoding='utf-8', timeout=30,
+    )
+
+
+def _cli_status(result: subprocess.CompletedProcess[str], code: int, pipeline: str,
+                assessment_status: str = 'not_run') -> dict:
+    assert result.returncode == code, result.stderr or result.stdout
+    status = json.loads(result.stdout)
+    assert status['pipeline_status'] == pipeline
+    assert status['assessment_status'] == assessment_status
+    assert bool(status['pending']) is (code == 3)
+    return status
+
+
+def _cli_prepare_args(tmp_path: Path) -> tuple[str | Path, ...]:
+    paper, resources, work = _prep_inputs(tmp_path)
+    resources.write_bytes(json.dumps({**_resources(), 'scope': _compare_scope()}).encode())
+    policy = tmp_path / 'policy.json'
+    policy.write_bytes(json.dumps(_policy()).encode())
+    return ('prepare', '--paper', paper, '--resources', resources, '--out', work, '--policy', policy)
+
+
+def test_paper_cli_help_without_science_imports(tmp_path: Path) -> None:
+    for args, expected in [
+        (('--help',), ('prepare', 'freeze', 'compare')),
+        (('prepare', '--help'), ('--paper', '--resources', '--out', '--policy', '--parent')),
+        (('freeze', '--help'), ('--work', '--review')),
+        (('compare', '--help'), ('--work', '--report', '--out', '--evidence')),
+    ]:
+        result = _paper_cli(tmp_path, *args)
+        assert result.returncode == 0, result.stderr
+        assert all(option in result.stdout for option in expected)
+    assert not list(tmp_path.iterdir())
+
+
+def test_paper_cli_three_stage_roundtrip(tmp_path: Path) -> None:
+    prepare = _cli_prepare_args(tmp_path)
+    work = tmp_path / 'work'
+    first = _cli_status(_paper_cli(tmp_path, *prepare), 3, 'awaiting_responses')
+    assert _cli_status(_paper_cli(tmp_path, *prepare), 3, 'awaiting_responses') == first
+    draft = _pending_request(work)
+    assert draft['operation'] == 'draft'
+    _deliver(work, draft, _response_record(draft, raw=json.dumps(_draft())))
+
+    _cli_status(_paper_cli(tmp_path, *prepare), 3, 'awaiting_responses')
+    extract = _pending_request(work)
+    assert extract['operation'] == 'extract'
+    response = _reference_response(extract)
+    response['claims'][0].update(
+        scope=_compare_scope(), kind='point',
+        payload={'metric': 'accuracy', 'estimate': 75, 'unit': 'percent'},
+    )
+    _deliver(work, extract, _response_record(extract, raw=json.dumps(response)))
+    _cli_status(_paper_cli(tmp_path, *prepare), 0, 'prepared')
+    _cli_status(_paper_cli(tmp_path, 'freeze', '--work', work, '--review', _review(tmp_path, work)),
+                0, 'frozen')
+
+    report = tmp_path / 'report.md'
+    report.write_bytes(_COMPARE_REPORT.encode('utf-8'))
+    output = tmp_path / 'comparison'
+    evidence = tmp_path / 'evidence.json'
+    evidence.write_bytes(json.dumps({
+        'evidence_verdicts': [{'claim_id': 's0001:0', 'status': 'valid'}],
+        'process_checks': {'assessment_status': 'pending'},
+    }).encode())
+    compare = ('compare', '--work', work, '--report', report, '--out', output, '--evidence', evidence)
+    _cli_status(_paper_cli(tmp_path, *compare), 3, 'awaiting_responses')
+    extract = _pending_request(output)
+    assert extract['data']['segment']['text'] == _COMPARE_REPORT
+    response = json.loads(_compare_response(extract))
+    response['claims'][1]['scope']['conditions']['head'] = 'nonlinear'
+    _deliver(output, extract, _response_record(extract, raw=json.dumps(response)))
+
+    waiting = _cli_status(_paper_cli(tmp_path, *compare), 3, 'awaiting_responses')
+    directions = set()
+    assert len(waiting['pending']) == 2
+    for pending in waiting['pending']:
+        request = json.loads((output / pending['request_path']).read_bytes())
+        assert request['operation'] == 'judge'
+        assert request['data']['agent_claim']['claim_id'] == 's0001:0'
+        directions.add(request['data']['direction'])
+        _deliver(output, request, _response_record(request, raw=_compare_response(request)))
+    assert directions == {'agent_covers_reference', 'reference_supports_agent'}
+    compared = _cli_status(_paper_cli(tmp_path, *compare), 0, 'compared', 'scored_dimensions')
+    assert compared['task_relation'] == 'adapted'
+    assert compared['scientific_assessment_complete'] is False
+    assert (output / 'report.txt').read_bytes() == report.read_bytes()
+    assessed = json.loads((output / 'assessment.json').read_bytes())
+    assert [(c['request']['operation'], c['status']) for c in assessed['calls']] == [
+        ('extract', 'complete'), ('judge', 'complete'), ('judge', 'complete'),
+    ]
+    assert {(e['agent_claim_id'], e['direction'], e['relation']) for e in assessed['judgments']} == {
+        ('s0001:0', 'agent_covers_reference', 'supported'),
+        ('s0001:0', 'reference_supports_agent', 'supported'),
+        ('s0001:1', 'agent_covers_reference', 'not_covered'),
+        ('s0001:1', 'reference_supports_agent', 'not_covered'),
+    }
+    assert assessed['dimensions']['numerical_validity']['valid_claim_ids'] == ['s0001:0']
+    assert assessed['dimensions']['contradictions'] == []
+    assert '"conditions.head"' in (output / 'COMPARISON.md').read_text(encoding='utf-8')
+    assert _cli_status(_paper_cli(tmp_path, *compare), 0, 'compared', 'scored_dimensions') == compared
+
+
+def test_cli_revision_and_report_before_freeze_rejected(tmp_path: Path) -> None:
+    prepare = _cli_prepare_args(tmp_path)
+    work = tmp_path / 'work'
+    _cli_status(_paper_cli(tmp_path, *prepare), 3, 'awaiting_responses')
+    draft = _pending_request(work)
+    _deliver(work, draft, _response_record(draft, raw=json.dumps(_draft())))
+    _cli_status(_paper_cli(tmp_path, *prepare), 3, 'awaiting_responses')
+    extract = _pending_request(work)
+    _deliver(work, extract, _response_record(extract, raw=json.dumps(_reference_response(extract))))
+    _cli_status(_paper_cli(tmp_path, *prepare), 0, 'prepared')
+    before = {path.relative_to(work): path.read_bytes() for path in work.rglob('*') if path.is_file()}
+    report = tmp_path / 'report.md'
+    report.write_bytes(b'Observed accuracy was 75%.')
+    output = tmp_path / 'comparison'
+    _cli_status(_paper_cli(tmp_path, 'compare', '--work', work, '--report', report, '--out', output),
+                2, 'input_error')
+    assert not output.exists()
+
+    (tmp_path / 'policy.json').write_bytes(json.dumps(_policy(segment_chars=64)).encode())
+    _cli_status(_paper_cli(tmp_path, *prepare), 2, 'input_error')
+    assert {path.relative_to(work): path.read_bytes() for path in work.rglob('*') if path.is_file()} == before
+
+
+def test_cli_rejects_policy_inside_resolved_output(tmp_path: Path) -> None:
+    prepare = _cli_prepare_args(tmp_path)
+    work = tmp_path / 'work'
+    work.mkdir()
+    policy = work / 'pending.json'
+    original = json.dumps(_policy()).encode()
+    policy.write_bytes(original)
+    _cli_status(_paper_cli(tmp_path, *prepare[:-1], work / '..' / 'work' / policy.name), 2, 'input_error')
+    assert list(work.iterdir()) == [policy]
+    assert policy.read_bytes() == original
+
+
+def test_cli_prepare_terminal_failure_is_distinct_from_waiting(tmp_path: Path) -> None:
+    prepare = _cli_prepare_args(tmp_path)
+    work = tmp_path / 'work'
+    _cli_status(_paper_cli(tmp_path, *prepare), 3, 'awaiting_responses')
+    draft = _pending_request(work)
+    _deliver(work, draft, _response_record(
+        draft, raw=None, status='service_failure',
+        failure={'type': 'SyntheticOutage', 'message': 'No draft was delivered.'},
+    ))
+    _cli_status(_paper_cli(tmp_path, *prepare), 2, 'prepare_failed')
+    assert not (work / 'PREPARED.json').exists()

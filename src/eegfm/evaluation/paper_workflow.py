@@ -1106,3 +1106,24 @@ def compare_workflow(work: Path, report_path: Path, output: Path, *,
     }
     _save_files(output, {**files, 'COMPARISON.json': json_bytes(receipt)})
     return status
+
+
+def main() -> int:
+    """Dispatch local stages; a missing bridge response is a resumable exit."""
+    from eegfm.arguments import task_parser
+
+    args = task_parser('paper').parse_args()
+    try:
+        if args.command == 'prepare':
+            _require_external_input(args.policy, args.out.resolve())
+            result = prepare_workflow(args.paper, args.resources, args.out,
+                                      policy=read_json(args.policy), parent=args.parent)
+        elif args.command == 'freeze':
+            result = freeze_workflow(args.work, args.review)
+        else:
+            result = compare_workflow(args.work, args.report, args.out, evidence_path=args.evidence)
+    except (OSError, ValueError, TypeError, KeyError, RecursionError) as exc:
+        result = _pipeline('input_error', reason=str(exc))
+
+    print(json.dumps(result, indent=2))
+    return {'awaiting_responses': 3, 'prepare_failed': 2, 'input_error': 2}.get(result['pipeline_status'], 0)

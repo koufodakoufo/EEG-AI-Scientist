@@ -15,6 +15,7 @@ TASK_COMMANDS: dict[str, str] = {
     "bootstrap": "eegfm.eeg.bootstrap",
     "replay": "eegfm.eeg.replay",
     "calibrate": "eegfm.evaluation.calibration",
+    "paper": "eegfm.evaluation.paper_workflow",
     "legacy-score": "eegfm.evaluation.legacy.__main__",
 }
 

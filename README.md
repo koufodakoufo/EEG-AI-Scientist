@@ -12,6 +12,7 @@
 - [读出任务的研究者对照](docs/research/readout-method-transfer-results.md)：同一份冻结方法在新问题上的六次比较；六份候选复验通过，四份完整报告、两次总结中断。
 - [主计划与 ignition 准入](docs/research/ignition-study.md)：当前进度、原时间窗口和仍未满足的准入条件。
 - [BrainPEC 主张索引](docs/research/brainpec-claim-map.md)：原论文问题、作者结论与改编条件的比较边界。
+- [论文制题与报告比较](docs/research/paper-workflow.md)
 - [代码结构](docs/architecture.md)：各部分负责什么，哪些能力已经实现。
 - [机器与同步](docs/workspaces.md)：本地、火山云、ncc 和 GitHub 的关系。
 - [历史成果](docs/history/README.md)：已有结果和原始证据入口。
