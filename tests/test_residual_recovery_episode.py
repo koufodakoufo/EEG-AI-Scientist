@@ -71,7 +71,8 @@ assert 'numpy' not in sys.modules
 assert 'eegfm.eeg.residual_recovery_aggregation' not in sys.modules
 print('optional-science-free:' + operation)
 '''
-    result = subprocess.run([sys.executable, "-I", "-c", probe, str(source_root), operation],
+    # Isolated mode ignores PYTHONDONTWRITEBYTECODE, so pass -B to protect the source tree.
+    result = subprocess.run([sys.executable, "-I", "-B", "-c", probe, str(source_root), operation],
                             capture_output=True, text=True, timeout=20)
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == "optional-science-free:" + operation
