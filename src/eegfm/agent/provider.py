@@ -618,10 +618,23 @@ def _audit_initial_records(records: list[dict], *, identity: dict, agent_path: s
     known = {'model.base_instructions', 'memories.instructions', 'host_skills.instructions', 'permissions.instructions',
              'collaboration_mode.instructions', 'tools.deferred_namespaces', 'multi_agent.role_instructions', 'multi_agent.mode_instructions'}
     known_developer = known | {'generic.developer_instructions', 'plugins.recommendations'}
+    variant_mode = 'context_variants' in identity.get('trace_export', {})
+    metadata = []
+    if variant_mode:
+        from eegfm.agent.provider_export import initial_metadata_sha256, matches_context_bundle, validate_binding
+        validate_binding(identity)
     for record in records:
         item = record.get('payload', {})
         if record.get('type') == 'response_item' and item.get('type') in {'function_call', 'custom_tool_call'}:
             break
+        if variant_mode:
+            kind = record.get('type')
+            if kind == 'world_state' or kind == 'response_item' and item.get('type') == 'additional_tools':
+                metadata_kind = 'world_state' if kind == 'world_state' else 'additional_tools'
+                try:
+                    metadata.append({'kind': metadata_kind, 'payload_sha256': initial_metadata_sha256(metadata_kind, item)})
+                except ValueError:
+                    issues.append('Invalid initial instruction-bearing metadata')
         if record.get('type') == 'turn_context':
             effort = item.get('effort') or item.get('collaboration_mode', {}).get('settings', {}).get('reasoning_effort')
             contexts.append({'model': item.get('model'), 'effort': effort})
@@ -662,12 +675,15 @@ def _audit_initial_records(records: list[dict], *, identity: dict, agent_path: s
     if summaries != [identity['inherited_context']['memory_summary_sha256']]:
         issues.append('inherited memory summary mismatch or missing')
     actual_profile = [{key:row[key] for key in ('role', 'kinds', 'content_sha256')} for row in messages if row['role'] != 'agent_message']
-    if actual_profile != identity['inherited_context']['initial_messages'] or user_inputs != 1 or bootstrap_inputs != 1:
+    memory_hash = summaries[0] if len(summaries) == 1 else None
+    profile_matches = (matches_context_bundle(identity, actual_profile, metadata, memory_hash) if variant_mode
+                       else actual_profile == identity['inherited_context']['initial_messages'])
+    if not profile_matches or user_inputs != 1 or bootstrap_inputs != 1:
         issues.append('complete initial context profile or required environment/bootstrap mismatch')
     if not contexts or any(row != {'model': identity['model'], 'effort': identity['effort']} for row in contexts):
         issues.append('initial model/effort mismatch')
     return {'valid': not issues, 'issues': issues, 'context_id': context_id, 'agent_path': agent_path,
-            'initial_messages': messages, 'memory_summary_sha256': summaries[0] if len(summaries) == 1 else None,
+            'initial_messages': messages, 'memory_summary_sha256': memory_hash,
             'disclosure': identity['inherited_context']['disclosure']}
 
 

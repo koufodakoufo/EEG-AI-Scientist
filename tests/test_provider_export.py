@@ -137,6 +137,111 @@ def test_old_full_payload_export_binding_requires_a_separate_enrollment(tmp_path
         provider_export.sanitize_admin_trace(path,identity,session,context_id='context')
 
 
+def variant_fixture(tmp_path):
+    path,identity,session,_=fixture(tmp_path)
+    original=[json.loads(line) for line in path.read_text().splitlines()]
+    shared=identity['inherited_context']['initial_messages']
+    variants=[]
+    for name in ('old','new'):
+        messages=[]
+        profile=[]
+        for kind in ('model.base_instructions','multi_agent.role_instructions'):
+            content=[{'type':'input_text','text':f'{name} synthetic {kind}'}]
+            profile.append({'role':'developer','kinds':[kind],'content_sha256':provider._hash(content)})
+            messages.append({'type':'response_item','payload':{'type':'message','role':'developer','content':content,
+                             'internal_chat_message_metadata_passthrough':{'content_item_kinds':[kind]}}})
+        description=f'{name} synthetic functions.exec'
+        if name=='new':description+=' declares literature_search_query'
+        tool={'type':'additional_tools','role':'developer','tools':[{'description':description}],
+              'id':'at_00000000-0000-0000-0000-000000000001'}
+        world={'full':True,'state':name}
+        metadata=[{'type':'response_item','payload':tool},{'type':'world_state','payload':world}]
+        bundle={'initial_messages':profile+shared,'memory_summary_sha256':identity['inherited_context']['memory_summary_sha256'],
+                'initial_metadata':[{'kind':kind,'payload_sha256':provider_export.initial_metadata_sha256(kind,value)}
+                                    for kind,value in [('additional_tools',tool),('world_state',world)]]}
+        variants.append((messages,metadata,bundle))
+    identity['inherited_context']['initial_messages']=variants[0][2]['initial_messages']
+    identity['trace_export'].update(audit_profile_sha256=provider._hash(provider_export.audit_profile(identity)),
+                                    initial_metadata=variants[0][2]['initial_metadata'],context_variants=[x[2] for x in variants])
+    return path,identity,session,original,variants
+
+
+def write_variant(path, original, messages, metadata):
+    rows=original[:1]+messages+metadata+original[1:]
+    path.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+
+
+@pytest.mark.parametrize('index',[0,1])
+def test_joint_variant_accepts_only_one_complete_bundle(tmp_path,index):
+    path,identity,session,original,variants=variant_fixture(tmp_path)
+    messages,metadata,bundle=variants[index]
+    write_variant(path,original,messages,metadata)
+    assert provider.audit_initial_context(path,identity=identity,agent_path=session['agent_path'],context_id='context')['valid']
+    result=provider_export.sanitize_admin_trace(path,identity,session,context_id='context',complete=True)
+    _,audit=provider_export.validate_admin_export(result,identity,session,context_id='context')
+    assert [row['content_sha256'] for row in audit['initial_messages'] if row['role']!='agent_message']==[
+        row['content_sha256'] for row in bundle['initial_messages']]
+
+
+@pytest.mark.parametrize('case',['old_messages_new_metadata','new_messages_old_metadata','mixed_messages',
+                                 'third_variant','changed_tool','literature_call'])
+def test_joint_variant_rejects_hybrids_and_unapproved_context_or_tool(tmp_path,case):
+    path,identity,session,original,variants=variant_fixture(tmp_path)
+    messages,metadata,_=copy.deepcopy(variants[0])
+    if case=='old_messages_new_metadata':metadata=variants[1][1]
+    elif case=='new_messages_old_metadata':messages=variants[1][0]
+    elif case=='mixed_messages':messages[0]=variants[1][0][0]
+    elif case=='third_variant':messages[0]['payload']['content'][0]['text']='Unknown variant'
+    elif case=='changed_tool':metadata[0]['payload']['tools'][0]['description']='Changed tool instruction'
+    else:
+        messages,metadata,_=variants[1]
+        call_row=next(row for row in original if row['payload'].get('type')=='custom_tool_call')
+        call_row['payload']['input']='const result = await tools.web__run({literature_search_query:[{q:"synthetic"}]}); text(result);'
+    write_variant(path,original,messages,metadata)
+    if case!='literature_call':
+        assert not provider.audit_initial_context(path,identity=identity,agent_path=session['agent_path'],context_id='context')['valid']
+    with pytest.raises(ValueError):
+        provider_export.sanitize_admin_trace(path,identity,session,context_id='context')
+
+
+@pytest.mark.parametrize('index',[0,1])
+def test_remote_rejects_individually_enrolled_messages_and_metadata_from_different_variants(tmp_path,index):
+    path,identity,session,original,variants=variant_fixture(tmp_path)
+    exports=[]
+    for messages,metadata,_ in variants:
+        write_variant(path,original,messages,metadata)
+        exports.append(provider_export.sanitize_admin_trace(path,identity,session,context_id='context'))
+    message_export,metadata_export=exports[index],exports[1-index]
+    for row,other in zip(message_export['records'],metadata_export['records']):
+        if row['type']=='sanitized_metadata':row['payload']=other['payload']
+    with pytest.raises(ValueError,match='prospective profile'):
+        provider_export.validate_admin_export(message_export,identity,session,context_id='context')
+
+
+def test_remote_requires_the_entire_enrolled_variant_family(tmp_path):
+    path,identity,session,original,variants=variant_fixture(tmp_path)
+    write_variant(path,original,*variants[0][:2])
+    exported=copy.deepcopy(provider_export.sanitize_admin_trace(path,identity,session,context_id='context'))
+    del exported['binding']['context_variants']
+    with pytest.raises(ValueError,match='Unenrolled export'):
+        provider_export.validate_admin_export(exported,identity,session,context_id='context')
+
+
+@pytest.mark.parametrize('case',['duplicate','missing_primary','third','environment','memory_row','memory_hash','shape'])
+def test_variant_enrollment_requires_two_exact_bundles_with_common_context(tmp_path,case):
+    _,identity,_,_,_=variant_fixture(tmp_path)
+    variants=copy.deepcopy(identity['trace_export']['context_variants'])
+    if case=='duplicate':variants[1]=variants[0]
+    elif case=='missing_primary':variants[0]['initial_messages'][0]['content_sha256']='f'*64
+    elif case=='third':variants.append(variants[0])
+    elif case=='environment':variants[1]['initial_messages'][-1]['content_sha256']='f'*64
+    elif case=='memory_row':variants[1]['initial_messages'][-2]['content_sha256']='f'*64
+    elif case=='memory_hash':variants[1]['memory_summary_sha256']='f'*64
+    else:variants[1]['initial_messages'][0]['kinds']=['host_skills.instructions']
+    identity['trace_export']['context_variants']=variants
+    with pytest.raises(ValueError):provider_export.validate_binding(identity)
+
+
 @pytest.mark.parametrize('changed_content',[False,True])
 def test_current_developer_profile_requires_exact_ordered_content_hashes(tmp_path,changed_content):
     path,identity,session,_=fixture(tmp_path)

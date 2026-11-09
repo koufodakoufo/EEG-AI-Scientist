@@ -43,19 +43,75 @@ def initial_metadata_sha256(kind: str, payload: dict) -> str:
     return _hash({key: payload[key] for key in ('type', 'role', 'tools')})
 
 
+def _metadata_profile(value: object) -> bool:
+    return isinstance(value, list) and all(
+        isinstance(row, dict) and set(row) == {'kind', 'payload_sha256'}
+        and isinstance(row['kind'], str) and row['kind'] in INITIAL_METADATA and _sha(row['payload_sha256'])
+        for row in value)
+
+
+def _message_shape(value: object) -> list:
+    if not isinstance(value, list) or not value or any(
+            not isinstance(row, dict) or set(row) != {'role', 'kinds', 'content_sha256'}
+            or row['role'] not in ('system', 'developer', 'user') or not isinstance(row['kinds'], list)
+            or not row['kinds'] or any(not isinstance(kind, str) for kind in row['kinds']) or not _sha(row['content_sha256'])
+            for row in value):
+        raise ValueError('Invalid complete context variant message profile')
+    return [(row['role'], row['kinds']) for row in value]
+
+
+def _primary_context(identity: dict) -> dict:
+    inherited = identity['inherited_context']
+    return {'initial_messages': inherited['initial_messages'], 'memory_summary_sha256': inherited['memory_summary_sha256'],
+            'initial_metadata': identity['trace_export']['initial_metadata']}
+
+
+def _validate_context_variants(identity: dict) -> None:
+    binding = identity['trace_export']
+    if 'context_variants' not in binding:
+        return
+    variants = binding['context_variants']
+    primary = _primary_context(identity)
+    if (not isinstance(variants, list) or len(variants) != 2 or variants[0] == variants[1]
+            or primary not in variants or any(not isinstance(bundle, dict) or set(bundle) != set(primary) for bundle in variants)):
+        raise ValueError('Two distinct complete context variants must include the primary bundle')
+    message_shape = _message_shape(primary['initial_messages'])
+    if (not _sha(primary['memory_summary_sha256']) or sum(role == 'user' for role, _ in message_shape) != 1
+            or not any('memories.instructions' in kinds for _, kinds in message_shape)):
+        raise ValueError('Context variants require one environment and a bound memory profile')
+    metadata_shape = [row['kind'] for row in primary['initial_metadata']]
+    for bundle in variants:
+        messages = bundle['initial_messages']
+        metadata = bundle['initial_metadata']
+        if (_message_shape(messages) != message_shape or not _metadata_profile(metadata)
+                or [row['kind'] for row in metadata] != metadata_shape
+                or bundle['memory_summary_sha256'] != primary['memory_summary_sha256']
+                or any(actual != expected for actual, expected in zip(messages, primary['initial_messages'])
+                       if expected['role'] == 'user' or 'memories.instructions' in expected['kinds'])):
+            raise ValueError('Context variants require common ordered structure, memory and environment')
+
+
+def matches_context_bundle(identity: dict, messages: list, metadata: list, memory_sha256: str | None) -> bool:
+    """Compare a complete observed bundle, never its fields independently."""
+    binding = identity['trace_export']
+    observed = {'initial_messages': messages, 'initial_metadata': metadata, 'memory_summary_sha256': memory_sha256}
+    if 'context_variants' in binding:
+        return observed in binding['context_variants']
+    return observed == _primary_context(identity)
+
+
 def validate_binding(identity: dict) -> None:
     binding = identity.get('trace_export')
-    if (not isinstance(binding, dict) or set(binding) != {'schema_version', 'client_source_sha256', 'sanitizer_source_sha256', 'audit_profile_sha256', 'initial_metadata'}
+    required = {'schema_version', 'client_source_sha256', 'sanitizer_source_sha256', 'audit_profile_sha256', 'initial_metadata'}
+    if (not isinstance(binding, dict) or not required <= set(binding) or set(binding) - required - {'context_variants'}
             or binding['schema_version'] != SCHEMA
             or any(not isinstance(binding[key], str) or re.fullmatch('[0-9a-f]{64}', binding[key]) is None
                    for key in ('client_source_sha256', 'sanitizer_source_sha256', 'audit_profile_sha256'))
             or binding['sanitizer_source_sha256'] != source_sha256()
             or binding['audit_profile_sha256'] != _hash(audit_profile(identity))
-            or not isinstance(binding['initial_metadata'], list)
-            or any(not isinstance(row, dict) or set(row) != {'kind', 'payload_sha256'}
-                   or row['kind'] not in INITIAL_METADATA or not _sha(row['payload_sha256'])
-                   for row in binding['initial_metadata'])):
+            or not _metadata_profile(binding['initial_metadata'])):
         raise ValueError('Prospective trusted-admin sanitizer/profile binding required')
+    _validate_context_variants(identity)
 
 
 def _sha(value: object) -> bool:
@@ -291,10 +347,13 @@ def validate_admin_export(value: dict, identity: dict, session: dict, *, context
         else: raise ValueError('Unknown exported record')
     if markers != audit['initial_messages']:
         raise ValueError('Initial proof marker mismatch')
-    if initial_metadata != identity['trace_export']['initial_metadata'] or contexts != 1 or inter_agent > 1:
+    if contexts != 1 or inter_agent > 1:
         raise ValueError('Unenrolled initial metadata or multiple native turns')
     profile = [{key: item[key] for key in ('role', 'kinds', 'content_sha256')} for item in markers if item['role'] != 'agent_message']
-    if profile != identity['inherited_context']['initial_messages'] or sum(item['role'] == 'agent_message' for item in markers) != 1:
+    if 'context_variants' not in identity['trace_export'] and initial_metadata != identity['trace_export']['initial_metadata']:
+        raise ValueError('Unenrolled initial metadata or multiple native turns')
+    if (not matches_context_bundle(identity, profile, initial_metadata, audit['memory_summary_sha256'])
+            or sum(item['role'] == 'agent_message' for item in markers) != 1):
         raise ValueError('Initial proof differs from prospective profile')
     for item in markers:
         if any(re.fullmatch('[0-9a-f]{64}', item[key]) is None for key in ('text_sha256', 'content_sha256')): raise ValueError('Initial proof requires hashes')
