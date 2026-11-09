@@ -11,7 +11,7 @@ GitHub 的 `main` 是已验证代码的共同主线。本地与服务器各有�
 
 此前完整研究使用“NCC 控制器 → SSH 传输冻结候选 → 火山云 Docker 执行 → 可信评分返回”。SSH 认证留在可信控制层，不进入候选容器。第一项研究的六个目标 episode 已沿此路径完成；[方法迁移结果](research/method-transfer-results.md)和[Builder 读出结果](research/readout-bottleneck-results.md)保留原证据。
 
-2026-11-08 的新科学计算均在火山云个人工程根的 `runs/evidence-guided-research-v1/builder/`。本地 `.local/research-renewal/` 保存协议、审查和独立研究决策记录。NCC 原生模型通道的资格检查返回授权失效，不能把旧资格记录当成今天可运行的证明；没有读取或复制认证文件。新的八次决策通过本地独立上下文直接调用冻结实验工具，完整审计实际访问，但不称为模型进程的 OS 隔离。后续编码研究者接入仍在单独验证；科学候选的 Docker 边界继续保留。
+本轮科学计算在火山云个人工程根的 `runs/evidence-guided-research-v1/`：`builder/` 保存 Builder 分析，`coding-readout-v6/base-r01/` 保存独立编码研究者的真实 EEG 作业。本地 `.local/research-renewal/` 保存协议、审查和研究者记录。NCC 旧原生模型通道授权失效；新通道使用本地独立上下文，经 NCC 控制器调用火山云。合成及真实 EEG 流程和预测复算均已完成。模型上下文接受访问审计，科学候选使用 Docker，两种边界不能混为模型进程的 OS 隔离。
 
 ## 火山云存储
 
@@ -54,6 +54,8 @@ Windows 状态检查：
 
 每处的`BACKUP_MANIFEST.json`列出文件和哈希，`BACKUP_VERIFIED.json`记录核验；读出备份后补的说明文件另由`BACKUP_ADDENDUM.json`绑定，原清单不改写。这些副本包含小型拟合参数和预测产物，不包含原始EEG、缓存输入、基础模型权重、认证或原生会话目录。完整重放还需要原登记的数据与环境；原运行和失败回执保持原位。审阅材料包含参考答案和条件映射，不能整体交给后续受测研究者。
 
+本轮新证据另外保存在 NCC 的 `runs/evidence-guided-research-v1/backup/`：`completed-science-v1/` 和 `spatial-pretraining-v1/` 保存已完成的 EEG 分析；`coding-evidence-v2/` 保存 411 个筛选后的编码流程、失败、报告评价及研究决策证据文件，约 31 MB。后一份已从 NCC 下载到本地恢复检查目录，逐文件与原件核对一致。原生会话正文、平台背景、认证和缓存不包含在此备份中；原文件没有移动或删除。本地核验入口为 `.local/research-renewal/evidence-backup-v2/RESTORE_VERIFIED.json`。
+
 ## 运行命名与历史
 
 新运行名按 `study-v<protocol>-g<generation>-<condition>-r<repeat>` 组合，例如 `method-transfer-v1-g1-learned-r01`。当前控制器要求单层 run_id，不允许斜杠；研究、协议和代际的层次同时作为元数据字段，不能把多层路径直接传作 run_id。创建时间、模型版本、代码 commit、资源与父策略也写入元数据；正文用研究问题和条件名。
@@ -61,6 +63,10 @@ Windows 状态检查：
 旧 ncc 部署根及其中 integration checkout、旧火山云 dated 根和旧环境保持原位，仅用于冻结证据和恢复，不再作为新开发入口。旧分支由 `archive/*` 标签保留，原始目录映射见 [历史索引](history/README.md)。
 
 ## 环境与验证
+
+当前源码 `0a8456a` 的完整支持套件各收集 880 项：Windows 797 通过 / 83 跳过，NCC 861 / 19，火山云 859 / 21。核验清单在正式本地工程 `.local/research-renewal/coding-episode-validation-v6/VERIFIED.json`，绑定源码、依赖、前后文件身份与清理结果。两台 Linux 在独立冻结副本上验收，不替换旧运行源码。
+
+本轮真实 EEG 编码任务使用本地模型会话、NCC 控制器和火山云 Docker，已完成两次公开拟合、两次验证、一次最终测试，随后一次源码重拟合和一次完整预测复算。原始证据分别在两台服务器项目根的 `runs/evidence-guided-research-v1/coding-readout-v6/base-r01/`；本地审阅副本在 `.local/research-renewal/coding-eeg-workflow-v6/`。这条新通道可用；NCC 旧原生模型授权仍未恢复。模型上下文的访问审计不等于其进程受到操作系统隔离。
 
 `config/workspaces.json` 是本人机器路径清单，不含认证；同步脚本读取其中的 code 路径，包不会自动把 runs/python 字段当成运行配置。实际运行显式设置 `EEGFM_ROOT`（其下包含任务、运行和允许的知识），或使用 checkout 默认值。新代码可 `pip install -e`，科学包和 Linux 沙箱能力分别验收；CPU PyTorch 应先从 CPU wheel 安装，避免普通依赖解析安装整套 CUDA 库。
 
@@ -78,7 +84,7 @@ python -m eegfm --help
 
 ncc 只读复用原科学 venv；验证新代码时显式设 `PYTHONPATH=/data/duandh/EEG-AI-Scientist/code/src`。既有环境和冻结实验不被新包安装覆盖。
 
-### 当前验收（维护源码 `0206182`，2026-11-02）
+### 上一阶段验收（维护源码 `0206182`，2026-11-02）
 
 | 环境 | 完整套件结果 | 解释 |
 |---|---|---|
