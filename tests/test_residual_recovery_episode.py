@@ -19,6 +19,64 @@ from test_residual_recovery_aggregation import _fixture, _receipt
 TASK = "eegmat-residual-recovery-v1"
 
 
+@pytest.mark.parametrize("operation", ["enrollment", "validation", "test", "named_test"])
+def test_generic_worker_paths_do_not_import_optional_science(operation):
+    """Fresh process avoids NumPy already loaded by this test module's fixtures."""
+    import subprocess
+    import sys
+    source_root = Path(__file__).resolve().parents[1] / "src"
+    probe = r'''
+import importlib.abc
+import sys
+from pathlib import Path
+from types import SimpleNamespace
+source = Path(sys.argv[1])
+sys.path.insert(0, str(source))
+class WithoutOptionalScience(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname == 'numpy' or fullname.startswith('numpy.') or fullname.startswith('eegfm.eeg.residual_recovery'):
+            raise ModuleNotFoundError('probe: optional science import forbidden: ' + fullname)
+sys.meta_path.insert(0, WithoutOptionalScience())
+import eegfm.evaluation.worker as module
+assert Path(module.__file__).resolve() == source / 'eegfm/evaluation/worker.py'
+worker = object.__new__(module.SandboxedWorkerEvaluator)
+worker.aggregate = SimpleNamespace()
+operation = sys.argv[2]
+if operation == 'enrollment':
+    binary = Path(sys.executable).resolve()
+    worker.aggregate_source_path = Path(module.__file__)
+    worker.aggregate_source_sha256 = module.digest_file(worker.aggregate_source_path)
+    worker.aggregate_policy_sha256 = 'a' * 64
+    worker.docker = None
+    worker.runtime = SimpleNamespace(python=binary, bwrap=binary, backend='bwrap', environment_roots=(), manifest=None)
+    worker.runtime_hashes = dict.fromkeys(('python', 'bwrap'), module.digest_file(binary))
+    worker.inputs = {}
+    worker.aggregate_bindings = ()
+    worker.released_metrics = frozenset({'synthetic_metric'})
+    worker.timeout = 30
+    worker.free_floor = 0
+    worker.allowed_splits = frozenset({'validation', 'test'})
+    worker.public_artifact_mode = None
+    result = worker._enrollment()
+    assert result['released_metrics'] == ['synthetic_metric']
+    assert 'validation_identity_release' not in result
+else:
+    if operation == 'named_test':
+        # Even a possible registered-class match must short-circuit the test split.
+        collector = type('ResidualRecoveryAggregator', (), {'__module__': 'eegfm.eeg.residual_recovery_aggregation'})
+        worker.aggregate = collector()
+    split = 'validation' if operation == 'validation' else 'test'
+    assert worker._residual_validation_identity_artifact(Path('.'), {}, SimpleNamespace(split=split)) is None
+assert 'numpy' not in sys.modules
+assert 'eegfm.eeg.residual_recovery_aggregation' not in sys.modules
+print('optional-science-free:' + operation)
+'''
+    result = subprocess.run([sys.executable, "-I", "-c", probe, str(source_root), operation],
+                            capture_output=True, text=True, timeout=20)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "optional-science-free:" + operation
+
+
 def config(tmp_path):
     roles = ("public_train", "public_validation", "inference_validation", "inference_test",
              "truth_train", "truth_validation", "truth_test", "split_manifest")
@@ -381,6 +439,17 @@ def test_release_policy_changes_enrollment_and_does_not_affect_other_collectors(
     worker.aggregate_policy_sha256 = changed.policy_sha256
     assert worker._enrollment() != original
     worker.aggregate = PublicFitAggregator(worker.public, worker.public_hash)
+    assert "validation_identity_release" not in worker._enrollment()
+    assert worker._residual_validation_identity_artifact(tmp_path, {}, spec) is None
+
+
+@pytest.mark.parametrize("subclass", [False, True])
+def test_lazy_collector_name_prefilter_never_authorizes_impostor_or_subclass(tmp_path, monkeypatch, subclass):
+    worker, spec = worker_fixture(tmp_path, monkeypatch)
+    bases = (ResidualRecoveryAggregator,) if subclass else ()
+    collector = type("ResidualRecoveryAggregator", bases,
+                     {"__module__": "eegfm.eeg.residual_recovery_aggregation"})
+    worker.aggregate = object.__new__(collector)
     assert "validation_identity_release" not in worker._enrollment()
     assert worker._residual_validation_identity_artifact(tmp_path, {}, spec) is None
 

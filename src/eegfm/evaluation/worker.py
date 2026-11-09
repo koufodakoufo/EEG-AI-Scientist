@@ -308,8 +308,7 @@ class SandboxedWorkerEvaluator:
                 result['public_artifact_manifest_sha256'] = self.public_hash
             if self.public_fit_deadline_epoch is not None:
                 result['public_fit_deadline_epoch'] = self.public_fit_deadline_epoch
-        from eegfm.eeg.residual_recovery_aggregation import ResidualRecoveryAggregator
-        if type(self.aggregate) is ResidualRecoveryAggregator:
+        if self._is_residual_recovery_aggregator():
             result['validation_identity_release'] = 'residual_baseline_identity_hash_v1'
         return result
 
@@ -515,12 +514,21 @@ class SandboxedWorkerEvaluator:
         self._finish(job_id, result)
         return result
 
+    def _is_residual_recovery_aggregator(self) -> bool:
+        # Keep optional science imports out of every unrelated worker path.
+        collector = type(self.aggregate)
+        if (collector.__module__ != 'eegfm.eeg.residual_recovery_aggregation'
+                or collector.__name__ != 'ResidualRecoveryAggregator'):
+            return False
+        from eegfm.eeg.residual_recovery_aggregation import ResidualRecoveryAggregator
+        return collector is ResidualRecoveryAggregator
+
     def _residual_validation_identity_artifact(self, output: Path, aggregated: dict[str, Any],
                                              spec: EvaluationSpec) -> dict[str, str] | None:
-        from eegfm.eeg.residual_recovery_aggregation import ResidualRecoveryAggregator, _read_json
-        from eegfm.eeg.residual_recovery import IDENTITY_SCHEMA, TASK_ID
-        if type(self.aggregate) is not ResidualRecoveryAggregator or spec.split != 'validation':
+        if spec.split != 'validation' or not self._is_residual_recovery_aggregator():
             return None
+        from eegfm.eeg.residual_recovery_aggregation import _read_json
+        from eegfm.eeg.residual_recovery import IDENTITY_SCHEMA, TASK_ID
         # validate_aggregate has already checked exact records and file bindings.
         records = [item for item in aggregated['artifacts'] if Path(item['path']).name == 'baseline_identity.json']
         if len(records) != 1 or records[0]['path'] != 'baseline_identity.json':
