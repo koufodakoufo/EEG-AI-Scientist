@@ -2,6 +2,7 @@
 import copy
 import hashlib
 import json
+from datetime import datetime, timezone
 import pytest
 from test_provider_trace import WAIT, trace
 from test_agent_provider import setup_provider, open_session, complete_trace, call
@@ -341,3 +342,105 @@ def test_explicit_admin_route_admits_then_audits_actual_deliveries(setup_provide
     saved=json.loads((box.root/'audits/session-01.json').read_text())
     assert saved['valid'] and saved['trace_export']['source']==final['source']
     assert saved['timing']['completion_epoch']<=saved['timing']['deadline_epoch']
+
+
+@pytest.mark.parametrize('scenario', ['success','late_admit','global_bound','expired_actor','late_native','late_receipt',
+                                      'wrong_turn','pre_admit_write','promotion_too_late','commit_crosses_deadline'])
+def test_opt_in_native_timing_separates_dispatch_actor_and_receipt(setup_provider,tmp_path,monkeypatch,scenario):
+    controller,old_box,enrollment=setup_provider
+    published=1_900_000_000
+    native_start=published+100
+    clock=[published]
+    monkeypatch.setattr(provider.time,'time',lambda:clock[0])
+    enrollment={**enrollment,'native_timing':{'dispatch_wait_seconds':180,'receipt_grace_seconds':15,
+                                               'episode_deadline_epoch':published+(365 if scenario=='global_bound' else 2700)}}
+    binding={'schema_version':provider_export.SCHEMA,'client_source_sha256':'a'*64,
+             'sanitizer_source_sha256':provider_export.source_sha256(),
+             'audit_profile_sha256':provider._hash(provider_export.audit_profile(enrollment)), 'initial_metadata':[]}
+    box=provider.ProviderMailbox(root=tmp_path/'timed'/'provider',case_root=controller.case,public_root=old_box.public,
+                                 enrollment={**enrollment,'trace_export':binding})
+    public=open_session(box,register=False)
+    assert public['dispatch_deadline_epoch']==published+(110 if scenario=='global_bound' else 180)
+    path=box.root/'synthetic-native-prefix.jsonl'
+    rows=[json.loads(line) for line in path.read_text().splitlines()]
+    rows.insert(1,{'type':'event_msg','payload':{'type':'task_started','turn_id':'wrong' if scenario=='wrong_turn' else 'turn-1'}})
+    if scenario=='pre_admit_write':
+        request={'request_id':'early-write','operation':'write_chunk','payload':{'path':'draft.py','offset':0,'text':'x=1'}}
+        rows.append({'type':'response_item','payload':{'type':'custom_tool_call','name':'exec','call_id':'early-write',
+                                                      'input':provider.call_template(box.identity,'session-01',json.dumps(request))}})
+    for i,row in enumerate(rows):
+        row['timestamp']=datetime.fromtimestamp(native_start+i-1,timezone.utc).isoformat()
+    path.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+    clock[0]=published+(180 if scenario=='late_admit' else 120)
+    if scenario=='pre_admit_write':
+        with pytest.raises(ValueError,match='may precede native admission'):
+            provider_export.sanitize_admin_trace(path,box.identity,box.session('session-01'),context_id='context')
+        assert box.session('session-01')['registered_context'] is None
+        return
+    prefix=provider_export.sanitize_admin_trace(path,box.identity,box.session('session-01'),context_id='context')
+    admit={'admin':'admit_sanitized','session':'session-01','context_id':'context','export':prefix}
+    if scenario in {'late_admit','global_bound','wrong_turn'}:
+        with pytest.raises(ValueError):provider.service_request(box,admit)
+        assert box.session('session-01')['registered_context'] is None
+        return
+    admission=provider.service_request(box,admit)
+    state=box.session('session-01')
+    assert state['started_epoch']==published
+    timing=state['registered_context']['native_timing']
+    assert timing=={'started_epoch':native_start,'actor_deadline_epoch':native_start+240,'receipt_deadline_epoch':native_start+255}
+    assert admission['native_timing']==timing
+    if scenario=='expired_actor':
+        clock[0]=native_start+241
+        assert call(box,'task')['status']=='rejected'
+        return
+    clock[0]=native_start+230  # Already beyond the old publication-based window.
+    assert call(box,'task')['status']=='ok'
+    if scenario=='commit_crosses_deadline':
+        written=call(box,'write_chunk',{'path':'draft.py','offset':0,'text':'x=1\n'})
+        assert call(box,'seal_file',{'path':'draft.py','sha256':written['result']['sha256']})['status']=='ok'
+    assert call(box,'seal_session',{'requests':[]})['status']=='ok'
+    complete_trace(box,path)
+    rows=[json.loads(line) for line in path.read_text().splitlines()]
+    for index,row in enumerate(rows[len(prefix['records']):],start=220):
+        row['timestamp']=datetime.fromtimestamp(native_start+index,timezone.utc).isoformat()
+    rows[-1]['timestamp']=datetime.fromtimestamp(native_start+(241 if scenario=='late_native' else 239),timezone.utc).isoformat()
+    path.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+    if scenario=='late_native':
+        with pytest.raises(ValueError,match='execution audit'):
+            provider_export.sanitize_admin_trace(path,box.identity,box.session('session-01'),context_id='context',
+                                                 complete=True,prior_source=prefix['source'])
+        return
+    full=provider_export.sanitize_admin_trace(path,box.identity,box.session('session-01'),context_id='context',
+                                             complete=True,prior_source=prefix['source'])
+    clock[0]=native_start+(255 if scenario=='late_receipt' else 250)
+    accept={**admit,'admin':'accept_sanitized','export':full}
+    if scenario=='promotion_too_late':
+        manifest=provider.tree_manifest
+        def delayed_manifest(path):
+            clock[0]=native_start+255
+            return manifest(path)
+        monkeypatch.setattr(provider,'tree_manifest',delayed_manifest)
+    if scenario=='commit_crosses_deadline':
+        copy=provider.shutil.copyfile
+        def delayed_copy(source,destination):
+            result=copy(source,destination)
+            clock[0]=native_start+256
+            return result
+        monkeypatch.setattr(provider.shutil,'copyfile',delayed_copy)
+    if scenario in {'late_receipt','promotion_too_late'}:
+        with pytest.raises(ValueError,match='receipt deadline'):
+            provider.service_request(box,accept)
+        assert box.session('session-01')['receipt_sha256'] is None
+    else:
+        pointer=provider.service_request(box,accept)
+        assert pointer['receipt_sha256']
+        accepted=provider.service_request(box,{'admin':'status','session':'session-01'})
+        crossed=scenario=='commit_crosses_deadline'
+        assert accepted['status']=='accepted' and accepted['receipt_sha256']==pointer['receipt_sha256']
+        assert accepted['receipt_timing']=={'accepted_started_epoch':native_start+250,
+            'commit_recorded_epoch':native_start+(256 if crossed else 250),'recorded_after_receipt_deadline':crossed}
+        if crossed:
+            assert (controller.case/'output/draft.py').read_text()=='x=1\n'
+            with pytest.raises(ValueError,match='audit only'):
+                provider.read_trusted_receipt(pointer,controller_run=box.root.parent,reservation_id='session-01',
+                                              episode_id='episode',run_id='run')

@@ -1,6 +1,7 @@
 """Delegated provider state/contracts; synthetic traces, no real model invocation."""
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 import hashlib,json
 import pytest
 from eegfm.agent import provider
@@ -119,6 +120,36 @@ def test_projection_requires_admitted_context_and_task(setup_provider):
     assert call(box,'read_projection',{'offset':0})['status']=='ok'
     assert call(box,'seal_session',{'requests':[]})['status']=='ok'
     assert call(box,'read_projection',{'offset':0})['status']=='rejected'
+
+
+@pytest.mark.parametrize('receipt_at', [None, 1350, 1355])
+def test_launcher_keeps_dispatch_and_receipt_windows_outside_actor_budget(tmp_path,monkeypatch,receipt_at):
+    from eegfm.agent import budget
+
+    clock=[1000.]
+    timing={'started_epoch':1100,'actor_deadline_epoch':1340,'receipt_deadline_epoch':1355}
+    calls=[]
+    def state(identifier):
+        assert identifier=='session-01'
+        registered={'context_id':'context','native_timing':timing} if receipt_at is not None and clock[0]>=1120 else None
+        return {'started_epoch':1000,'dispatch_deadline_epoch':1180,'registered_context':registered,
+                'receipt_sha256':'a'*64 if registered and clock[0]>=receipt_at else None}
+    mailbox=SimpleNamespace(root=tmp_path, session=state, publish=lambda *args,**kwargs:None)
+    monkeypatch.setattr(provider.time,'time',lambda:clock[0])
+    monkeypatch.setattr(provider.time,'sleep',lambda seconds:clock.__setitem__(0,clock[0]+seconds))
+    monkeypatch.setattr(budget,'reserve_call',lambda path,id,role,seconds:calls.append((id,role,seconds)))
+    monkeypatch.setattr(budget,'mark_call',lambda path,id,status,**details:calls.append((status,details)))
+    launch=provider.ProviderLaunch(mailbox,poll_seconds=10,budget_path=tmp_path/'budget.json',call_ids=['actor-1'])
+    projection={'provider_session':{'provider':provider.PROVIDER,'reservation_id':'session-01','timeout_seconds':240}}
+    if receipt_at==1350:
+        assert launch(projection)['receipt_sha256']=='a'*64
+        assert clock[0]==1350 and [call[0] for call in calls]==['actor-1','running','completed']
+        assert calls[1][1]['native_timing']==timing
+    else:
+        with pytest.raises(RuntimeError,match='outcome unresolved'):launch(projection)
+        assert clock[0]==(1180 if receipt_at is None else 1355)
+        assert [call[0] for call in calls]==(['actor-1'] if receipt_at is None else ['actor-1','running'])
+    assert calls[0]==('actor-1','actor',240)
 
 
 def test_chunk_replay_is_exact_paths_bounded_and_staging_never_executes(setup_provider):

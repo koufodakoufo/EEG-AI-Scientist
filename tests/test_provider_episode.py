@@ -42,6 +42,17 @@ def test_absolute_deadline_requires_positive_integer_epoch(tmp_path, deadline):
         episode.validate_delegated_config({**value, 'episode_deadline_epoch': deadline})
 
 
+def test_native_timing_must_share_the_explicit_episode_deadline(tmp_path):
+    value = config(tmp_path)
+    value['provider'] = {'native_timing': {'dispatch_wait_seconds': 180, 'receipt_grace_seconds': 15,
+                                          'episode_deadline_epoch': 3500}}
+    with pytest.raises(ValueError, match='exact episode deadline'):
+        episode.validate_delegated_config(value)
+    with pytest.raises(ValueError, match='exact episode deadline'):
+        episode.validate_delegated_config({**value, 'episode_deadline_epoch': 3501})
+    assert episode.validate_delegated_config({**value, 'episode_deadline_epoch': 3500})['previous_successful_test_job']
+
+
 def test_delegated_allocation_keeps_actual_start_and_original_deadline(tmp_path):
     value = config(tmp_path)
     value['episode_deadline_epoch'] = 3500

@@ -78,9 +78,45 @@ def _envelope(output):
     return result
 
 
+def _native_epoch(record: dict) -> float:
+    try:
+        stamp = datetime.fromisoformat(record['timestamp'].replace('Z', '+00:00'))
+        if stamp.tzinfo is None:
+            raise ValueError('Native timestamp must include its UTC offset')
+        epoch = stamp.timestamp()
+    except (KeyError, TypeError, AttributeError, ValueError, OverflowError) as error:
+        raise ValueError('Qualified native execution timestamps required') from error
+    if not math.isfinite(epoch):
+        raise ValueError('Qualified native execution timestamps required')
+    return epoch
+
+
+def native_turn_start(records: list[dict]) -> float:
+    starts, contexts = [], []
+    for index, record in enumerate(records):
+        item = record.get('payload', {})
+        if record.get('type') == 'event_msg' and item.get('type') == 'task_started':
+            starts.append((index, record))
+        elif record.get('type') == 'turn_context':
+            contexts.append((index, record))
+    if len(starts) != 1 or len(contexts) != 1 or starts[0][0] >= contexts[0][0]:
+        raise ValueError('One native task start and its turn context required')
+    start, context = starts[0][1], contexts[0][1]
+    turn = start['payload'].get('turn_id')
+    epoch = _native_epoch(start)
+    if not isinstance(turn, str) or not turn or turn != context['payload'].get('turn_id') or epoch > _native_epoch(context):
+        raise ValueError('Native task start must match its turn and precede execution')
+    return epoch
+
+
 def _timing(records: list[dict], session: dict) -> dict:
     """Prove execution against its original reservation, not ingestion time."""
     start, duration = session.get('started_epoch'), session.get('timeout_seconds')
+    native = (session.get('registered_context') or {}).get('native_timing')
+    if native is not None:
+        start = native_turn_start(records)
+        if start != native['started_epoch'] or start + duration != native['actor_deadline_epoch']:
+            raise ValueError('Native start differs from admitted timing')
     if (type(start) not in (int, float) or not math.isfinite(start)
             or type(duration) is not int or not 1 <= duration <= 240):
         raise ValueError('Original finite native session reservation required')
@@ -93,14 +129,8 @@ def _timing(records: list[dict], session: dict) -> dict:
                         or ptype == 'message' and item.get('role') == 'assistant' and item.get('phase') == 'final_answer'))
         if not critical:
             continue
-        try:
-            stamp = datetime.fromisoformat(record['timestamp'].replace('Z', '+00:00'))
-            if stamp.tzinfo is None:
-                raise ValueError('Native timestamp must include its UTC offset')
-            epoch = stamp.timestamp()
-        except (KeyError, TypeError, AttributeError, ValueError, OverflowError) as error:
-            raise ValueError('Qualified native execution timestamps required') from error
-        if not math.isfinite(epoch) or not previous <= epoch <= deadline:
+        epoch = _native_epoch(record)
+        if not previous <= epoch <= deadline:
             raise ValueError('Native execution outside original reservation or timestamp order')
         previous = epoch
         if kind == 'event_msg' and ptype == 'task_complete':

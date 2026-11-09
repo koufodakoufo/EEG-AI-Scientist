@@ -89,8 +89,16 @@ class ProviderMailbox:
         manifest = verify_public_bundle(self.public)
         required = {"episode_id", "run_id", "model", "effort", "parent_thread", "agent_prefix", "session_limit",
                     "session_timeout_seconds", "gateway", "inherited_context"}
-        if not required <= set(enrollment) or set(enrollment) - required - {'study_disclosure', 'trace_export'}:
+        if not required <= set(enrollment) or set(enrollment) - required - {'study_disclosure', 'trace_export', 'native_timing'}:
             raise ValueError("Explicit provider enrollment fields required")
+        if 'native_timing' in enrollment:
+            timing = enrollment['native_timing']
+            if ('trace_export' not in enrollment or not isinstance(timing, dict)
+                    or set(timing) != {'dispatch_wait_seconds', 'receipt_grace_seconds', 'episode_deadline_epoch'}
+                    or any(type(value) is not int for value in timing.values())
+                    or not 1 <= timing['dispatch_wait_seconds'] <= 600 or not 0 <= timing['receipt_grace_seconds'] <= 15
+                    or timing['episode_deadline_epoch'] <= 0):
+                raise ValueError('Bounded native timing requires trusted sanitized enrollment')
         for name in ("episode_id", "run_id"):
             _id(enrollment[name])
         if (enrollment["model"] != "gpt-6.1-sol" or enrollment["effort"] not in {"medium", "high"}
@@ -189,6 +197,15 @@ class ProviderMailbox:
                 return retained["published"]
             if db.execute("SELECT COUNT(*) FROM sessions").fetchone()[0] >= self.identity["session_limit"]:
                 raise ValueError("Provider session budget exhausted")
+            policy = self.identity.get('native_timing')
+            timing_fields = {}
+            if policy is not None:
+                published_epoch = time.time()
+                dispatch_deadline = min(published_epoch + policy['dispatch_wait_seconds'],
+                                        policy['episode_deadline_epoch'] - timeout_seconds - policy['receipt_grace_seconds'])
+                if published_epoch >= dispatch_deadline:
+                    raise ValueError('Insufficient episode time for dispatch and full native allocation')
+                timing_fields = {'dispatch_deadline_epoch': dispatch_deadline}
             directory = self.root / "sessions" / identifier
             pending = directory / "case" / "output"
             pending.mkdir(parents=True, exist_ok=False)
@@ -200,8 +217,9 @@ class ProviderMailbox:
                 if digest_file(target) != entry["sha256"]:
                     raise ValueError("Own output changed during provider snapshot")
             published = {"session_id": identifier, "agent_path": bound["agent_path"], "timeout_seconds": timeout_seconds,
-                         "bootstrap": bootstrap(self.identity, identifier)}
-            state = {**bound, "published": published, "original_manifest": original, "started_epoch": time.time(),
+                         "bootstrap": bootstrap(self.identity, identifier), **timing_fields}
+            state = {**bound, **timing_fields, "published": published, "original_manifest": original,
+                     "started_epoch": published_epoch if policy is not None else time.time(),
                      "status": "open", "task_read": False, "uploads": {}, "written_bytes": 0,
                      "fit_jobs": {}, "sealed": None, "registered_context": None, "receipt_sha256": None}
             db.execute("INSERT INTO sessions VALUES(?,?)", (identifier, json.dumps(state)))
@@ -224,6 +242,13 @@ class ProviderMailbox:
         value = {"context_id": context_id, "trace_path": str(Path(trace_path).resolve())}
         if export_source is not None:
             value['export_source'] = export_source
+        policy = self.identity.get('native_timing')
+        if policy is not None:
+            from eegfm.agent.provider_trace import native_turn_start
+            start = native_turn_start(_trace_records(trace_path, allow_partial=False))
+            actor_deadline = start + session['timeout_seconds']
+            value['native_timing'] = {'started_epoch': start, 'actor_deadline_epoch': actor_deadline,
+                                      'receipt_deadline_epoch': actor_deadline + policy['receipt_grace_seconds']}
         with self.transaction() as db:
             session = self._session(db, identifier)
             if session["registered_context"] is not None:
@@ -232,6 +257,12 @@ class ProviderMailbox:
                         or json.loads(audit_path.read_text(encoding='utf-8')) != audit):
                     raise ValueError("Context reservation cannot be replaced")
                 return
+            admission_deadline = None
+            if policy is not None:
+                now = time.time()
+                admission_deadline = min(session['dispatch_deadline_epoch'], actor_deadline)
+                if not session['started_epoch'] <= start <= now < admission_deadline:
+                    raise ValueError('Native admission outside original dispatch or actor deadline')
             write_atomic(audit_path, audit)
             value['initial_audit_sha256'] = digest_file(audit_path)
             session["registered_context"] = value
@@ -243,6 +274,8 @@ class ProviderMailbox:
                 result = self._action(session, 'task', {})
                 response = {'request_id': request_id, 'request_sha256': digest, 'status': 'ok', 'result': result}
                 db.execute('UPDATE requests SET response=? WHERE session=? AND id=?', (json.dumps(response), identifier, request_id))
+            if admission_deadline is not None and time.time() >= admission_deadline:
+                raise ValueError('Native admission outside original dispatch or actor deadline')
             self._save_session(db, session)
 
     def _pending_root(self, identifier: str) -> Path:
@@ -272,7 +305,11 @@ class ProviderMailbox:
                 raise ValueError("Gateway operation budget exhausted")
             db.execute("INSERT INTO requests VALUES(?,?,?,?,NULL)", (identifier, request_id, digest, raw.decode()))
             if session['registered_context'] is None:
-                if request['operation'] == 'task' and request['payload'] == {}:
+                dispatch_deadline = session.get('dispatch_deadline_epoch')
+                if dispatch_deadline is not None and time.time() >= dispatch_deadline:
+                    response = {'request_id': request_id, 'request_sha256': digest, 'status': 'rejected', 'error_type': 'DispatchDeadlineReached'}
+                    db.execute('UPDATE requests SET response=? WHERE session=? AND id=?', (json.dumps(response), identifier, request_id))
+                elif request['operation'] == 'task' and request['payload'] == {}:
                     response = {'request_id': request_id, 'request_sha256': digest, 'status': 'awaiting_context_admission'}
                 else:
                     response = {'request_id': request_id, 'request_sha256': digest, 'status': 'rejected', 'error_type': 'ContextNotAdmitted'}
@@ -280,7 +317,10 @@ class ProviderMailbox:
                 db.execute('INSERT INTO deliveries(session,request,response) VALUES(?,?,?)', (identifier, raw.decode(), json.dumps(response)))
                 return response
         try:
-            if time.time() > session["started_epoch"] + session["timeout_seconds"]:
+            native_timing = session['registered_context'].get('native_timing')
+            deadline = native_timing['actor_deadline_epoch'] if native_timing else session['started_epoch'] + session['timeout_seconds']
+            now = time.time()
+            if now > deadline or native_timing and now == deadline:
                 raise ValueError("Provider session deadline reached")
             result = self._action(session, request["operation"], request["payload"])
             response = {"request_id": request_id, "request_sha256": digest, "status": "ok", "result": result}
@@ -478,6 +518,9 @@ class ProviderMailbox:
                     'receipt_sha256': session['receipt_sha256']}
         if session['status'] != 'sealed' or not session['registered_context']:
             raise ValueError('Completed sealed source/context required')
+        native_timing = session['registered_context'].get('native_timing')
+        if native_timing and time.time() >= native_timing['receipt_deadline_epoch']:
+            raise ValueError('Trusted receipt deadline reached')
         initial_path = self.root / 'audits' / f'{identifier}-initial.json'
         if digest_file(_regular(initial_path)) != session['registered_context']['initial_audit_sha256']:
             raise ValueError('Initial context admission changed')
@@ -495,6 +538,11 @@ class ProviderMailbox:
         sealed = session['sealed']
         if tree_manifest(pending) != sealed['source_manifest'] or tree_manifest(self.case / 'output') != session['original_manifest']:
             raise ValueError('Staged or current case changed before audited promotion')
+        accepted_started_epoch = None
+        if native_timing:
+            accepted_started_epoch = time.time()
+            if accepted_started_epoch >= native_timing['receipt_deadline_epoch']:
+                raise ValueError('Trusted receipt deadline reached before promotion')
         for entry in sealed['source_manifest']:
             source = _regular(_relative(pending, entry['path']))
             destination = _relative(self.case / 'output', entry['path'])
@@ -518,6 +566,11 @@ class ProviderMailbox:
             current = self._session(db, identifier)
             if current['sealed'] != sealed or current['receipt_sha256'] is not None:
                 raise ValueError('Provider session changed during audit')
+            if native_timing:
+                commit_recorded_epoch = time.time()
+                current['receipt_timing'] = {'accepted_started_epoch': accepted_started_epoch,
+                    'commit_recorded_epoch': commit_recorded_epoch,
+                    'recorded_after_receipt_deadline': commit_recorded_epoch >= native_timing['receipt_deadline_epoch']}
             current['receipt_sha256'] = digest_file(receipt_path)
             current['status'] = 'accepted'
             self._save_session(db, current)
@@ -548,12 +601,17 @@ class ProviderLaunch:
         self.mailbox.publish(identifier, projection, timeout_seconds=timeout)
         while True:
             state = self.mailbox.session(identifier)
+            native_timing = (state['registered_context'] or {}).get('native_timing')
             if call_id is not None and state['registered_context'] and not running:
                 from eegfm.agent.budget import mark_call
                 mark_call(self.budget_path, call_id, 'running', provider=PROVIDER,
-                          model_context_id=state['registered_context']['context_id'])
+                          model_context_id=state['registered_context']['context_id'],
+                          **({'native_timing': native_timing} if native_timing else {}))
                 running = True
-            if state['receipt_sha256']:
+            deadline = (native_timing['receipt_deadline_epoch'] if native_timing else
+                        state.get('dispatch_deadline_epoch', state['started_epoch'] + timeout))
+            now = time.time()
+            if state['receipt_sha256'] and (native_timing is None or now < deadline):
                 if call_id is not None:
                     from eegfm.agent.budget import mark_call
                     if not running:
@@ -562,11 +620,11 @@ class ProviderLaunch:
                               receipt_sha256=state['receipt_sha256'])
                 return {'provider': PROVIDER, 'receipt_path': str(self.mailbox.root / 'receipts' / f'{identifier}.json'),
                         'receipt_sha256': state['receipt_sha256']}
-            if time.time() >= state['started_epoch'] + timeout:
+            if now >= deadline:
                 # Never fabricate process cleanup or free an unresolved model
                 # slot. Existing controller crash-resume guard quarantines it.
                 raise RuntimeError('Delegated model/transport outcome unresolved; trusted context cleanup required')
-            time.sleep(min(self.poll_seconds, max(0., state['started_epoch'] + timeout - time.time())))
+            time.sleep(min(self.poll_seconds, max(0., deadline - time.time())))
 
 
 def command(identity: dict, session: str) -> str:
@@ -731,6 +789,8 @@ def read_trusted_receipt(pointer: dict, *, controller_run: Path, reservation_id:
     state = json.loads(row[0]) if row else {}
     if state.get("receipt_sha256") != pointer["receipt_sha256"]:
         raise ValueError("Delegated receipt is not authoritative in the mailbox")
+    if state.get('receipt_timing', {}).get('recorded_after_receipt_deadline'):
+        raise ValueError('Late durable receipt is retained for audit only')
     receipt = json.loads(path.read_text())
     if (receipt.get("provider") != PROVIDER or receipt.get("reservation_id") != reservation_id
             or receipt.get("episode_id") != episode_id or receipt.get("run_id") != run_id):
@@ -777,6 +837,10 @@ def load_service(config_path: Path, config_sha256: str) -> ProviderMailbox:
     if (not required <= set(config) or set(config) - required - {'public_fit_worker', 'public_fit_journal', 'episode_deadline_epoch'}
             or config['schema_version'] != 'audited_provider_service_v1'):
         raise ValueError('Unknown audited provider service configuration')
+    policy = config['enrollment'].get('native_timing')
+    if policy is not None and (not isinstance(policy, dict) or type(config.get('episode_deadline_epoch')) is not int
+                               or policy.get('episode_deadline_epoch') != config['episode_deadline_epoch']):
+        raise ValueError('Native timing must retain the exact service episode deadline')
     for name in ('mailbox_root', 'case_root', 'public_root'):
         if not Path(config[name]).is_absolute():
             raise ValueError('Absolute provider service roots required')
@@ -820,6 +884,10 @@ def service_request(mailbox: ProviderMailbox, request: dict) -> dict:
         keys = ('session_id', 'status', 'registered_context', 'receipt_sha256', 'fit_jobs')
         if 'trace_export' in mailbox.identity:
             keys += ('agent_path', 'started_epoch', 'timeout_seconds')
+        if 'dispatch_deadline_epoch' in state:
+            keys += ('dispatch_deadline_epoch',)
+        if 'receipt_timing' in state:
+            keys += ('receipt_timing',)
         return {key: state[key] for key in keys}
     if request.get('admin') in {'admit_sanitized', 'accept_sanitized'} and set(request) == {'admin', 'session', 'context_id', 'export'}:
         return _admin_export(mailbox, request)
@@ -889,7 +957,10 @@ def _admin_export(mailbox: ProviderMailbox, request: dict) -> dict:
     if complete:
         return mailbox.accept_trace(identifier, path, trusted_admin_initial=initial, export_source=source)
     mailbox.register_context(identifier, context_id=context_id, trace_path=path, trusted_admin_initial=initial, export_source=source)
-    return {'status': 'initial_context_admitted', 'context_id': context_id}
+    response = {'status': 'initial_context_admitted', 'context_id': context_id}
+    if 'native_timing' in mailbox.identity:
+        response['native_timing'] = mailbox.session(identifier)['registered_context']['native_timing']
+    return response
 
 
 def main() -> None:

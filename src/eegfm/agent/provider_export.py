@@ -28,7 +28,8 @@ def source_sha256() -> str:
 
 
 def audit_profile(identity: dict) -> dict:
-    return {key: identity[key] for key in PROFILE_KEYS}
+    keys = PROFILE_KEYS + (('native_timing',) if 'native_timing' in identity else ())
+    return {key: identity[key] for key in keys}
 
 
 def initial_metadata_sha256(kind: str, payload: dict) -> str:
@@ -321,7 +322,11 @@ def validate_admin_export(value: dict, identity: dict, session: dict, *, context
                     raise ValueError('Unauthorized exported tool')
                 calls.add(item['call_id'])
                 operation, request = parse_tool(item['input'], identity, session['session_id'])
-                if operation == 'call': requests.append(canonical_bytes(request))
+                if operation == 'call':
+                    if ('native_timing' in identity and prior_source is None
+                            and request['operation'] not in {'task', 'request_status'}):
+                        raise ValueError('Only task delivery and status may precede native admission')
+                    requests.append(canonical_bytes(request))
             elif ptype == 'custom_tool_call_output':
                 if (set(item) != {'type', 'call_id', 'output'} or item['call_id'] not in calls or item['call_id'] in outputs
                         or _output(item['output']) != item['output']):

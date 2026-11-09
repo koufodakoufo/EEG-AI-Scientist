@@ -717,6 +717,10 @@ def validate_delegated_config(config: dict[str, Any]) -> dict[str, Any]:
     if 'episode_deadline_epoch' in config and (type(config['episode_deadline_epoch']) is not int
                                                or config['episode_deadline_epoch'] <= 0):
         raise ValueError('Absolute episode deadline must be a positive integer epoch')
+    timing = config.get('provider', {}).get('native_timing')
+    if timing is not None and (not isinstance(timing, dict) or 'episode_deadline_epoch' not in config
+                               or timing.get('episode_deadline_epoch') != config['episode_deadline_epoch']):
+        raise ValueError('Native timing must retain the exact episode deadline')
     calls = config.get('call_ids')
     if (not isinstance(calls, list) or not 1 <= len(calls) <= 6 or len(set(calls)) != len(calls)
             or any(not isinstance(item, str) or re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,99}', item) is None for item in calls)):
