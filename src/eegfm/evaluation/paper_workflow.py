@@ -407,6 +407,23 @@ def _extraction_settings(policy: dict[str, Any]) -> dict[str, Any]:
     return {key: policy[key] for key in ('provider_id', 'provider_metadata', 'segment_chars', 'timeout_seconds')}
 
 
+def _check_frozen_extraction(work: Path, reference: str, settings: dict[str, Any]) -> None:
+    frozen = read_json(work / 'reference-extraction.json')
+    try:
+        replay = ReplayProvider(frozen['calls'])
+        # Use the original source and settings so exact request matching checks
+        # the current template without conflating reference and report segments.
+        current = assessment.extract_report(reference, _REFERENCE_SOURCE, replay, **settings)
+        replay.assert_consumed()
+        if current['plan'] != frozen['plan']:
+            raise ReplayMismatch('Reference extraction plan changed')
+    except ValueError as exc:
+        raise ReplayMismatch(
+            'Frozen reference extraction is incompatible with the current evaluator. '
+            'Use the evaluator version that extracted the reference or prepare and review a new revision.'
+        ) from exc
+
+
 def draft_request(paper: str, resources: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
     """Return the one fixed draft request, with source material in data only."""
     resolved = resolve_policy(policy)
@@ -986,6 +1003,8 @@ def compare_workflow(work: Path, report_path: Path, output: Path, *,
     """
     work, output = work.absolute(), output.absolute()
     freeze, policy, private_task = load_frozen_workflow(work)
+    settings = _extraction_settings(policy)
+    _check_frozen_extraction(work, freeze['reference_span']['quote'], settings)
     output = _comparison_layout(work.resolve(), output)
     _require_external_input(report_path, output)
     report_bytes, report = read_utf8(report_path)
@@ -998,7 +1017,6 @@ def compare_workflow(work: Path, report_path: Path, output: Path, *,
     input_hashes = {name: bytes_sha256(data) for name, data in inputs.items()}
     input_identity = {'freeze_sha256': bytes_sha256(json_bytes(freeze)), 'file_hashes': input_hashes}
     source_id = 'complete-report:' + canonical_sha256(input_identity)
-    settings = _extraction_settings(policy)
     plan = claims.build_extraction_plan(report, source_id, segment_chars=settings['segment_chars'])
     remaining = policy['max_compare_requests'] - len(plan['segments'])
     if remaining < 0:

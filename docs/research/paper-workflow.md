@@ -44,6 +44,8 @@ eegfm paper compare --work WORK --report report.md --out COMPARE
 
 **3. 比较。** 用既有 runner 做研究后交付完整、未改写的 UTF-8 最终报告。报告、可选 `--evidence evidence.json` 及其中的文件都须在 `COMPARE` 之外；两个工作目录不得嵌套。可信调用者可在证据 JSON 中提供 `evidence_verdicts`（含 `claim_id` 和 `status` 的对象列表，状态为 `valid`、`invalid` 或 `pending`）、`process_checks`（对象）和 `artifacts`（含 `path`、`sha256` 的对象列表，相对路径以证据清单为准）。报告自述不能授予数值或流程信用。先读 `COMPARISON.md` 的具体条件差异与锚点，再查 `assessment.json` 的原始结果和有序调用、`report.txt` 的完整原文及 `COMPARISON.json` 的终端校验记录。已知条件不相容记为未覆盖，未知条件保留待核查。
 
+比较写入前会用冻结参考的原始设置在本地核对抽取请求。若当前评估器生成的请求或分段计划不同，命令返回 `input_error`。此时可使用生成冻结参考时的评估器版本，或准备并审阅一个新修订版。
+
 | 退出码 | 如何解释 |
 | --- | --- |
 | `3` | `awaiting_responses`：还有待交付项，`assessment_status=not_run`。 |

@@ -1082,6 +1082,52 @@ def test_compare_checks_frozen_reference_before_queueing(tmp_path: Path) -> None
     assert not output.exists()
 
 
+@pytest.mark.parametrize('route', ['queue', 'injected'])
+@pytest.mark.parametrize('drift', ['instructions', 'prompt_version', 'response_contract'])
+def test_compare_rejects_frozen_extraction_drift_before_writes_or_dispatch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, route: str, drift: str,
+) -> None:
+    work, report_path, output = _frozen_compare(tmp_path)
+    frozen = {path: path.read_bytes() for path in work.rglob('*') if path.is_file()}
+    if drift == 'instructions':
+        monkeypatch.setattr(claims, 'EXTRACTION_PROMPT', claims.EXTRACTION_PROMPT + '\nSynthetic extra instruction.')
+    elif drift == 'prompt_version':
+        monkeypatch.setattr(claims, 'EXTRACTION_PROMPT_VERSION', 'synthetic-next-version')
+    else:
+        monkeypatch.setitem(assessment.CLAIM_CONTRACT, 'subject', 'synthetic changed subject contract')
+
+    dispatched = []
+
+    def provider(request: dict) -> str:
+        dispatched.append(request)
+        return _compare_response(request)
+
+    with pytest.raises(ValueError, match='Frozen reference extraction'):
+        paper_workflow.compare_workflow(work, report_path, output, provider=provider if route == 'injected' else None)
+
+    assert dispatched == []
+    assert not output.exists()
+    assert {path: path.read_bytes() for path in work.rglob('*') if path.is_file()} == frozen
+
+
+@pytest.mark.parametrize(('route', 'status'), [('queue', 'awaiting_responses'), ('injected', 'compared')])
+def test_compare_accepts_same_frozen_extraction_contract_with_different_report_segments(
+    tmp_path: Path, route: str, status: str,
+) -> None:
+    work, report_path, output = _frozen_compare(tmp_path, segment_chars=64)
+    provider = _compare_response if route == 'injected' else None
+    result = paper_workflow.compare_workflow(work, report_path, output, provider=provider)
+    assert result['pipeline_status'] == status
+    frozen_calls = paper_workflow.read_json(work / 'reference-extraction.json')['calls']
+    if route == 'queue':
+        requests = [paper_workflow.read_json(path) for path in (output / 'requests').glob('*.json')]
+    else:
+        calls = paper_workflow.read_json(output / 'assessment.json')['calls']
+        requests = [call['request'] for call in calls if call['request']['operation'] == 'extract']
+    assert len(frozen_calls) == 1 and len(requests) > 1
+    assert {request['data']['source_id'] for request in requests} != {frozen_calls[0]['request']['data']['source_id']}
+
+
 def test_compare_retains_failed_extraction_when_trusted_verdict_ids_are_unavailable(tmp_path: Path) -> None:
     work, report_path, output = _frozen_compare(tmp_path)
     evidence_path = tmp_path / 'controller-checks.json'
