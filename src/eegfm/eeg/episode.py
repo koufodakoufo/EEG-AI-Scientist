@@ -788,7 +788,9 @@ def run_delegated_episode(config: dict[str, Any]) -> dict[str, Any]:
     if digest_file(public / 'train.npz') != train.sha256 or digest_file(public / 'validation.npz') != binding(config['public_validation_input']).sha256:
         raise ValueError('Provider public resources differ from bound historical data')
     protected = [private, split.path, validation.path, test.path, Path(config['budget_path']),
-                 *(item.path for item in aggregate.bindings)]
+                 aggregate.train_truth.path, *(item.path for item in aggregate.truth.values()),
+                 *(item.path for item in aggregate.inference.values()), aggregate.test_cohort.path,
+                 *(item.path for item in aggregate.source_bindings)]
     validate_private_boundaries(case, protected, ())
 
     def cloud_worker(value: dict, journal: Path) -> SshWorkerEvaluator:

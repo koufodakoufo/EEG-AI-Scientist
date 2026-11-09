@@ -1,10 +1,12 @@
 """Opt-in delegated episode admission, no model/science/provider starts."""
 import json
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 import pytest
 from eegfm.eeg import episode
 from eegfm.evaluation.bundle import digest_file
+from test_readout_aggregation import case
 
 
 def config(tmp_path):
@@ -77,3 +79,79 @@ def test_fixed_deadline_propagates_to_worker_and_refuses_late_science(monkeypatc
     assert calls == ['within-allocation']
     with pytest.raises(ValueError, match='deadline'):
         episode.DeadlineEvaluator(worker, 1000.25, timeout_seconds=2700, deadline_epoch=3800)
+
+
+@pytest.mark.parametrize('private_alias', [None, 'truth_train', 'truth_validation', 'truth_test',
+                                            'inference_train', 'inference_validation', 'inference_test', 'cohort'])
+def test_delegated_entry_keeps_public_resources_and_denies_private_role_aliases(case, monkeypatch, private_alias):
+    from eegfm.eeg.readout_aggregation import ReadoutAggregator
+    from eegfm.evaluation import ssh_worker
+
+    root = case.root
+    actor, trusted, source = root / 'actor-case', root / 'trusted', root / 'public-source'
+    source.mkdir()
+    (source / 'resources').mkdir()
+    (source / 'eeg_api.py').write_text('# Synthetic public resource\n', encoding='utf-8')
+    (source / 'resources/CACHE_SCHEMA.json').write_text('{}', encoding='utf-8')
+    for split, path in case.public.items():
+        (source / (split + '.npz')).write_bytes(path.read_bytes())
+    split_manifest = root / 'splits.json'
+    split_manifest.write_text('{}', encoding='utf-8')
+    paths = {**{'public_' + split: source / (split + '.npz') for split in case.public},
+             **{'truth_' + split: path for split, path in case.truth.items()},
+             **{'inference_' + split: path for split, path in case.inference.items()},
+             'cohort': case.cohort, 'split_manifest': split_manifest}
+    value = {'schema_version':'audited_coding_episode_v1','task_id':episode.READOUT_TASK,'model':'gpt-6.1-sol',
+             'reasoning_effort':'high','session_timeout_seconds':240,'episode_timeout_seconds':2700,
+             'call_ids':['actor-01'],'case_root':str(actor),'trusted_root':str(trusted),'condition':'no_skill',
+             'public_source':str(source),'public_files':['train.npz','validation.npz','eeg_api.py','resources/CACHE_SCHEMA.json'],
+             'budget_path':str(trusted / 'budget.json'), 'aggregate_runtime':{
+                 'schema_version':'readout_host_runtime_v1','python':{'implementation':'CPython','version':'fixture',
+                 'executable_sha256':'a'*64},'packages':{'numpy':'fixture','scipy':'fixture','sklearn':'fixture'},
+                 'modules':{'numpy':'b'*64},'libraries':[],'verifier_source_sha256':'c'*64}}
+    if private_alias:
+        # Exercise the resume-side guard with a byte-identical, declared public
+        # file masquerading as a private role. A path-based exemption is unsafe.
+        public = episode.prepare_public(value, actor, trusted)
+        (trusted / 'ENROLLMENT.json').write_text('{}', encoding='utf-8')
+        paths[private_alias] = public / 'train.npz'
+    bindings = {role:{'path':str(path),'sha256':digest_file(path)} for role,path in paths.items()}
+    proof = root / 'historical.json'
+    proof.write_text(json.dumps({'status':'exact_historical_readout_inputs_qualified_for_development_replay',
+          'not_project_unseen_confirmation':True,'previous_successful_test_job':'synthetic-prior-test',
+          'bindings':[{'role':role,'sha256':item['sha256']} for role,item in bindings.items()]}),encoding='utf-8')
+    value.update(historical_data_qualification={'path':str(proof),'sha256':digest_file(proof)},
+                 train_input=bindings['public_train'],public_validation_input=bindings['public_validation'],
+                 validation_input=bindings['inference_validation'],test_input=bindings['inference_test'],
+                 inference_by_split={split:bindings['inference_'+split] for split in case.inference},
+                 train_truth=bindings['truth_train'],truth_by_split={split:bindings['truth_'+split] for split in ('validation','test')},
+                 test_cohort=bindings['cohort'],split_manifest=bindings['split_manifest'],
+                 cloud_worker={'host':'fixture','port':22,'user':'fixture','known_hosts':bindings['split_manifest'],
+                               'python':'/usr/bin/python','code':'/fixture','config':bindings['split_manifest']})
+    observed = []
+    real_load = episode.load_aggregator
+
+    def observe_aggregate(*args, **kwargs):
+        aggregate = real_load(*args, **kwargs)
+        assert isinstance(aggregate, ReadoutAggregator)
+        observed.append(aggregate)
+        return aggregate
+
+    class ReachedWorkerBoundary(Exception):
+        pass
+
+    def stop_before_ssh(**kwargs):
+        raise ReachedWorkerBoundary
+
+    monkeypatch.setattr(episode, 'os', SimpleNamespace(name='posix'))
+    monkeypatch.setattr(episode, 'load_aggregator', observe_aggregate)
+    monkeypatch.setattr(ssh_worker, 'SshWorkerEvaluator', stop_before_ssh)
+    if private_alias:
+        with pytest.raises(ValueError, match='Private bindings cannot be mounted inside Actor case'):
+            episode.run_delegated_episode(value)
+    else:
+        with pytest.raises(ReachedWorkerBoundary):
+            episode.run_delegated_episode(value)
+    assert len(observed) == 1
+    assert {binding.path for binding in observed[0].public.values()} == {
+        actor / 'public/train.npz', actor / 'public/validation.npz'}
