@@ -31,3 +31,49 @@ def test_historical_exact_roles_and_allocation_are_required(tmp_path):
     assert result['previous_successful_test_job']=='old-success-test'
     for update in ({'session_timeout_seconds':900},{'auth_source':'never-read'},{'task_id':'unknown'},{'test_input':value['validation_input']}):
         with pytest.raises(ValueError):episode.validate_delegated_config({**value,**update})
+
+
+@pytest.mark.parametrize('deadline', [True, 0, -1, 2500.0, float('inf'), '2500'])
+def test_absolute_deadline_requires_positive_integer_epoch(tmp_path, deadline):
+    value = config(tmp_path)
+    with pytest.raises(ValueError, match='deadline'):
+        episode.validate_delegated_config({**value, 'episode_deadline_epoch': deadline})
+
+
+def test_delegated_allocation_keeps_actual_start_and_original_deadline(tmp_path):
+    value = config(tmp_path)
+    value['episode_deadline_epoch'] = 3500
+    budget = tmp_path / 'budget.json'
+    budget.write_text(json.dumps({'deadline_at': '1970-01-01T00:58:20+00:00',
+                                 'stop_new_research_at': '1970-01-01T00:58:00+00:00'}))
+    value['budget_path'] = str(budget)
+    assert episode.delegated_deadline(value, 1000.25) == 3500
+    # A later process reuses the actual enrollment start, not its restart time.
+    with patch.object(episode.time, 'time', return_value=3000):
+        assert episode.delegated_deadline(value, 1000.25) == 3500
+    assert episode.delegated_deadline(config(tmp_path), 1000.25) == 3700.25
+    for start in (3500, 3501, 799):
+        with pytest.raises(ValueError, match='deadline'):
+            episode.delegated_deadline(value, start)
+    budget.write_text(json.dumps({'deadline_at': '1970-01-01T01:00:00+00:00',
+                                 'stop_new_research_at': '1970-01-01T00:58:00+00:00'}))
+    with pytest.raises(ValueError, match='budget'):
+        episode.delegated_deadline(value, 1000.25)
+
+
+def test_fixed_deadline_propagates_to_worker_and_refuses_late_science(monkeypatch):
+    from types import SimpleNamespace
+    calls = []
+    worker = SimpleNamespace(timeout=180, operation_timeout_seconds=360,
+                             deadline_epoch=None, submit=lambda value: calls.append(value))
+    evaluator = episode.DeadlineEvaluator(worker, 1000.25, timeout_seconds=2700, deadline_epoch=3500)
+    assert evaluator.started_at == 1000.25
+    assert evaluator.deadline_epoch == worker.deadline_epoch == 3500
+    monkeypatch.setattr(episode.time, 'time', lambda: 3100)
+    evaluator.submit('within-allocation')
+    monkeypatch.setattr(episode.time, 'time', lambda: 3111)
+    with pytest.raises(episode.BudgetExceeded):
+        evaluator.submit('too-late')
+    assert calls == ['within-allocation']
+    with pytest.raises(ValueError, match='deadline'):
+        episode.DeadlineEvaluator(worker, 1000.25, timeout_seconds=2700, deadline_epoch=3800)

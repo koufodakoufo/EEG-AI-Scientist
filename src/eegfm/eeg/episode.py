@@ -514,11 +514,15 @@ def validate_private_boundaries(case: Path, protected: list[Path], roots: tuple[
 class DeadlineEvaluator:
     sandboxed = True
 
-    def __init__(self, evaluator: Any, started_at: float, *, timeout_seconds: int = 5400) -> None:
+    def __init__(self, evaluator: Any, started_at: float, *, timeout_seconds: int = 5400,
+                 deadline_epoch: float | None = None) -> None:
         if type(timeout_seconds) is not int or not 0 < timeout_seconds <= 5400:
             raise ValueError("Invalid episode timeout")
         self.evaluator, self.started_at = evaluator, started_at
-        self.deadline_epoch = started_at + timeout_seconds
+        self.deadline_epoch = started_at + timeout_seconds if deadline_epoch is None else deadline_epoch
+        if (type(self.deadline_epoch) not in (int, float)
+                or not started_at < self.deadline_epoch <= started_at + timeout_seconds):
+            raise ValueError("Invalid absolute episode deadline")
         if hasattr(evaluator, "deadline_epoch"):
             evaluator.deadline_epoch = self.deadline_epoch
 
@@ -710,6 +714,9 @@ def validate_delegated_config(config: dict[str, Any]) -> dict[str, Any]:
     wall, timeout = episode_time_limits(config)
     if not 180 <= timeout <= 240 or wall > 2700:
         raise ValueError('Audited session allocation must be 180-240 seconds within 2700 seconds')
+    if 'episode_deadline_epoch' in config and (type(config['episode_deadline_epoch']) is not int
+                                               or config['episode_deadline_epoch'] <= 0):
+        raise ValueError('Absolute episode deadline must be a positive integer epoch')
     calls = config.get('call_ids')
     if (not isinstance(calls, list) or not 1 <= len(calls) <= 6 or len(set(calls)) != len(calls)
             or any(not isinstance(item, str) or re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,99}', item) is None for item in calls)):
@@ -733,6 +740,26 @@ def validate_delegated_config(config: dict[str, Any]) -> dict[str, Any]:
             or binding(config['test_input']).sha256 != roles['inference_test']):
         raise ValueError('Worker inference differs from historical replay inputs')
     return proof
+
+
+def delegated_deadline(config: dict[str, Any], started_at: float) -> float:
+    """Bind a prospective deadline to the original enrollment and model budget."""
+    wall, _ = episode_time_limits(config)
+    if 'episode_deadline_epoch' not in config:
+        return started_at + wall
+    deadline = config['episode_deadline_epoch']
+    if type(deadline) is not int or not started_at < deadline <= started_at + wall:
+        raise ValueError('Absolute episode deadline is outside the original allocation')
+    budget = read_json(Path(config['budget_path']))
+    try:
+        end = datetime.fromisoformat(budget['deadline_at'])
+        cutoff = datetime.fromisoformat(budget['stop_new_research_at'])
+        if (end.utcoffset() is None or cutoff.utcoffset() is None
+                or end.timestamp() != deadline or cutoff.timestamp() > deadline):
+            raise ValueError('Model budget differs from the fixed episode deadline')
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError('Model budget must bind the same absolute deadline') from error
+    return deadline
 
 
 def run_delegated_episode(config: dict[str, Any]) -> dict[str, Any]:
@@ -781,7 +808,9 @@ def run_delegated_episode(config: dict[str, Any]) -> dict[str, Any]:
     if (fit_identity.get('episode_id') != config['episode_id'] or fit_identity.get('run_id') != config['run_id']
             or fit_identity.get('public_manifest_sha256') != public_hash
             or fit_identity.get('worker', {}).get('public_artifact_mode') != MODE
-            or fit_identity.get('worker', {}).get('allowed_splits') != ['validation']):
+            or fit_identity.get('worker', {}).get('allowed_splits') != ['validation']
+            or ('episode_deadline_epoch' in config
+                and fit_identity.get('episode_deadline_epoch') != config['episode_deadline_epoch'])):
         raise ValueError('Public fit worker is not bound to this case/public-only capability')
     if worker.timeout > 180 or fit_worker.timeout > 120:
         raise ValueError('Initial audited replay caps scientific work at 180s and public fits at 120s')
@@ -798,12 +827,20 @@ def run_delegated_episode(config: dict[str, Any]) -> dict[str, Any]:
             raise ValueError('Audited coding enrollment drift')
     else:
         enrollment = {'identity': identity, 'started_at_epoch': time.time()}
+        if 'episode_deadline_epoch' in config:
+            enrollment['deadline_epoch'] = delegated_deadline(config, enrollment['started_at_epoch'])
         with enrollment_path.open('xb') as stream:
             stream.write(canonical_bytes(enrollment))
     wall, timeout = episode_time_limits(config)
+    deadline = delegated_deadline(config, enrollment['started_at_epoch'])
+    if 'episode_deadline_epoch' in config and enrollment.get('deadline_epoch') != deadline:
+        raise ValueError('Original enrollment deadline changed')
+    if time.time() >= deadline:
+        raise BudgetExceeded('Original episode deadline reached')
     controller = EpisodeController(trusted_root=private / 'controller', case_root=case,
         episode_id=config['episode_id'], run_id=config['run_id'], public_manifest_sha256=public_hash,
-        split_manifest_sha256=split.sha256, evaluator=DeadlineEvaluator(worker, enrollment['started_at_epoch'], timeout_seconds=wall),
+        split_manifest_sha256=split.sha256, evaluator=DeadlineEvaluator(worker, enrollment['started_at_epoch'],
+                                                                       timeout_seconds=wall, deadline_epoch=deadline),
         max_attempts=config.get('max_attempts', 2), task_id=READOUT_TASK,
         recovery_policy=config.get('recovery_policy', 'strict-v1'), session_guidance=config.get('session_guidance', 'fixed_stages_v1'))
 
@@ -811,7 +848,7 @@ def run_delegated_episode(config: dict[str, Any]) -> dict[str, Any]:
         relative = pending_case.resolve().relative_to((controller.run / 'provider/sessions').resolve())
         if len(relative.parts) != 2 or relative.parts[-1] != 'case':
             raise ValueError('Public fitting belongs to a declared provider session')
-        fit_worker.deadline_epoch = enrollment['started_at_epoch'] + wall
+        fit_worker.deadline_epoch = deadline
         return PublicWorkbench(evaluator=fit_worker, private_root=controller.run / 'provider/fit-journals' / relative.parts[0],
             case_root=pending_case, episode_id=config['episode_id'], run_id=config['run_id'],
             public_manifest_sha256=public_hash, split_manifest_sha256=fit_worker.identity['split_manifest_sha256'])
@@ -826,7 +863,7 @@ def run_delegated_episode(config: dict[str, Any]) -> dict[str, Any]:
     service = {'schema_version': 'audited_provider_service_v1', 'mailbox_root': str(mailbox.root),
                'case_root': str(case), 'public_root': str(public), 'enrollment': provider_enrollment,
                'public_fit_worker': config['public_fit_worker'], 'public_fit_journal': str(private / 'public-fit-worker-journal'),
-               'episode_deadline_epoch': enrollment['started_at_epoch'] + wall}
+               'episode_deadline_epoch': deadline}
     service_path = mailbox.root / 'SERVICE.json'
     if service_path.exists() and read_json(service_path) != service:
         raise ValueError('Frozen provider service changed')
@@ -835,7 +872,7 @@ def run_delegated_episode(config: dict[str, Any]) -> dict[str, Any]:
     launcher = ProviderLaunch(mailbox, budget_path=Path(config['budget_path']), call_ids=config['call_ids'])
     driver = EpisodeDriver(controller, launch=launcher, reviewer=lambda projection: review_brief(controller, projection),
         max_sessions=len(config['call_ids']), session_provider=PROVIDER, provider_model=MODEL, provider_timeout_seconds=timeout, poll=1.)
-    driver.episode_deadline = enrollment['started_at_epoch'] + wall
+    driver.episode_deadline = deadline
     try:
         exit_code = driver.loop()
     except ControllerAlreadyRunning:
