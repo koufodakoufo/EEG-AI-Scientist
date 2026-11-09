@@ -29,6 +29,7 @@ ORIGIN = {
     "sha256": "3" * 64,
     "description": "Controller-verified synthetic registration",
 }
+V2 = "registered_report_assessment_v2"
 
 
 def task_fixture():
@@ -100,7 +101,7 @@ def fixture_provider(request):
                         )
                     },
                     "relation": "supported",
-                    "judge_version": JUDGE_VERSION,
+                    "judge_version": request["response_contract"]["judgments"][0]["judge_version"],
                 }
                 for e in request["data"]["edges"]
             ],
@@ -115,6 +116,12 @@ def test_complete_new_path_exact_replay_and_context_not_model_retyped():
         task, p, context, fixture_provider, provider_id="fixture"
     )
     assert result["status"] == "scored_dimensions"
+    assert context["context_id"] == "09625c21a73e7b0fe167760b17ba8aaa80e0e1ae4560cdea0310171c8c17bae8"
+    assert [c["request_sha256"] for c in result["calls"]] == [
+        "827fa188443e7320c6e9a14b9c53e03ec77d21f2e40f20e3241791567470ad47",
+        "5706cfb862f2f892f195544b64992a368f8d5d975e722f45767537fc2d2e3188",
+    ]
+    assert claims.canonical_sha256(result) == "e7bf8cf323dcf9c746197f4f53fff9ab2496752929a9e5427d9174d3c6bb1211"
     assert result["dimensions"]["reference_coverage"]["f1"] == 1
     assert len(result["calls"]) == 2  # extraction + one two-direction batch
     extraction_request = result["calls"][0]["request"]
@@ -587,3 +594,128 @@ def test_actual_closed_report_wrong_both_fold_logit_claim_reaches_judge_unchange
         e["reference_view"]["original_claim"]["claim_id"] == "adapted-logit-boundary"
         for e in seen
     )
+
+
+def test_v2_routes_anchored_state_and_count_without_guessing_the_ba_logit_contrast():
+    text = (
+        "For penalty 1, the frozen head's balanced accuracy drops from 0.67361 to 0.65972/0.63194 "
+        "and its absolute logit changes are 0.27829/0.37535; both reported pairs lie within each fold's "
+        "three matched-control ranges."
+    )
+    task, package, _ = registered_fixture(text)
+    task["scope"]["conditions"]["primary_penalty"] = 10
+    reference = task["references"][0]["claim"]
+    reference.update(kind="qualitative", payload={"statement": "BA overlaps the matched-control ranges."})
+    reference["scope"]["conditions"].update(primary_penalty=10, head_state="frozen", random_controls_per_fold=3)
+    original = copy.deepcopy(task)
+    context = build_registered_context(task["scope"], origin=ORIGIN, protocol_version=V2)
+    seen = []
+
+    def provider(request):
+        if request["operation"] == "registered_extract":
+            block = request["data"]["segment"]["primary_blocks"][0]
+            span = {"start": block["start"], "end": block["end"], "quote": block["text"]}
+            atoms = []
+            for metric in ("BA", "absolute logit change"):
+                qualifiers = [{"field": field, "value": value, "source_spans": [span]}
+                              for field, value in (("head_state", "frozen"), ("random_controls_per_fold", 3),
+                                                   ("metric", metric), ("probe_penalty", 1), ("pair_position", "reported order"))]
+                atom = core(metric, block, qualifiers=qualifiers)
+                atom.update(kind="qualitative", payload={"statement": f"The reported {metric} lies within each fold's three matched-control ranges."})
+                atoms.append(atom)
+            return json.dumps({"segment_id": request["data"]["segment"]["segment_id"], "status": "complete",
+                               "claims": atoms, "notes": ""})
+        seen.extend(request["data"]["edges"])
+        response = json.loads(fixture_provider(request))
+        for judgment in response["judgments"]:
+            judgment["relation"] = "needs_review"
+        return json.dumps(response)
+
+    result = assess_registered_report(task, package, context, provider, provider_id="fixture")
+    assert task == original
+    assert result["version"] == V2 and context["schema_version"].endswith("_v2")
+    extraction, judge = [c["request"] for c in result["calls"]]
+    assert extraction["adapter_version"] == judge["adapter_version"] == V2
+    assert extraction["prompt_version"].endswith("_v2") and judge["prompt_version"].endswith("_v2")
+    assert result["projection_version"] == result["reference_views"]["version"] == context["projection"]["version"]
+    assert result["projection_version"].endswith("_v2")
+    roles = extraction["data"]["field_roles"]
+    assert all(values == sorted(values) for values in roles.values())
+    assert {"conditions/head", "conditions/checkpoint"} <= set(roles["context_assertions"])
+    assert {"model_state", "head_state", "random_controls_per_fold"} <= set(roles["condition_qualifiers"])
+    assert "head_status" not in roles["condition_qualifiers"] and "head" not in roles["condition_qualifiers"]
+    assert len(seen) == 4 and {e["agent_claim_id"] for e in seen} == {"BA", "absolute logit change"}
+    for edge in seen:
+        agent = edge["agent_view"]
+        assert agent["claim"]["source_spans"][0]["quote"] == text
+        assert not agent["context_assertions"]
+        assert {q["field"]: q["value"] for q in agent["condition_qualifiers"]} == {
+            "head_state": "frozen", "random_controls_per_fold": 3, "metric": edge["agent_claim_id"],
+            "probe_penalty": 1, "pair_position": "reported order",
+        }
+        assert edge["reference_view"]["original_conditions"] == original["references"][0]["claim"]["scope"]["conditions"]
+    assert result["judging"]["accepted_model_judgments"] == result["judging"]["needs_review_entries"] == 4
+
+
+@pytest.mark.parametrize("field,value,assertion", [
+    ("conditions/head", "Frozen-head", True), ("conditions/checkpoint", "wrong", True),
+    ("dataset", "wrong", True), ("split", "wrong", True), ("head_status", "frozen", False),
+    ("unrecognized", "frozen", False), ("head_state", "", False), ("model_state", "unknown", False),
+    ("model_state", True, False), ("random_controls_per_fold", True, False),
+    ("random_controls_per_fold", -1, False), ("random_controls_per_fold", 0, False),
+    ("random_controls_per_fold", None, False), ("random_controls_per_fold", 3.0, False),
+])
+def test_v2_explicit_identity_conflicts_and_invalid_conditions_stay_pending(field, value, assertion):
+    task, package, _ = registered_fixture()
+    context = build_registered_context(task["scope"], origin=ORIGIN, protocol_version=V2)
+
+    def provider(request):
+        assert request["operation"] == "registered_extract"
+        response = json.loads(fixture_provider(request))
+        atom = response["claims"][0]
+        name = "context_assertions" if assertion else "condition_qualifiers"
+        atom[name] = [{"field": field, "value": value, "source_spans": atom["source_spans"]}]
+        return json.dumps(response)
+
+    result = assess_registered_report(task, package, context, provider, provider_id="fixture")
+    occurrence = result["extraction"]["occurrences"][0]
+    assert occurrence["status"] == "pending" and occurrence["issues"]
+    assert occurrence["original_core"]["context_assertions" if assertion else "condition_qualifiers"][0]["value"] == value
+    assert len(result["calls"]) == 1
+    assert result["judging"]["deterministic_boundary_entries"] == result["judging"]["needs_review_entries"] == 2
+    assert result["judging"]["accepted_model_judgments"] == 0
+
+
+def test_v2_unknown_versions_and_tampered_context_fail_before_provider_access():
+    task, package, _ = registered_fixture()
+    with pytest.raises(ValueError, match="version"):
+        build_registered_context(task["scope"], origin=ORIGIN, protocol_version="unknown")
+    context = build_registered_context(task["scope"], origin=ORIGIN, protocol_version=V2)
+    for changed in ({**context, "schema_version": "unknown"}, {**context, "context_id": "0" * 64}):
+        with pytest.raises(ValueError):
+            assess_registered_report(task, package, changed, lambda _: pytest.fail("unexpected provider access"),
+                                     provider_id="fixture")
+
+
+@pytest.mark.parametrize("mode,counts", [
+    ("complete", (2, 0, 0, 0)), ("transport_failure", (0, 0, 2, 0)),
+    ("provider_budget", (0, 0, 0, 2)), ("logical_budget", (0, 0, 0, 2)),
+])
+def test_v2_edge_counts_partition_inventory_and_support_does_not_validate_numbers(mode, counts):
+    task, package, _ = registered_fixture()
+    context = build_registered_context(task["scope"], origin=ORIGIN, protocol_version=V2)
+
+    def provider(request):
+        if mode == "transport_failure" and request["operation"] == "registered_judge_batch":
+            raise RuntimeError("synthetic unavailable provider")
+        return fixture_provider(request)
+
+    result = assess_registered_report(task, package, context, provider, provider_id="fixture",
+                                      max_provider_requests=1 if mode == "provider_budget" else 80,
+                                      max_logical_edges=1 if mode == "logical_budget" else 1024)
+    judging = result["judging"]
+    assert tuple(judging[k] for k in ("accepted_model_judgments", "deterministic_boundary_entries",
+                                      "unreturned_requested_edges", "unrequested_edges")) == counts
+    assert sum(counts) == len(judging["directional_edge_inventory"])
+    assert judging["needs_review_entries"] == 0
+    assert result["dimensions"]["numerical_validity"]["pending_claim_ids"] == ["s0001-0"]
