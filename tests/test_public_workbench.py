@@ -103,6 +103,67 @@ class FakeWorker:
         return self.result or {'job_id':job_id,'candidate_digest':self.spec.candidate_digest,'split':'validation','status':'waiting'}
 
 
+def test_public_fit_requires_full_remaining_submit_window_and_allows_owned_poll(context,monkeypatch):
+    import time
+    root,bundle,split=context
+    candidate=bundle.parent/'output/candidate';candidate.mkdir(parents=True)
+    (candidate/'fit.py').write_text('pass')
+    worker=FakeWorker(digest_file(bundle/'PUBLIC_MANIFEST.json'))
+    worker.deadline_epoch=1500.0;worker.operation_timeout_seconds=220
+    monkeypatch.setattr(time,'time',lambda:1000.0)
+    bench=public.PublicWorkbench(evaluator=worker,private_root=root/'workbench',case_root=bundle.parent,episode_id='episode',run_id='run',public_manifest_sha256=worker.public_hash,split_manifest_sha256=digest_file(split))
+    bench.submit('owned','candidate')
+    monkeypatch.setattr(time,'time',lambda:1499.0)
+    with pytest.raises(ValueError,match='public fit execution window'):
+        bench.submit('too-late','candidate')
+    assert not (bench.private/'too-late').exists() and not (bench.private/'too-late.json').exists()
+    assert bench.submit('owned','candidate')['status']=='waiting'
+    assert worker.submissions==1 and worker.polls==1
+
+
+def test_remote_public_fit_deadline_refuses_before_candidate_staging(context,monkeypatch):
+    import time
+    from eegfm.evaluation import ssh_worker
+    root,bundle,split=context
+    worker=make_worker(context,mode=public.MODE,splits=frozenset({'validation'}))
+    worker.timeout=40;worker.public_fit_deadline_epoch=1001.0
+    monkeypatch.setattr(time,'time',lambda:1000.0)
+    config={'schema_version':'ssh_public_fit_worker_v1','episode_id':'episode','run_id':'run','staging_root':str(root/'staging'),
+            'episode_deadline_epoch':1001.0}
+    record={'job_id':'too-late','episode_id':'episode','run_id':'run','attempt_id':'public-fit','split':'validation','candidate_digest':'a'*64,'public_manifest_sha256':worker.public_hash,'split_manifest_sha256':worker.split_hash}
+    with patch.object(ssh_worker,'load_worker',return_value=(config,worker)),patch.object(ssh_worker,'stage_candidate',side_effect=AssertionError('staging forbidden')):
+        with pytest.raises(ValueError,match='public fit execution window'):
+            ssh_worker.handle_request(FileBinding(split,digest_file(split)),{'operation':'submit','spec':record,'files':{}})
+    assert not (root/'staging').exists()
+
+
+def test_local_public_fit_rechecks_deadline_after_building_command(context,monkeypatch):
+    import time
+    from eegfm.agent import processes
+    from eegfm.evaluation import worker as worker_module
+
+    root,_,_=context
+    worker=make_worker(context,mode=public.MODE,splits=frozenset({'validation'}))
+    worker.docker=None;worker.timeout=40;worker.public_fit_deadline_epoch=1500.0
+    monkeypatch.setattr(worker,'_enrollment',lambda:{'fixture':True})
+    monkeypatch.setattr(worker,'_verify',lambda spec:None)
+    monkeypatch.setattr(processes,'process_info',lambda pid:{'start':'synthetic'})
+    now=[1000.0];calls=[]
+    monkeypatch.setattr(time,'time',lambda:now[0])
+
+    def slow_build(*args):
+        now[0]=1499.0
+        return ['never-run']
+
+    monkeypatch.setattr(worker,'build_command',slow_build)
+    monkeypatch.setattr(worker_module,'run_bounded',lambda *args,**kw:calls.append(args))
+    source=root/'fit-source';source.mkdir();(source/'main.py').write_text('pass')
+    spec=EvaluationSpec('late-local','episode','run','fit','validation',source,candidate_digest(source),worker.split_hash,worker.public_hash)
+    result=worker.submit(spec)
+    assert not calls
+    assert result['status']=='failed' and result['diagnostic_code']=='evaluation_setup_failed'
+
+
 def test_fit_submission_replay_never_resubmits_and_promotion_binds_case(context):
     root,bundle,split=context
     candidate=bundle.parent/'output/candidate';candidate.mkdir(parents=True)

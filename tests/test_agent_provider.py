@@ -30,7 +30,7 @@ def setup_provider(tmp_path):
     return controller,box,enrollment
 
 
-def open_session(box,timeout=240):
+def open_session(box,timeout=240,*,register=True):
     session=box.publish('session-01',{'episode_id':'episode','run_id':'run','state':{'status':'brief','version':0},'lock':None},timeout_seconds=timeout)
     path=box.root/'synthetic-native-prefix.jsonl'
     records=[{'type':'session_meta','payload':{'id':'context','parent_thread_id':'parent','agent_path':session['agent_path']}},
@@ -38,8 +38,10 @@ def open_session(box,timeout=240):
              {'type':'response_item','payload':{'type':'message','role':'user','content':[{'type':'input_text','text':ENV_TEXT}],'internal_chat_message_metadata_passthrough':{'content_item_kinds':['environments.environment_context']}}},
              {'type':'response_item','payload':{'type':'agent_message','author':'/root','recipient':session['agent_path'],'content':[{'type':'input_text','text':f"Message Type: NEW_TASK\nTask name: {session['agent_path']}\nSender: /root\nPayload:\n"},{'type':'encrypted_content','encrypted_content':'gAAAAAsynthetic'}]}},
              {'type':'turn_context','payload':{'turn_id':'turn-1','model':'gpt-6.1-sol','effort':'high'}}]
+    start=datetime.fromtimestamp(box.session('session-01')['started_epoch']+1,timezone.utc)
+    for index,row in enumerate(records):row['timestamp']=(start+timedelta(seconds=index)).isoformat()
     path.write_text(''.join(json.dumps(row)+'\n' for row in records))
-    box.register_context('session-01',context_id='context',trace_path=path)
+    if register:box.register_context('session-01',context_id='context',trace_path=path)
     return session
 
 
@@ -123,9 +125,9 @@ def test_task_waits_for_prospectively_bound_native_initial_history(setup_provide
     assert status['result']['response']['result']['inherited_context']['memory_summary_sha256']==box.identity['inherited_context']['memory_summary_sha256']
 
 
-def complete_trace(box):
+def complete_trace(box,path=None):
     from eegfm.agent import provider_trace
-    session=box.session('session-01');path=Path(session['registered_context']['trace_path'])
+    session=box.session('session-01');path=path or Path(session['registered_context']['trace_path'])
     rows=[json.loads(line) for line in path.read_text().splitlines()]
     for index,item in enumerate(box.deliveries('session-01')):
         stdout=provider.canonical_bytes(item['response']).decode()+'\n'
@@ -134,7 +136,7 @@ def complete_trace(box):
             {'type':'response_item','payload':{'type':'custom_tool_call_output','call_id':f'call-{index}','output':[{'type':'input_text','text':'Script completed\nWall time 0.1 seconds\nOutput:\n'},{'type':'input_text','text':json.dumps({'output':stdout,'exit_code':0,'wall_time_seconds':0.1})}]}}])
     rows.extend([{'type':'response_item','payload':{'type':'message','role':'assistant','phase':'final_answer','id':'final','content':[{'type':'output_text','text':'SESSION_SEALED'}],'internal_chat_message_metadata_passthrough':{'turn_id':'turn-1'}}},{'type':'event_msg','payload':{'type':'task_complete','turn_id':'turn-1'}}])
     start=datetime.fromtimestamp(session['started_epoch']+1,timezone.utc)
-    for index,row in enumerate(rows):row['timestamp']=(start+timedelta(seconds=index)).isoformat()
+    for index,row in enumerate(rows):row.setdefault('timestamp',(start+timedelta(seconds=index)).isoformat())
     path.write_text(''.join(json.dumps(row)+'\n' for row in rows));return path
 
 

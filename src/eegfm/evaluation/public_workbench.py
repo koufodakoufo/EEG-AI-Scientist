@@ -20,7 +20,7 @@ import numpy as np
 from eegfm.agent.budget import write_atomic
 from eegfm.agent.controller import EvaluationSpec
 from eegfm.evaluation.bundle import canonical_bytes, digest_file, safe_relative, verify_public_bundle
-from eegfm.evaluation.worker import FileBinding, candidate_digest, _path, _id
+from eegfm.evaluation.worker import FileBinding, candidate_digest, require_public_fit_window, _path, _id
 
 MODE = "public-finite-npz-v1"
 MAX_COMPRESSED = 1024**2
@@ -123,7 +123,7 @@ def load_public_worker(config: dict[str, Any]):
     from eegfm.evaluation.worker import SandboxedWorkerEvaluator, SplitInputs, RuntimeConfig
     required = {"schema_version", "episode_id", "run_id", "staging_root", "private_root", "public_root",
                 "public_manifest_sha256", "split_manifest", "runtime"}
-    if not required <= set(config) or set(config) - required - {"timeout_seconds", "minimum_free_bytes"}:
+    if not required <= set(config) or set(config) - required - {"timeout_seconds", "minimum_free_bytes", "episode_deadline_epoch"}:
         raise ValueError("Unexpected public-fit configuration fields")
     if config["schema_version"] != "ssh_public_fit_worker_v1":
         raise ValueError("Unknown public-fit configuration")
@@ -151,6 +151,7 @@ def load_public_worker(config: dict[str, Any]):
         aggregate=aggregate, released_metrics=aggregate.released_metrics, aggregate_bindings=aggregate.bindings,
         aggregate_policy_sha256=aggregate.policy_sha256, allowed_splits=frozenset({"validation"}),
         public_artifact_mode=MODE, timeout_seconds=config.get("timeout_seconds", 120),
+        public_fit_deadline_epoch=config.get("episode_deadline_epoch"),
         minimum_free_bytes=config.get("minimum_free_bytes", 20 * 1024**3))
 
 
@@ -227,6 +228,16 @@ class PublicWorkbench:
             with enrollment.open('xb') as stream:
                 stream.write(canonical_bytes(self.identity))
 
+    def require_submit_time(self) -> None:
+        deadline = getattr(self.worker, 'deadline_epoch', None)
+        remote_deadline = self.worker_identity.get('episode_deadline_epoch')
+        if remote_deadline is not None:
+            deadline = remote_deadline if deadline is None else min(deadline, remote_deadline)
+        if deadline is not None:
+            require_public_fit_window(deadline, self.worker.operation_timeout_seconds)
+        elif hasattr(self.worker, 'require_public_fit_time'):
+            self.worker.require_public_fit_time()
+
     def submit(self, job_id: str, candidate_relative: str) -> dict[str, Any]:
         _id(job_id)
         source = _case_path(self.case, candidate_relative)
@@ -240,6 +251,7 @@ class PublicWorkbench:
             if retained["identity"] != identity:
                 raise ValueError("Public fit ID reused with changed source/case")
             return self.poll(job_id)
+        self.require_submit_time()
         staged = self.private / job_id
         staged.mkdir(exist_ok=False)
         (staged / "authored").mkdir()

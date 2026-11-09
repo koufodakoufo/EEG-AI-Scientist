@@ -106,13 +106,23 @@ def _timing(records: list[dict], session: dict) -> dict:
             'execution_wall_seconds': completion - start}
 
 
-def audit_native_context(path: Path, identity: dict, session: dict, deliveries: list[dict]) -> dict:
+def audit_native_context(path: Path, identity: dict, session: dict, deliveries: list[dict], *,
+                         trusted_admin_initial: dict | None = None) -> dict:
     registered = session.get('registered_context') or {}
-    initial = audit_initial_context(path, identity=identity, agent_path=session['agent_path'], context_id=registered.get('context_id'), session_id=session['session_id'])
-    issues = list(initial['issues'])
+    initial = trusted_admin_initial if trusted_admin_initial is not None else audit_initial_context(
+        path, identity=identity, agent_path=session['agent_path'], context_id=registered.get('context_id'), session_id=session['session_id'])
+    result = _audit_native_records(_trace_records(path, allow_partial=False), identity, session, deliveries,
+                                   initial, sanitized=trusted_admin_initial is not None)
     if str(Path(path).resolve()) != registered.get('trace_path'):
-        issues.append('Native trace is not the registered context source')
-    records = _trace_records(path, allow_partial=False)
+        result['issues'].append('Native trace is not the registered context source')
+        result['valid'] = False
+    result['trace_sha256'] = hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    return result
+
+
+def _audit_native_records(records: list[dict], identity: dict, session: dict, deliveries: list[dict] | None,
+                          initial: dict, *, sanitized: bool) -> dict:
+    issues = list(initial['issues'])
     timing = None
     try:
         timing = _timing(records, session)
@@ -135,6 +145,8 @@ def audit_native_context(path: Path, identity: dict, session: dict, deliveries: 
             elif ptype == 'message' and item.get('role') == 'assistant' and item.get('phase') == 'final_answer':
                 finals.append((position, ''.join(part.get('text', '') for part in item.get('content', []) if part.get('type') == 'output_text'),
                                item.get('internal_chat_message_metadata_passthrough', {}).get('turn_id')))
+            elif sanitized and ptype == 'initial_context_hash' and first_tool is None:
+                pass
             elif ptype not in {'reasoning', 'message', 'agent_message', 'configuration_update', 'additional_tools'}:
                 issues.append('Unexpected or opaque native tool/input record')
             if first_tool is not None and (ptype == 'agent_message' or ptype == 'message' and item.get('role') in {'user', 'developer', 'system'}):
@@ -158,6 +170,9 @@ def audit_native_context(path: Path, identity: dict, session: dict, deliveries: 
                 issues.append('Unexpected late native task/settings event')
         elif kind == 'compacted':
             issues.append('Compacted native context is not a fresh-session record')
+        elif sanitized and kind == 'sanitized_metadata':
+            if first_tool is not None and item.get('kind') in {'additional_tools', 'world_state', 'inter_agent_communication_metadata'}:
+                issues.append('Unexpected late native context metadata')
         elif kind != 'session_meta':
             issues.append('Unexpected native top-level record')
     if (len(contexts) != 1 or contexts[0][1:] != (identity['model'], identity['effort'])
@@ -211,15 +226,17 @@ def audit_native_context(path: Path, identity: dict, session: dict, deliveries: 
         issues.append('Unresolved native transport session remains')
     if set(outputs) != seen:
         issues.append('Orphan, encrypted or missing native outputs')
-    if not calls or len(calls) > 192 or len(logical) != len(deliveries) or len(shells) != len(logical):
+    if not calls or len(calls) > 192 or len(shells) != len(logical) or (deliveries is not None and len(logical) != len(deliveries)):
         issues.append('Native gateway/delivery/command count mismatch')
-    for index, (actual, delivered) in enumerate(zip(logical, deliveries)):
+    for index, actual in enumerate(logical):
         try:
-            if canonical_bytes(actual['request']) != canonical_bytes(delivered['request']):
-                raise ValueError('Native request differs from durable gateway delivery')
-            expected_stdout = canonical_bytes(delivered['response']).decode() + '\n'
-            if actual['stdout'] != expected_stdout:
-                raise ValueError('Actual native stdout differs from durable gateway response')
+            expected_stdout = actual['stdout']
+            if deliveries is not None:
+                delivered = deliveries[index]
+                if canonical_bytes(actual['request']) != canonical_bytes(delivered['request']):
+                    raise ValueError('Native request differs from durable gateway delivery')
+                if expected_stdout != canonical_bytes(delivered['response']).decode() + '\n':
+                    raise ValueError('Actual native stdout differs from durable gateway response')
             native_position, native = shells[index]
             if native.get('status') != 'completed' or type(native.get('exit_code')) is not int or native['exit_code'] != 0:
                 raise ValueError('Native command must complete successfully with matching exit code zero')
@@ -235,10 +252,9 @@ def audit_native_context(path: Path, identity: dict, session: dict, deliveries: 
             if (native.get('aggregated_output') != expected_stdout
                     or not actual['last_running_output'] < native_position < actual['terminal_output_position']):
                 raise ValueError('Native command/output/chronology mismatch')
-        except (ValueError, TypeError, KeyError, UnicodeError) as error:
+        except (ValueError, TypeError, KeyError, IndexError, UnicodeError) as error:
             issues.append(str(error))
-    return {'valid': not issues, 'issues': sorted(set(issues)), 'context_id': registered.get('context_id'),
-            'trace_sha256': hashlib.sha256(Path(path).read_bytes()).hexdigest(),
+    return {'valid': not issues, 'issues': sorted(set(issues)), 'context_id': initial['context_id'],
             'gateway_calls': len(logical), 'native_poll_calls': polls, 'actual_tool_calls': len(calls),
             'initial_context': initial, 'deliveries': verified,
             'timing': timing,

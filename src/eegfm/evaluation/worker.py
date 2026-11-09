@@ -23,6 +23,7 @@ import sqlite3
 import stat
 import struct
 import sys
+import time
 from typing import Any, Callable, TYPE_CHECKING
 import zipfile
 
@@ -176,6 +177,13 @@ class RuntimeConfig:
             raise ValueError('Additional scientific runtimes require a frozen dependency manifest')
 
 
+def require_public_fit_window(deadline_epoch: float | None, operation_seconds: int) -> None:
+    if deadline_epoch is not None and (type(deadline_epoch) not in (int, float) or not math.isfinite(deadline_epoch)
+            or type(operation_seconds) is not int or operation_seconds < 1
+            or time.time() + operation_seconds > deadline_epoch):
+        raise ValueError('Insufficient episode wall for full public fit execution window')
+
+
 class SandboxedWorkerEvaluator:
     sandboxed = True
 
@@ -188,11 +196,17 @@ class SandboxedWorkerEvaluator:
                  aggregate_bindings: tuple[FileBinding, ...] = (),
                  aggregate_policy_sha256: str | None = None,
                  allowed_splits: frozenset[str] = frozenset({"validation", "test"}),
-                 public_artifact_mode: str | None = None) -> None:
+                 public_artifact_mode: str | None = None,
+                 public_fit_deadline_epoch: float | None = None) -> None:
         if sys.platform != "linux": raise RuntimeError("Worker execution requires Linux")
         if allowed_splits not in (frozenset({"validation", "test"}), frozenset({"validation"})) or set(inputs_by_split) != allowed_splits:
             raise ValueError("Explicit authorized split bindings required")
         self.allowed_splits, self.public_artifact_mode = frozenset(allowed_splits), public_artifact_mode
+        if public_fit_deadline_epoch is not None and (public_artifact_mode is None
+                or type(public_fit_deadline_epoch) not in (int, float) or not math.isfinite(public_fit_deadline_epoch)
+                or public_fit_deadline_epoch <= 0):
+            raise ValueError('Explicit finite deadline is restricted to public fitting')
+        self.public_fit_deadline_epoch = public_fit_deadline_epoch
         if type(timeout_seconds) is not int or not 0 < timeout_seconds <= 1800: raise ValueError("Invalid timeout")
         if not released_metrics or any(not isinstance(name, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.-]{0,119}", name) for name in released_metrics):
             raise ValueError("Finite public metric names must be predeclared")
@@ -292,6 +306,8 @@ class SandboxedWorkerEvaluator:
             result.update(allowed_splits=sorted(self.allowed_splits), public_artifact_mode=self.public_artifact_mode)
             if self.public_artifact_mode is not None:
                 result['public_artifact_manifest_sha256'] = self.public_hash
+            if self.public_fit_deadline_epoch is not None:
+                result['public_fit_deadline_epoch'] = self.public_fit_deadline_epoch
         return result
 
     def _verify(self, spec: EvaluationSpec) -> SplitInputs:
@@ -361,6 +377,10 @@ class SandboxedWorkerEvaluator:
             if row[0] is not None and json.loads(row[0]) != result: raise ValueError("Terminal worker response immutable")
             db.execute("UPDATE jobs SET result=? WHERE id=?", (json.dumps(result, allow_nan=False), job_id))
 
+    def require_public_fit_time(self) -> None:
+        # The remote budget reserves candidate runtime plus trusted setup and cleanup.
+        require_public_fit_window(self.public_fit_deadline_epoch, self.timeout + 120)
+
     def submit(self, spec: EvaluationSpec) -> dict[str, Any]:
         self._verify(spec)
         record = self._spec_record(spec)
@@ -375,6 +395,7 @@ class SandboxedWorkerEvaluator:
             if previous:
                 if previous[0] != fingerprint: raise ValueError("Job ID reused for a different request")
             else:
+                self.require_public_fit_time()
                 directory = self.job_directory(spec.job_id)
                 if directory.exists() or directory.is_symlink():
                     raise FileExistsError("Unregistered evidence directory exists; preserve it")
@@ -408,11 +429,13 @@ class SandboxedWorkerEvaluator:
                         entry.chmod(0o555 if entry.is_dir() else 0o444)
                     root.chmod(0o555)
                 output.chmod(0o777)
+                self.require_public_fit_time()
                 status = self.docker.execute(job, fingerprint, spec.split, self.timeout, self.free_floor)
             else:
                 # bwrap 0.6.1 lacks --size: scratch stays in monitored job.
                 (job / "tmp").mkdir(mode=0o700)
                 command = self.build_command(spec, candidate, output)
+                self.require_public_fit_time()
                 status = run_bounded(command, cwd=job, output_dir=job / "execution", timeout_seconds=self.timeout,
                     env={"PATH": "/usr/bin:/bin", "LANG": "C.UTF-8", "CUDA_VISIBLE_DEVICES": "", "PYTHONDONTWRITEBYTECODE": "1"},
                     threads=4, memory_limit_bytes=12 * 1024**3, storage_scope=job, storage_limit_bytes=2 * 1024**3,

@@ -87,7 +87,7 @@ class ProviderMailbox:
         manifest = verify_public_bundle(self.public)
         required = {"episode_id", "run_id", "model", "effort", "parent_thread", "agent_prefix", "session_limit",
                     "session_timeout_seconds", "gateway", "inherited_context"}
-        if not required <= set(enrollment) or set(enrollment) - required - {'study_disclosure'}:
+        if not required <= set(enrollment) or set(enrollment) - required - {'study_disclosure', 'trace_export'}:
             raise ValueError("Explicit provider enrollment fields required")
         for name in ("episode_id", "run_id"):
             _id(enrollment[name])
@@ -112,6 +112,9 @@ class ProviderMailbox:
         if (not isinstance(gateway, dict) or set(gateway) != {"script", "workdir"}
                 or any(not isinstance(value, str) or re.fullmatch(r"[A-Za-z]:/[A-Za-z0-9_./-]+", value) is None for value in gateway.values())):
             raise ValueError("Fixed Windows gateway paths required")
+        if 'trace_export' in enrollment:
+            from eegfm.agent.provider_export import validate_binding
+            validate_binding(enrollment)
         self.identity = {**enrollment, "case_root": str(self.case.resolve()), "public_manifest_sha256": digest_file(self.public / "PUBLIC_MANIFEST.json"),
                          "provider_source_sha256": digest_file(Path(__file__)),
                          "trace_verifier_source_sha256": digest_file(Path(__file__).with_name('provider_trace.py')),
@@ -149,6 +152,9 @@ class ProviderMailbox:
                 or digest_file(self.public / "PUBLIC_MANIFEST.json") != self.identity["public_manifest_sha256"]):
             raise ValueError("Frozen provider source/public binding changed")
         verify_public_bundle(self.public)
+        if 'trace_export' in self.identity:
+            from eegfm.agent.provider_export import validate_binding
+            validate_binding(self.identity)
 
     def _session(self, db: sqlite3.Connection, identifier: str) -> dict:
         row = db.execute("SELECT value FROM sessions WHERE id=?", (_id(identifier),)).fetchone()
@@ -200,21 +206,32 @@ class ProviderMailbox:
             write_atomic(directory / "PUBLIC_RESERVATION.json", published)
             return published
 
-    def register_context(self, identifier: str, *, context_id: str, trace_path: Path) -> None:
+    def register_context(self, identifier: str, *, context_id: str, trace_path: Path,
+                         trusted_admin_initial: dict | None = None, export_source: dict | None = None) -> None:
         """Root-only mapping, not an operation accepted by handle()."""
         self.verify()
         session = self.session(identifier)
-        audit = audit_initial_context(trace_path, identity=self.identity, agent_path=session['agent_path'], context_id=context_id, session_id=identifier)
+        sanitized = 'trace_export' in self.identity
+        if (trusted_admin_initial is not None) != sanitized or (export_source is not None) != sanitized:
+            raise ValueError('Initial audit transport differs from enrollment')
+        audit = trusted_admin_initial if trusted_admin_initial is not None else audit_initial_context(
+            trace_path, identity=self.identity, agent_path=session['agent_path'], context_id=context_id, session_id=identifier)
         if not audit['valid']:
             raise ValueError('Native initial context differs from prospective enrollment')
         audit_path = self.root / 'audits' / f'{identifier}-initial.json'
-        write_atomic(audit_path, audit)
-        value = {"context_id": context_id, "trace_path": str(Path(trace_path).resolve()),
-                 'initial_audit_sha256': digest_file(audit_path)}
+        value = {"context_id": context_id, "trace_path": str(Path(trace_path).resolve())}
+        if export_source is not None:
+            value['export_source'] = export_source
         with self.transaction() as db:
             session = self._session(db, identifier)
-            if session["registered_context"] not in (None, value):
-                raise ValueError("Context reservation cannot be replaced")
+            if session["registered_context"] is not None:
+                previous = session['registered_context']
+                if (previous != {**value, 'initial_audit_sha256': digest_file(_regular(audit_path))}
+                        or json.loads(audit_path.read_text(encoding='utf-8')) != audit):
+                    raise ValueError("Context reservation cannot be replaced")
+                return
+            write_atomic(audit_path, audit)
+            value['initial_audit_sha256'] = digest_file(audit_path)
             session["registered_context"] = value
             pending = list(db.execute('SELECT id,digest,request FROM requests WHERE session=? AND response IS NULL', (identifier,)))
             for request_id, digest, raw in pending:
@@ -367,6 +384,9 @@ class ProviderMailbox:
                     if row and json.loads(row[0]) != fit_identity:
                         raise ValueError('Public fit reservation changed source')
                     if not row:
+                        require_time = getattr(bench, 'require_submit_time', None)
+                        if require_time is not None:
+                            require_time()
                         if db.execute('SELECT COUNT(*) FROM fits').fetchone()[0] >= 2:
                             raise ValueError('Episode-wide public fit budget exhausted')
                         db.execute('INSERT INTO fits VALUES(?,?,?,?)', (session['session_id'], job_id, json.dumps(fit_identity), 'waiting'))
@@ -424,11 +444,15 @@ class ProviderMailbox:
             return [{"request": json.loads(row[0]), "response": json.loads(row[1])} for row in db.execute(
                 "SELECT request,response FROM deliveries WHERE session=? ORDER BY sequence", (_id(identifier),))]
 
-    def accept_trace(self, identifier: str, trace_path: Path) -> dict:
+    def accept_trace(self, identifier: str, trace_path: Path, *, trusted_admin_initial: dict | None = None,
+                     export_source: dict | None = None) -> dict:
         """Root-only passive verification; no arbitrary successful audit injection."""
         from eegfm.agent.provider_trace import audit_native_context
         self.verify()
         session = self.session(identifier)
+        sanitized = 'trace_export' in self.identity
+        if (trusted_admin_initial is not None) != sanitized or (export_source is not None) != sanitized:
+            raise ValueError('Complete audit transport differs from enrollment')
         if session['receipt_sha256']:
             return {'provider': PROVIDER, 'receipt_path': str(self.root / 'receipts' / f'{identifier}.json'),
                     'receipt_sha256': session['receipt_sha256']}
@@ -437,10 +461,13 @@ class ProviderMailbox:
         initial_path = self.root / 'audits' / f'{identifier}-initial.json'
         if digest_file(_regular(initial_path)) != session['registered_context']['initial_audit_sha256']:
             raise ValueError('Initial context admission changed')
-        audit = audit_native_context(trace_path, self.identity, session, self.deliveries(identifier))
+        audit = audit_native_context(trace_path, self.identity, session, self.deliveries(identifier), trusted_admin_initial=trusted_admin_initial)
         if audit['initial_context'] != json.loads(initial_path.read_text()):
             raise ValueError('Native initial inputs changed after admission')
         audit_path = self.root / 'audits' / f'{identifier}.json'
+        if export_source is not None:
+            audit['trace_export'] = {'binding': self.identity['trace_export'], 'source': export_source,
+                                     'admitted_source': session['registered_context']['export_source']}
         write_atomic(audit_path, audit)
         if not audit['valid']:
             raise ValueError('Complete native provider trace failed qualification; reservation remains unresolved')
@@ -551,6 +578,10 @@ def bootstrap(identity: dict, identifier: str) -> str:
 
 
 def _trace_records(path: Path, *, allow_partial: bool = True) -> list[dict]:
+    return _trace_records_from_bytes(_regular(Path(path)).read_bytes(), allow_partial=allow_partial)
+
+
+def _trace_records_from_bytes(raw: bytes, *, allow_partial: bool) -> list[dict]:
     def pairs(values):
         result = {}
         for key, value in values:
@@ -559,7 +590,7 @@ def _trace_records(path: Path, *, allow_partial: bool = True) -> list[dict]:
             result[key] = value
         return result
     records = []
-    lines = _regular(Path(path)).read_bytes().splitlines(keepends=True)
+    lines = raw.splitlines(keepends=True)
     for index, line in enumerate(lines):
         try:
             record = json.loads(line, object_pairs_hook=pairs)
@@ -575,7 +606,10 @@ def _trace_records(path: Path, *, allow_partial: bool = True) -> list[dict]:
 
 def audit_initial_context(path: Path, *, identity: dict, agent_path: str, context_id: str, session_id: str | None = None) -> dict:
     """Private hashes only. This audit runs before public task/fitting admission."""
-    records = _trace_records(path)
+    return _audit_initial_records(_trace_records(path), identity=identity, agent_path=agent_path, context_id=context_id, session_id=session_id)
+
+
+def _audit_initial_records(records: list[dict], *, identity: dict, agent_path: str, context_id: str, session_id: str | None) -> dict:
     issues, messages, summaries, contexts = [], [], [], []
     user_inputs, bootstrap_inputs = 0, 0
     meta = records[0].get('payload', {}) if records and records[0].get('type') == 'session_meta' else {}
@@ -583,6 +617,7 @@ def audit_initial_context(path: Path, *, identity: dict, agent_path: str, contex
         issues.append('native initial context identity mismatch')
     known = {'model.base_instructions', 'memories.instructions', 'host_skills.instructions', 'permissions.instructions',
              'collaboration_mode.instructions', 'tools.deferred_namespaces', 'multi_agent.role_instructions', 'multi_agent.mode_instructions'}
+    known_developer = known | {'generic.developer_instructions', 'plugins.recommendations'}
     for record in records:
         item = record.get('payload', {})
         if record.get('type') == 'response_item' and item.get('type') in {'function_call', 'custom_tool_call'}:
@@ -612,7 +647,8 @@ def audit_initial_context(path: Path, *, identity: dict, agent_path: str, contex
             messages.append({'role': 'agent_message', 'kinds': ['declared_bootstrap'], 'text_sha256': _hash(content), 'content_sha256': _hash(content)})
         if record.get('type') == 'response_item' and item.get('type') == 'message' and item.get('role') in {'developer', 'system'}:
             kinds = item.get('internal_chat_message_metadata_passthrough', {}).get('content_item_kinds', [])
-            if not kinds or any(kind not in known for kind in kinds):
+            allowed_kinds = known_developer if item['role'] == 'developer' else known
+            if not kinds or any(kind not in allowed_kinds for kind in kinds):
                 issues.append('unexpected initial platform input kind')
             text = ''.join(part.get('text', '') for part in item.get('content', []) if part.get('type') == 'input_text')
             messages.append({'role': item['role'], 'kinds': kinds, 'text_sha256': hashlib.sha256(text.encode()).hexdigest(),
@@ -712,6 +748,11 @@ def load_service(config_path: Path, config_sha256: str) -> ProviderMailbox:
                 remote_config=FileBinding(Path(cloud['config']['path']), cloud['config']['sha256']),
                 journal_root=Path(config['public_fit_journal']))
             worker.deadline_epoch = config.get('episode_deadline_epoch')
+            if 'trace_export' in config['enrollment']:
+                remote_deadline = worker.identity.get('episode_deadline_epoch')
+                if (type(remote_deadline) not in (int, float) or type(worker.deadline_epoch) not in (int, float)
+                        or not 0 < remote_deadline <= worker.deadline_epoch < float('inf')):
+                    raise ValueError('Sanitized provider requires a bound remote public fit deadline')
             relative = pending_case.resolve().relative_to((Path(config['mailbox_root']) / 'sessions').resolve())
             if len(relative.parts) != 2 or relative.parts[-1] != 'case':
                 raise ValueError('Fit case does not belong to this provider')
@@ -732,8 +773,15 @@ def service_request(mailbox: ProviderMailbox, request: dict) -> dict:
             return {'sessions': [json.loads(row[0])['published'] for row in db.execute('SELECT value FROM sessions ORDER BY id')]}
     if request.get('admin') == 'status' and set(request) == {'admin', 'session'}:
         state = mailbox.session(request['session'])
-        return {key: state[key] for key in ('session_id', 'status', 'registered_context', 'receipt_sha256', 'fit_jobs')}
+        keys = ('session_id', 'status', 'registered_context', 'receipt_sha256', 'fit_jobs')
+        if 'trace_export' in mailbox.identity:
+            keys += ('agent_path', 'started_epoch', 'timeout_seconds')
+        return {key: state[key] for key in keys}
+    if request.get('admin') in {'admit_sanitized', 'accept_sanitized'} and set(request) == {'admin', 'session', 'context_id', 'export'}:
+        return _admin_export(mailbox, request)
     if request.get('admin') in {'admit', 'accept'} and set(request) == {'admin', 'session', 'context_id', 'trace_base64'}:
+        if 'trace_export' in mailbox.identity:
+            raise ValueError('Raw trace upload forbidden for sanitized enrollment')
         import base64
         encoded = request['trace_base64']
         if not isinstance(encoded, str) or len(encoded) > 24 * 1024**2:
@@ -754,6 +802,50 @@ def service_request(mailbox: ProviderMailbox, request: dict) -> dict:
             raise ValueError('Root context identity changed before final audit')
         return mailbox.accept_trace(identifier, path)
     raise ValueError('Unknown provider service envelope')
+
+
+def _admin_export(mailbox: ProviderMailbox, request: dict) -> dict:
+    """Explicit trusted-root route for private projected native evidence."""
+    from eegfm.agent.provider_export import validate_admin_export
+
+    mailbox.verify()
+    identifier = _id(request['session'])
+    context_id, exported = _id(request['context_id']), request['export']
+    session = mailbox.session(identifier)
+    registered = session['registered_context']
+    complete = request['admin'] == 'accept_sanitized'
+    if complete and (not registered or registered['context_id'] != context_id or session['status'] not in {'sealed', 'accepted'}):
+        raise ValueError('Sealed previously admitted context required')
+    prior = registered['export_source'] if complete else None
+    records, initial = validate_admin_export(exported, mailbox.identity, session, context_id=context_id, prior_source=prior)
+    source = exported['source']
+    directory = mailbox.root / 'sessions' / identifier
+    admit_proof = directory / 'admitted-export.json'
+    proof = directory / 'complete-export.json' if complete else admit_proof
+    if complete:
+        admitted = json.loads(_regular(admit_proof).read_text(encoding='utf-8'))
+        if (source['raw_bytes'] != source['prefix_bytes'] or source['raw_sha256'] != source['prefix_sha256']
+                or admitted['source'] != prior or admitted['initial_audit'] != initial
+                or records[:len(admitted['records'])] != admitted['records']):
+            raise ValueError('Complete projected trace does not extend the exact admitted prefix')
+    raw = canonical_bytes(exported)
+    if len(raw) > 16 * 1024**2:
+        raise ValueError('Projected trace byte cap exceeded')
+    if proof.exists():
+        if _regular(proof).read_bytes() != raw:
+            raise ValueError('Trusted native projection cannot be replaced')
+    else:
+        with proof.open('xb') as stream:
+            stream.write(raw)
+    path = directory / 'native.jsonl'
+    if complete or registered is None:
+        temporary = path.with_suffix('.upload')
+        temporary.write_bytes(b''.join(canonical_bytes(row) for row in records))
+        temporary.replace(path)
+    if complete:
+        return mailbox.accept_trace(identifier, path, trusted_admin_initial=initial, export_source=source)
+    mailbox.register_context(identifier, context_id=context_id, trace_path=path, trusted_admin_initial=initial, export_source=source)
+    return {'status': 'initial_context_admitted', 'context_id': context_id}
 
 
 def main() -> None:
