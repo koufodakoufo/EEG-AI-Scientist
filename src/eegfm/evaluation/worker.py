@@ -308,6 +308,8 @@ class SandboxedWorkerEvaluator:
                 result['public_artifact_manifest_sha256'] = self.public_hash
             if self.public_fit_deadline_epoch is not None:
                 result['public_fit_deadline_epoch'] = self.public_fit_deadline_epoch
+        if self._is_residual_recovery_aggregator():
+            result['validation_identity_release'] = 'residual_baseline_identity_hash_v1'
         return result
 
     def _verify(self, spec: EvaluationSpec) -> SplitInputs:
@@ -456,12 +458,15 @@ class SandboxedWorkerEvaluator:
             aggregated = self.aggregate(output, spec)
             diagnostic_code = "evaluation_integrity_failed"
             aggregated = self.validate_aggregate(output, aggregated)
+            identity_artifact = self._residual_validation_identity_artifact(output, aggregated, spec)
             diagnostic_code = "evaluation_setup_failed"
             write_atomic(job / "aggregation-private.json", aggregated)
             metrics_file = job / "released_metrics.json"
             write_atomic(metrics_file, aggregated["metrics"])
             result = self._base_result(record, "succeeded")
             result.update(metrics=aggregated["metrics"], artifacts=[{"path": "released_metrics.json", "sha256": digest_file(metrics_file)}])
+            if identity_artifact is not None:
+                result['artifacts'].append(identity_artifact)
             if self.public_artifact_mode is not None:
                 from eegfm.evaluation.public_workbench import encode_parameters
                 result['public_artifacts'] = [encode_parameters(output / 'parameters.npz')]
@@ -508,6 +513,34 @@ class SandboxedWorkerEvaluator:
                 self.docker.remove_owned(container['id'], fingerprint)
         self._finish(job_id, result)
         return result
+
+    def _is_residual_recovery_aggregator(self) -> bool:
+        # Keep optional science imports out of every unrelated worker path.
+        collector = type(self.aggregate)
+        if (collector.__module__ != 'eegfm.eeg.residual_recovery_aggregation'
+                or collector.__name__ != 'ResidualRecoveryAggregator'):
+            return False
+        from eegfm.eeg.residual_recovery_aggregation import ResidualRecoveryAggregator
+        return collector is ResidualRecoveryAggregator
+
+    def _residual_validation_identity_artifact(self, output: Path, aggregated: dict[str, Any],
+                                             spec: EvaluationSpec) -> dict[str, str] | None:
+        if spec.split != 'validation' or not self._is_residual_recovery_aggregator():
+            return None
+        from eegfm.eeg.residual_recovery_aggregation import _read_json
+        from eegfm.eeg.residual_recovery import IDENTITY_SCHEMA, TASK_ID
+        # validate_aggregate has already checked exact records and file bindings.
+        records = [item for item in aggregated['artifacts'] if Path(item['path']).name == 'baseline_identity.json']
+        if len(records) != 1 or records[0]['path'] != 'baseline_identity.json':
+            raise ValueError('Exactly one trusted residual baseline identity required')
+        sha = _sha(records[0]['sha256'])
+        path = _path(output / 'baseline_identity.json')
+        identity = _read_json(path, 1024 * 1024)
+        if (not isinstance(identity, dict) or identity.get('schema_version') != IDENTITY_SCHEMA
+                or identity.get('task_id') != TASK_ID or path.read_bytes() != canonical_bytes(identity)
+                or digest_file(path) != sha):
+            raise ValueError('Invalid trusted residual baseline identity')
+        return {'path': 'baseline_identity.json', 'sha256': sha}
 
     def validate_aggregate(self, output: Path, result: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(result, dict) or set(result) != {"metrics", "artifacts"}: raise ValueError("Invalid aggregation schema")

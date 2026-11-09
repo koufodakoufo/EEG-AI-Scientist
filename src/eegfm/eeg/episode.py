@@ -47,6 +47,7 @@ from eegfm.eeg.evidence_policy import SESSION_GUIDANCE, validate_policy, validat
 MODEL = "gpt-6.1-sol"
 DEFAULT_TASK = "eegmat-representation-analysis-v1"
 READOUT_TASK = "eegmmidb-readout-bottleneck-v1"
+RESIDUAL_RECOVERY_TASK = "eegmat-residual-recovery-v1"
 SCOPE = {"task": "eegmat-arithmetic-background", "public_resources_only": True,
          "backbone_frozen": True, "head_frozen": True, "selection_split": "validation",
          "test_after_lock_only": True, "gpu": 0}
@@ -59,6 +60,7 @@ TASKS = {
     "eegmat-attribute-dependence-v2": ("eegmat_attribute_dependence_v2", "eegmat-arithmetic-background"),
     "eegmmidb-attribute-dependence-v2": ("eegmmidb_attribute_dependence_v2", "eegmmidb-eyes-open-closed-baseline"),
     READOUT_TASK: ("readout_bottleneck", "eegmmidb-cached-readout-bottleneck"),
+    RESIDUAL_RECOVERY_TASK: ("residual_recovery", "eegmat-cached-residual-recovery"),
 }
 EVIDENCE_TASKS = frozenset({"eegmat-attribute-dependence-v2", "eegmmidb-attribute-dependence-v2"})
 
@@ -67,7 +69,7 @@ def task_scope(task_id: str = DEFAULT_TASK) -> dict[str, Any]:
     if not isinstance(task_id, str) or task_id not in TASKS:
         raise ValueError("Unregistered public task identity")
     scope = {**SCOPE, "task": TASKS[task_id][1]}
-    if task_id == READOUT_TASK:
+    if task_id in {READOUT_TASK, RESIDUAL_RECOVERY_TASK}:
         scope.update(cached_inputs_only=True, train_only_readouts=True)
     return scope
 
@@ -144,6 +146,58 @@ def binding(value: dict[str, str]) -> FileBinding:
     return result
 
 
+def validate_residual_qualification(config: dict[str, Any]) -> dict[str, Any]:
+    """Match the eight attested roles to actual enrolled files before launch."""
+    from eegfm.eeg.residual_recovery import validate_qualification
+    if config.get("task_id") != RESIDUAL_RECOVERY_TASK:
+        raise ValueError("Residual qualification requires its registered task")
+    if (set(config["truth_by_split"]) != {"validation", "test"}
+            or set(config["inference_by_split"]) != {"validation", "test"}):
+        raise ValueError("Residual private roles require exactly validation/test")
+    expected = {"truth_train": binding(config["train_truth"]).sha256,
+                "split_manifest": binding(config["split_manifest"]).sha256,
+                **{f"truth_{s}": binding(v).sha256 for s, v in config["truth_by_split"].items()},
+                **{f"inference_{s}": binding(v).sha256 for s, v in config["inference_by_split"].items()}}
+    if config.get("schema_version") == "ssh_residual_recovery_worker_v1":
+        public = Path(config["public_root"])
+        manifest = verify_public_bundle(public)
+        if manifest["task_id"] != RESIDUAL_RECOVERY_TASK:
+            raise ValueError("Residual public task mismatch")
+        files = {item["path"]: item["sha256"] for item in manifest["files"]}
+        expected.update({f"public_{s}": files[f"{s}.npz"] for s in ("train", "validation")})
+    else:
+        expected.update(public_train=binding(config["train_input"]).sha256,
+                        public_validation=binding(config["public_validation_input"]).sha256)
+        if (binding(config["validation_input"]).sha256 != expected["inference_validation"]
+                or binding(config["test_input"]).sha256 != expected["inference_test"]):
+            raise ValueError("Residual worker inputs differ from enrolled inference")
+    receipt = read_json(binding(config["residual_data_qualification"]).path, maximum_bytes=64 * 1024)
+    return validate_qualification(receipt, expected)
+
+
+def residual_baseline_identity_sha(result: dict[str, Any]) -> str:
+    """Read only the trusted successful validation manifest, never actor files."""
+    if not isinstance(result, dict) or result.get("status") != "succeeded" or result.get("split") != "validation":
+        raise ValueError("Successful residual validation result required")
+    artifacts = result.get("artifacts")
+    if not isinstance(artifacts, list):
+        raise ValueError("Residual baseline identity artifact required")
+    matches = []
+    for item in artifacts:
+        if (not isinstance(item, dict) or set(item) != {"path", "sha256"}
+                or not isinstance(item["path"], str) or not isinstance(item["sha256"], str)
+                or re.fullmatch(r"[0-9a-f]{64}", item["sha256"]) is None):
+            raise ValueError("Malformed residual artifact")
+        safe_relative(item["path"])
+        if Path(item["path"]).name == "baseline_identity.json":
+            if item["path"] != "baseline_identity.json":
+                raise ValueError("Alternate baseline identity path forbidden")
+            matches.append(item["sha256"])
+    if len(matches) != 1:
+        raise ValueError("Exactly one trusted baseline identity artifact required")
+    return matches[0]
+
+
 def load_aggregator(config: dict[str, Any], *, public_root: Path | None = None,
                     verify_runtime: bool = False) -> Any:
     """Dispatch only enrolled scientific tasks, identically on both machines."""
@@ -151,15 +205,14 @@ def load_aggregator(config: dict[str, Any], *, public_root: Path | None = None,
     task_scope(task_id)
     truth = {name: binding(value) for name, value in config["truth_by_split"].items()}
     train_truth = binding(config["train_truth"])
-    if task_id == READOUT_TASK:
-        from eegfm.eeg.readout_aggregation import ReadoutAggregator
+    if task_id in {READOUT_TASK, RESIDUAL_RECOVERY_TASK}:
         from eegfm.evaluation.ssh_worker import readout_runtime_record, verify_readout_runtime
         runtime = readout_runtime_record(config.get("aggregate_runtime"))
         if verify_runtime:
             verify_readout_runtime(runtime)
         public = public_root if public_root is not None else Path(config["public_root"])
         manifest = verify_public_bundle(public)
-        if manifest["task_id"] != READOUT_TASK:
+        if manifest["task_id"] != task_id:
             raise ValueError("Readout scorer requires its actual enrolled public task bundle")
         if (config.get("public_manifest_sha256") is not None
                 and digest_file(public / "PUBLIC_MANIFEST.json") != config["public_manifest_sha256"]):
@@ -168,6 +221,16 @@ def load_aggregator(config: dict[str, Any], *, public_root: Path | None = None,
         public_inputs = {name: FileBinding(public / f"{name}.npz", files[f"{name}.npz"])
                          for name in ("train", "validation")}
         inference = {name: binding(value) for name, value in config["inference_by_split"].items()}
+        if task_id == RESIDUAL_RECOVERY_TASK:
+            from eegfm.eeg.residual_recovery_aggregation import ResidualRecoveryAggregator
+            if "bootstrap_resamples" in config or "seed" in config:
+                raise ValueError("Residual statistics have fixed seeds and resamples")
+            validate_residual_qualification(config)
+            return ResidualRecoveryAggregator(truth, train_truth, inference,
+                public_by_split=public_inputs, qualification=binding(config["residual_data_qualification"]),
+                runtime_identity=runtime,
+                verify_runtime=(lambda: verify_readout_runtime(runtime)) if verify_runtime else None)
+        from eegfm.eeg.readout_aggregation import ReadoutAggregator
         return ReadoutAggregator(truth, train_truth, inference,
             test_cohort=binding(config["test_cohort"]),
             public_by_split=public_inputs,
@@ -180,7 +243,7 @@ def load_aggregator(config: dict[str, Any], *, public_root: Path | None = None,
 
 def aggregator_source_sha256(task_id: str = DEFAULT_TASK) -> str:
     task_scope(task_id)
-    name = "readout_aggregation.py" if task_id == READOUT_TASK else "aggregation.py"
+    name = {READOUT_TASK: "readout_aggregation.py", RESIDUAL_RECOVERY_TASK: "residual_recovery_aggregation.py"}.get(task_id, "aggregation.py")
     return digest_file(Path(__file__).with_name(name))
 
 
@@ -188,6 +251,8 @@ def episode_time_limits(config: dict[str, Any]) -> tuple[int, int]:
     task_id = config.get("task_id", DEFAULT_TASK)
     task_scope(task_id)
     wall_cap, session_cap = (2700, 600) if task_id == READOUT_TASK else (5400, 900)
+    if task_id == RESIDUAL_RECOVERY_TASK:
+        wall_cap, session_cap = 2700, 240
     wall = config.get("episode_timeout_seconds", wall_cap)
     session = config.get("session_timeout_seconds", session_cap)
     if (type(wall) is not int or not 0 < wall <= wall_cap
@@ -221,12 +286,19 @@ class EpisodeController(ResearchController):
         self.task_id = task_id
         self.session_guidance = session_guidance
         self.evidence_policy = task_evidence_policy(task_id)
+        if task_id == RESIDUAL_RECOVERY_TASK:
+            kwargs.setdefault("max_attempts", 1)
+            if (type(kwargs["max_attempts"]) is not int or kwargs["max_attempts"] != 1
+                    or kwargs.get("recovery_policy", "strict-v1") != "strict-v1"):
+                raise ValueError("Residual recovery permits one iteration and no retries")
         if self.evidence_policy is not None:
             kwargs.setdefault("max_attempts", 2)
             kwargs.setdefault("recovery_policy", "validation-recovery-v1")
         guidance_identity = evidence_guidance_identity({"task_id": task_id, "session_guidance": session_guidance,
                                                        "max_attempts": kwargs.get("max_attempts", 2),
                                                        "recovery_policy": kwargs.get("recovery_policy", "strict-v1")})
+        if task_id == RESIDUAL_RECOVERY_TASK:
+            guidance_identity = {"validation_identity_release": "residual_baseline_identity_hash_v1"}
         # A separate task-bound enrollment preserves the base controller's v1
         # journal format while rejecting treatment drift even in direct use.
         guidance_path = Path(kwargs["trusted_root"]) / "runs" / kwargs["run_id"] / "EVIDENCE_GUIDANCE.json"
@@ -262,6 +334,11 @@ class EpisodeController(ResearchController):
         super()._completion_ready(state)
         locked = next(attempt for attempt in state["attempts"] if attempt["id"] == state["lock"]["attempt_id"])
         final = state["jobs"][state["test_job"]].get("result", {}).get("metrics", {})
+        if self.task_id == RESIDUAL_RECOVERY_TASK:
+            self._residual_parity(state, state["lock"])
+            if locked["kind"] != "iteration" or not self._residual_model_schema(final, 4):
+                raise ValueError("Residual completion requires the final four-model test schema")
+            return
         if self.task_id == READOUT_TASK:
             if (locked["kind"] != "iteration" or any(
                     metrics.get("readout_count", 0) < 2 or metrics.get("representation_readouts", 0) < 1
@@ -271,6 +348,40 @@ class EpisodeController(ResearchController):
         if (locked["kind"] != "iteration" or locked.get("metrics", {}).get("q1_groups", 0) <= 0
                 or final.get("q1_groups", 0) <= 0):
             raise ValueError("Completion requires Q1 evidence from the locked validation iteration and final test")
+
+    @staticmethod
+    def _residual_model_schema(metrics: dict[str, Any], count: int) -> bool:
+        return (metrics.get("model_count") == count and metrics.get("view_count") == 5
+                and metrics.get("target_count") == 6 and metrics.get("baseline_only") == (count == 2)
+                and metrics.get("numeric_scope_complete") == (count == 4))
+
+    def _residual_parity(self, state: dict[str, Any], payload: Any) -> None:
+        if not isinstance(payload, dict):
+            raise ValueError("Residual lock payload required")
+        baseline = [a for a in state["attempts"] if a["kind"] == "baseline"]
+        selected = [a for a in state["attempts"] if a["id"] == payload.get("attempt_id") and a["kind"] == "iteration"]
+        if len(baseline) != 1 or len(selected) != 1:
+            raise ValueError("Residual lock requires baseline and final iteration")
+        fingerprints = []
+        for attempt, count in ((baseline[0], 2), (selected[0], 4)):
+            if not self._validated_attempt(state, attempt):
+                raise ValueError("Successful actual residual validation job required")
+            keys = [key for key in attempt["jobs"] if state["jobs"][key]["split"] == "validation"]
+            key = keys[0]
+            job = state["jobs"][key]
+            result = job["result"]
+            if (job["job_id"] != key or job["attempt_id"] != attempt["id"]
+                    or any(result.get(name) != job[name] for name in ("job_id", "candidate_digest", "split"))
+                    or not self._residual_model_schema(result.get("metrics", {}), count)):
+                raise ValueError("Residual fingerprint must belong to the actual matching validation job")
+            fingerprints.append(residual_baseline_identity_sha(result))
+        if selected[0]["candidate_digest"] != payload.get("candidate_digest") or fingerprints[0] != fingerprints[1]:
+            raise ValueError("Residual baseline fingerprint parity required before lock")
+
+    def _dispatch(self, state: dict[str, Any], operation: str, payload: Any) -> tuple[dict[str, Any], dict[str, Any] | None]:
+        if self.task_id == RESIDUAL_RECOVERY_TASK and operation == "lock":
+            self._residual_parity(state, payload)
+        return super()._dispatch(state, operation, payload)
 
     def validate_done(self) -> None:
         # Base validation invokes this class's stricter _completion_ready on the
@@ -306,7 +417,7 @@ def prepare_public(config: dict[str, Any], case: Path, private: Path) -> Path:
     names = config["public_files"]
     if not isinstance(names, list) or len(set(names)) != len(names):
         raise ValueError("Explicit unique public allowlist required")
-    if task_id == READOUT_TASK and set(names) != {
+    if task_id in {READOUT_TASK, RESIDUAL_RECOVERY_TASK} and set(names) != {
             "train.npz", "validation.npz", "eeg_api.py", "resources/CACHE_SCHEMA.json"}:
         raise ValueError("Readout public allowlist must contain only data, schema API and CACHE_SCHEMA")
     for name in names:
@@ -492,8 +603,10 @@ def validate_cloud_bindings(remote: dict[str, Any], train: FileBinding,
                       for name, value in expected.items())
         matches = (matches and all(remote[key] == value for key, value in expected_identity.items())
                    and worker["aggregate_source_sha256"] == aggregate_source_sha256)
-        if expected_identity.get("task_id") == READOUT_TASK:
+        if expected_identity.get("task_id") in {READOUT_TASK, RESIDUAL_RECOVERY_TASK}:
             matches = matches and worker["aggregate_policy_sha256"] == expected_identity["aggregate_policy_sha256"]
+        if expected_identity.get("task_id") == RESIDUAL_RECOVERY_TASK:
+            matches = matches and worker.get("validation_identity_release") == "residual_baseline_identity_hash_v1"
     except (KeyError, TypeError):
         matches = False
     if not matches:
@@ -554,6 +667,8 @@ def run_episode(config: dict[str, Any]) -> dict[str, Any]:
     """Linux native entrypoint; no production scripted-hook or synthetic mode."""
     if config.get('schema_version') == 'audited_coding_episode_v1':
         return run_delegated_episode(config)
+    if config.get('task_id') == RESIDUAL_RECOVERY_TASK:
+        raise ValueError("Residual recovery requires the audited delegated route")
     if os.name != "posix":
         raise RuntimeError("Native isolated episodes require Linux")
     if config.get("schema_version") != "real_episode_config_v1":
@@ -706,7 +821,7 @@ def run_episode(config: dict[str, Any]) -> dict[str, Any]:
 
 def validate_delegated_config(config: dict[str, Any]) -> dict[str, Any]:
     """Explicit historical-readout admission; never inspect native credentials."""
-    if (config.get('schema_version') != 'audited_coding_episode_v1' or config.get('task_id') != READOUT_TASK
+    if (config.get('schema_version') != 'audited_coding_episode_v1' or config.get('task_id') not in {READOUT_TASK, RESIDUAL_RECOVERY_TASK}
             or config.get('model') != MODEL or config.get('reasoning_effort') not in {'medium', 'high'}):
         raise ValueError('Explicit audited historical-readout provider required')
     if any(name in config for name in ('auth_source', 'auth_mode', 'native_binary', 'isolation_report', 'proxy_url', 'bwrap')):
@@ -725,6 +840,11 @@ def validate_delegated_config(config: dict[str, Any]) -> dict[str, Any]:
     if (not isinstance(calls, list) or not 1 <= len(calls) <= 6 or len(set(calls)) != len(calls)
             or any(not isinstance(item, str) or re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,99}', item) is None for item in calls)):
         raise ValueError('One to six unique declared model calls required')
+    if config['task_id'] == RESIDUAL_RECOVERY_TASK:
+        if (type(config.get('max_attempts', 1)) is not int or config.get('max_attempts', 1) != 1
+                or config.get('recovery_policy', 'strict-v1') != 'strict-v1'):
+            raise ValueError('Residual recovery permits one iteration and no retries')
+        return validate_residual_qualification(config)
     proof_binding = binding(config['historical_data_qualification'])
     proof = read_json(proof_binding.path)
     if (proof.get('status') != 'exact_historical_readout_inputs_qualified_for_development_replay'
@@ -772,6 +892,8 @@ def run_delegated_episode(config: dict[str, Any]) -> dict[str, Any]:
     from eegfm.evaluation.public_workbench import PublicWorkbench
     from eegfm.evaluation.ssh_worker import SshWorkerEvaluator, scientific_identity
     validate_delegated_config(config)
+    task_id = config['task_id']
+    residual = task_id == RESIDUAL_RECOVERY_TASK
     if os.name != 'posix':
         raise RuntimeError('The trusted ResearchDriver controller remains on Linux')
     case, private = Path(config['case_root']), Path(config['trusted_root'])
@@ -793,7 +915,8 @@ def run_delegated_episode(config: dict[str, Any]) -> dict[str, Any]:
         raise ValueError('Provider public resources differ from bound historical data')
     protected = [private, split.path, validation.path, test.path, Path(config['budget_path']),
                  aggregate.train_truth.path, *(item.path for item in aggregate.truth.values()),
-                 *(item.path for item in aggregate.inference.values()), aggregate.test_cohort.path,
+                 *(item.path for item in aggregate.inference.values()),
+                 aggregate.qualification.path if residual else aggregate.test_cohort.path,
                  *(item.path for item in aggregate.source_bindings)]
     validate_private_boundaries(case, protected, ())
 
@@ -807,7 +930,7 @@ def run_delegated_episode(config: dict[str, Any]) -> dict[str, Any]:
 
     worker = cloud_worker(config['cloud_worker'], private / 'cloud-worker-journal')
     expected = scientific_identity(config, aggregate=aggregate, public_manifest_sha256=public_hash, split_manifest_sha256=split.sha256)
-    validate_cloud_bindings(worker.identity, train, validation, test, expected, aggregator_source_sha256(READOUT_TASK))
+    validate_cloud_bindings(worker.identity, train, validation, test, expected, aggregator_source_sha256(task_id))
     fit_worker = cloud_worker(config['public_fit_worker'], private / 'public-fit-worker-journal')
     from eegfm.evaluation.public_workbench import MODE
     fit_identity = fit_worker.identity
@@ -818,13 +941,14 @@ def run_delegated_episode(config: dict[str, Any]) -> dict[str, Any]:
             or ('episode_deadline_epoch' in config
                 and fit_identity.get('episode_deadline_epoch') != config['episode_deadline_epoch'])):
         raise ValueError('Public fit worker is not bound to this case/public-only capability')
-    if worker.timeout > 180 or fit_worker.timeout > 120:
-        raise ValueError('Initial audited replay caps scientific work at 180s and public fits at 120s')
+    if worker.timeout > (120 if residual else 180) or fit_worker.timeout > (90 if residual else 120):
+        raise ValueError('Audited scientific/public fit timeout exceeds task allocation')
     identity = {'schema_version': 'audited_coding_enrollment_v1', 'config_sha256': hashlib.sha256(canonical_bytes(config)).hexdigest(),
                 'execution_mode': PROVIDER, 'public_manifest_sha256': public_hash, 'worker': worker._enrollment(),
                 'public_fit_worker': fit_worker._enrollment(), 'runner_sha256': digest_file(Path(__file__)),
                 'controller_source_sha256': digest_file(Path(__file__).resolve().parents[1] / 'agent/controller.py'),
-                'historical_provenance_sha256': config['historical_data_qualification']['sha256'],
+                **({'residual_qualification_sha256': config['residual_data_qualification']['sha256']} if residual else
+                   {'historical_provenance_sha256': config['historical_data_qualification']['sha256']}),
                 **evidence_guidance_identity(config, public)}
     enrollment_path = private / 'ENROLLMENT.json'
     if enrollment_path.exists():
@@ -847,7 +971,7 @@ def run_delegated_episode(config: dict[str, Any]) -> dict[str, Any]:
         episode_id=config['episode_id'], run_id=config['run_id'], public_manifest_sha256=public_hash,
         split_manifest_sha256=split.sha256, evaluator=DeadlineEvaluator(worker, enrollment['started_at_epoch'],
                                                                        timeout_seconds=wall, deadline_epoch=deadline),
-        max_attempts=config.get('max_attempts', 2), task_id=READOUT_TASK,
+        max_attempts=config.get('max_attempts', 1 if residual else 2), task_id=task_id,
         recovery_policy=config.get('recovery_policy', 'strict-v1'), session_guidance=config.get('session_guidance', 'fixed_stages_v1'))
 
     def workbench(pending_case: Path) -> PublicWorkbench:
@@ -864,6 +988,10 @@ def run_delegated_episode(config: dict[str, Any]) -> dict[str, Any]:
         'model': MODEL, 'effort': config['reasoning_effort'], 'session_limit': len(config['call_ids']),
         'session_timeout_seconds': timeout,
         'study_disclosure': 'Historical readout train/validation/test bytes have previously been used by this project. Test is withheld from this researcher until lock for workflow replay only; it is not project-unseen confirmation. Common inherited project history may include high-level prior readout findings. No blind capability or research-gain claim follows.'}
+    if residual:
+        provider_enrollment['study_disclosure'] = ('Cached EEGMAT residual inputs include six final-test participants and prior project test exposure. '
+            'Test is withheld from this researcher until lock, not project-unseen confirmation. Common project history is inherited. '
+            'Additional recovery beyond the finite affine comparator does not establish intrinsic nonlinearity, causal reliance, method gain or RSI.')
     mailbox = ProviderMailbox(root=controller.run / 'provider', case_root=case, public_root=public,
                               enrollment=provider_enrollment, workbench_factory=workbench)
     service = {'schema_version': 'audited_provider_service_v1', 'mailbox_root': str(mailbox.root),

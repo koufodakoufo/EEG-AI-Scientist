@@ -106,6 +106,8 @@ class ScientificEnrollmentTests(unittest.TestCase):
             public_manifest_sha256='d'*64,split_manifest_sha256='e'*64)
         self.assertEqual(identity['truth_roles'],{'train_truth':'a'*64,'truth_by_split':{'validation':'b'*64,'test':'c'*64}})
         self.assertEqual(identity['scoring_policy']['bootstrap_resamples'],7)
+        self.assertNotIn('validation_identity_release',identity)
+        self.assertEqual(identity['scoring_policy']['schema'],'scientific_aggregate_v1')
         self.assertNotIn('/private',json.dumps(identity['scoring_policy']))
         swapped=ScientificAggregator({'validation':roles['test'],'test':roles['validation']},roles['train'],bootstrap_resamples=8)
         other=mod.scientific_identity({'episode_id':'episode','run_id':'run'},aggregate=swapped,
