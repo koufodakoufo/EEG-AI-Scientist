@@ -21,6 +21,8 @@ from eegfm.evaluation.bundle import canonical_bytes, digest_file, safe_relative,
 
 PROVIDER = "delegated_audited_v1"
 MAX_CHUNK = 4096
+PROJECTION_PAGE_CHARS = 6000
+PROJECTION_PAGE_JSON_BYTES = 6000
 
 
 def _id(value: Any) -> str:
@@ -305,13 +307,17 @@ class ProviderMailbox:
                 raise ValueError("Task is read once")
             session["task_read"] = True
             manifest = verify_public_bundle(self.public)
-            return {"session_id": session["session_id"], "projection": session["projection"], "files": manifest["files"],
+            snapshot = canonical_bytes(session["projection"])
+            descriptor = {"sha256": hashlib.sha256(snapshot).hexdigest(), "characters": len(snapshot.decode("utf-8")),
+                          "page_chars": PROJECTION_PAGE_CHARS, "read_operation": "read_projection"}
+            return {"session_id": session["session_id"], "projection": descriptor, "files": manifest["files"],
                     "own_files": tree_manifest(pending), "inherited_context": {key:self.identity['inherited_context'][key] for key in ('memory_summary_sha256', 'disclosure')},
                     'boundary_override': 'The native OS-isolation/global-memory-unavailable/process-cleanup descriptions in copied TASK/INTERFACE are superseded for this opted-in provider. Common inherited platform/project history is prospectively enrolled; requests are ingested only after a complete delegated-context/gateway audit. A typed receipt is not native-process isolation. Candidate fitting/inference still execute only in the separate restricted scientific Docker worker.',
                     'study_disclosure': self.identity.get('study_disclosure', self.identity['inherited_context']['disclosure']),
-                    "instructions": "Use only the exact gateway and poll templates. Read declared public TASK/INTERFACE/API/schema and optional skill. Author source with UTF-8 chunks <=4096 bytes. Each write_chunk returns cumulative bytes and SHA256; seal_file uses that final returned hash, so no other hashing tool is needed. Upload the JSON array of <=16 existing controller requests as requests.json, seal that file, then seal_session with its path and returned SHA256 after public fitting finishes. Return exactly SESSION_SEALED. Every gateway envelope has request_id/operation/payload and is <=8192 encoded JSON bytes. This is an audited tool context with common inherited platform history, not OS isolation or a memory-free blind evaluation.",
+                    "instructions": "Use only the exact gateway and poll templates. Read the frozen controller projection with read_projection, starting at offset 0 and following each next_offset until null. The page text in order forms the canonical JSON identified by the task projection SHA256. Read declared public TASK/INTERFACE/API/schema and optional skill. Author source with UTF-8 chunks <=4096 bytes. Each write_chunk returns cumulative bytes and SHA256; seal_file uses that final returned hash, so no other hashing tool is needed. Upload the JSON array of <=16 existing controller requests as requests.json, seal that file, then seal_session with its path and returned SHA256 after public fitting finishes. Return exactly SESSION_SEALED. Every gateway envelope has request_id/operation/payload and is <=8192 encoded JSON bytes. This is an audited tool context with common inherited platform history, not OS isolation or a memory-free blind evaluation.",
                     "call_template": call_template(self.identity, session["session_id"], "<STRICT_JSON_LITERAL>"),
-                    "operations": {"task": {}, "read_public": {"path": "declared path", "offset": 0},
+                    "operations": {"task": {}, "read_projection": {"offset": 0},
+                        "read_public": {"path": "declared path", "offset": 0},
                         "read_own": {"path": "own relative path", "offset": 0},
                         "write_chunk": {"path": "candidate/fit.py", "offset": 0, "text": "UTF-8 text <=4096 bytes"},
                         "seal_file": {"path": "candidate/fit.py", "sha256": "whole-file SHA256"},
@@ -321,6 +327,20 @@ class ProviderMailbox:
                     "poll_template": poll_template(123456)}
         if not session["task_read"]:
             raise ValueError("Read task before coding")
+        if operation == "read_projection" and set(payload) == {"offset"}:
+            snapshot = canonical_bytes(session["projection"])
+            projection = snapshot.decode("utf-8")
+            offset = payload["offset"]
+            if type(offset) is not int or not 0 <= offset <= len(projection):
+                raise ValueError("Invalid projection offset")
+            end = min(offset + PROJECTION_PAGE_CHARS, len(projection))
+            page = projection[offset:end]
+            # Escaping and multibyte characters can make 6000 characters much larger on the wire.
+            while (excess := len(canonical_bytes(page)) - PROJECTION_PAGE_JSON_BYTES) > 0:
+                end -= min(excess, len(page) // 2)
+                page = projection[offset:end]
+            return {"sha256": hashlib.sha256(snapshot).hexdigest(), "offset": offset,
+                    "text": page, "next_offset": end if end < len(projection) else None}
         if operation in {"read_public", "read_own"} and set(payload) == {"path", "offset"}:
             path = _relative(self.public if operation == "read_public" else pending, payload["path"])
             _regular(path)
@@ -553,6 +573,9 @@ def command(identity: dict, session: str) -> str:
     return f"python -X utf8 {identity['gateway']['script']} call --session {_id(session)} --payload "
 
 
+WAIT_STATUS_PREFIX = "await new Promise(resolve=>setTimeout(resolve,15000)); "
+
+
 def call_template(identity: dict, session: str, literal: str) -> str:
     return ("const request = " + literal + "; const payload = encodeURIComponent(JSON.stringify(request)).replace(/[!'()*]/g,c=>'%'"
             "+c.charCodeAt(0).toString(16).toUpperCase()); const result = await tools.exec_command({cmd:'"
@@ -569,12 +592,17 @@ def poll_template(session_id: int) -> str:
 
 def bootstrap(identity: dict, identifier: str) -> str:
     request = {"request_id": "task", "operation": "task", "payload": {}}
+    status = {"request_id": "task-status-01", "operation": "request_status", "payload": {"request_id": "task"}}
     return ("Use only this episode's exact audited gateway. Do not use any other tool/command, read files or memory directly, browse, or delegate. "
             "Platform history is automatically inherited and prospectively disclosed; this is workflow development, not memory-free or OS-isolated evaluation. "
             "If the native result returns session_id, poll only that ID with the shown empty-input poll template; never resubmit an uncertain mutation. "
-            "If task returns awaiting_context_admission, wait and query request_status for request_id task; root passively verifies initial inherited context before releasing it. "
+            "If task returns awaiting_context_admission, use the exact WAIT STATUS TEMPLATE. Use a fresh outer request_id for each query, keep payload.request_id task, and do not vary or stack the fixed 15-second wait. "
+            "Root passively verifies initial inherited context before releasing the task. "
             "After sealing the authored source/request batch, return exactly SESSION_SEALED.\n"
-            + call_template(identity, identifier, canonical_bytes(request).decode().strip()) + "\nPOLL TEMPLATE (replace only observed positive session_id):\n" + poll_template(123456))
+            + call_template(identity, identifier, canonical_bytes(request).decode().strip())
+            + "\nWAIT STATUS TEMPLATE (replace only the outer request_id for subsequent queries):\n"
+            + WAIT_STATUS_PREFIX + call_template(identity, identifier, canonical_bytes(status).decode().strip())
+            + "\nPOLL TEMPLATE (replace only observed positive session_id):\n" + poll_template(123456))
 
 
 def _trace_records(path: Path, *, allow_partial: bool = True) -> list[dict]:

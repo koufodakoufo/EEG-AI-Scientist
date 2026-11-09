@@ -5,7 +5,7 @@ import hashlib,json
 import pytest
 from eegfm.agent import provider
 from eegfm.agent.controller import ResearchController,ResearchDriver
-from eegfm.evaluation.bundle import create_public_bundle,digest_file
+from eegfm.evaluation.bundle import canonical_bytes,create_public_bundle,digest_file
 
 MEMORY='\nSynthetic common inherited history.\n'
 MEMORY_TEXT='========= MEMORY_SUMMARY BEGINS ========='+MEMORY+'========= MEMORY_SUMMARY ENDS ========='
@@ -30,8 +30,10 @@ def setup_provider(tmp_path):
     return controller,box,enrollment
 
 
-def open_session(box,timeout=240,*,register=True):
-    session=box.publish('session-01',{'episode_id':'episode','run_id':'run','state':{'status':'brief','version':0},'lock':None},timeout_seconds=timeout)
+def open_session(box,timeout=240,*,register=True,projection=None):
+    if projection is None:
+        projection={'episode_id':'episode','run_id':'run','state':{'status':'brief','version':0},'lock':None}
+    session=box.publish('session-01',projection,timeout_seconds=timeout)
     path=box.root/'synthetic-native-prefix.jsonl'
     records=[{'type':'session_meta','payload':{'id':'context','parent_thread_id':'parent','agent_path':session['agent_path']}},
              {'type':'response_item','payload':{'type':'message','role':'developer','content':[{'type':'input_text','text':'========= MEMORY_SUMMARY BEGINS ========='+MEMORY+'========= MEMORY_SUMMARY ENDS ========='}],'internal_chat_message_metadata_passthrough':{'content_item_kinds':['memories.instructions']}}},
@@ -61,6 +63,62 @@ def test_reservation_binds_budget_projection_context_and_inherited_history(setup
     assert task['inherited_context']['memory_summary_sha256']==enrollment['inherited_context']['memory_summary_sha256']
     assert 'not a blind' in task['inherited_context']['disclosure']
     assert 'private' not in json.dumps(task['files'])
+
+
+@pytest.mark.parametrize('deferred', [False, True])
+def test_large_projection_is_read_losslessly_through_bounded_gateway_pages(setup_provider,deferred):
+    _,box,_=setup_provider
+    projection={'episode_id':'episode','run_id':'run','state':{'status':'report','version':8},'lock':{'candidate':'selected'},
+                'cohorts':{f'cohort-{group}':{'subjects':{
+                    f'subject-{subject}':{'original_accuracy':(group+subject)/333,'accuracy':subject/137,
+                                         'loss':1/(subject+1),'mean_error':1/(subject+17),'label':'Δ accuracy'}
+                    for subject in range(100)}} for group in range(3)},
+                'notes':'🧠"\\' * 2000}
+    expected=canonical_bytes(projection)
+    assert len(expected)>44_000
+    open_session(box,register=not deferred,projection=projection)
+    if deferred:
+        assert call(box,'task',request_id='initial-task')['status']=='awaiting_context_admission'
+        box.register_context('session-01',context_id='context',trace_path=box.root/'synthetic-native-prefix.jsonl')
+        envelope=call(box,'request_status',{'request_id':'initial-task'})
+        task=envelope['result']['response']
+    else:
+        envelope=task=call(box,'task')
+    assert len(canonical_bytes(envelope))<6000
+    descriptor=task['result']['projection']
+    assert descriptor=={'sha256':hashlib.sha256(expected).hexdigest(),'characters':len(expected.decode('utf-8')),
+                        'page_chars':6000,'read_operation':'read_projection'}
+    assert task['result']['operations']['read_projection']=={'offset':0}
+    projection['cohorts'].clear()  # The caller's object can change after publication.
+    offset=0
+    parts=[]
+    while offset is not None:
+        envelope=call(box,'read_projection',{'offset':offset})
+        assert envelope['status']=='ok' and len(canonical_bytes(envelope))<7000
+        page=envelope['result']
+        assert page['sha256']==descriptor['sha256'] and page['offset']==offset
+        assert 0<len(page['text'])<=descriptor['page_chars']
+        parts.append(page['text'])
+        offset=page['next_offset']
+    assert ''.join(parts).encode('utf-8')==expected
+    terminal=call(box,'read_projection',{'offset':descriptor['characters']})
+    assert terminal['result']=={'sha256':descriptor['sha256'],'offset':descriptor['characters'],
+                                'text':'','next_offset':None}
+    for payload in ({'offset':False},{'offset':-1},{'offset':'0'},{'offset':1.5},
+                    {'offset':descriptor['characters']+1},{'offset':10**8},{'offset':0,'path':'TASK.md'},{}):
+        assert call(box,'read_projection',payload)['status']=='rejected'
+
+
+def test_projection_requires_admitted_context_and_task(setup_provider):
+    _,box,_=setup_provider
+    open_session(box,register=False)
+    assert call(box,'read_projection',{'offset':0})['error_type']=='ContextNotAdmitted'
+    box.register_context('session-01',context_id='context',trace_path=box.root/'synthetic-native-prefix.jsonl')
+    assert call(box,'read_projection',{'offset':0})['status']=='rejected'
+    assert call(box,'task')['status']=='ok'
+    assert call(box,'read_projection',{'offset':0})['status']=='ok'
+    assert call(box,'seal_session',{'requests':[]})['status']=='ok'
+    assert call(box,'read_projection',{'offset':0})['status']=='rejected'
 
 
 def test_chunk_replay_is_exact_paths_bounded_and_staging_never_executes(setup_provider):

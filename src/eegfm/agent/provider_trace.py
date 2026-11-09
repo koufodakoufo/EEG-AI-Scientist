@@ -13,7 +13,7 @@ from pathlib import Path
 import re
 from urllib.parse import quote, unquote_to_bytes
 
-from eegfm.agent.provider import _trace_records, audit_initial_context, call_template, poll_template, command
+from eegfm.agent.provider import WAIT_STATUS_PREFIX, _trace_records, audit_initial_context, call_template, poll_template, command
 from eegfm.evaluation.bundle import canonical_bytes
 
 SHELL_PREFIX = [r"C:\Users\14090\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\powershell\pwsh.exe", "-Command"]
@@ -45,6 +45,9 @@ def parse_tool(code: str, identity: dict, session: str):
     poll = re.fullmatch(r"const result = await tools\.write_stdin\(\{session_id:([1-9][0-9]*),chars:'',max_output_tokens:9000,yield_time_ms:1000\}\); text\(result\);", code)
     if poll:
         return 'poll', int(poll[1])
+    waited = code.startswith(WAIT_STATUS_PREFIX)
+    if waited:
+        code = code.removeprefix(WAIT_STATUS_PREFIX)
     prefix = 'const request = '
     if not code.startswith(prefix):
         raise ValueError('Not an exact coding gateway/poll template')
@@ -55,6 +58,8 @@ def parse_tool(code: str, identity: dict, session: str):
         raise ValueError('Coding gateway template altered')
     if not isinstance(request, dict):
         raise ValueError('Gateway request object required')
+    if waited and request.get('operation') != 'request_status':
+        raise ValueError('The fixed wait prefix is only for request_status')
     return 'call', request
 
 

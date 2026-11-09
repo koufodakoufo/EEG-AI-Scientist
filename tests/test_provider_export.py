@@ -3,19 +3,32 @@ import copy
 import hashlib
 import json
 import pytest
-from test_provider_trace import trace
+from test_provider_trace import WAIT, trace
 from test_agent_provider import setup_provider, open_session, complete_trace, call
-from eegfm.agent import provider, provider_export
+from eegfm.agent import provider, provider_export, provider_trace
 
 
-def fixture(tmp_path):
-    path,identity,session,deliveries=trace(tmp_path)
+def fixture(tmp_path, *, wait_status=False):
+    path,identity,session,deliveries=trace(tmp_path,wait_status=wait_status)
     identity.update(episode_id='episode',run_id='run',agent_prefix='/root/actor')
     binding={'schema_version':provider_export.SCHEMA,'client_source_sha256':'a'*64,
              'sanitizer_source_sha256':provider_export.source_sha256(),
              'audit_profile_sha256':provider._hash(provider_export.audit_profile(identity)), 'initial_metadata':[]}
     identity['trace_export']=binding
     return path,identity,session,deliveries
+
+
+def test_wait_status_prefix_survives_native_projection_and_delivery_audit(tmp_path):
+    path,identity,session,deliveries=fixture(tmp_path,wait_status=True)
+    exported=provider_export.sanitize_admin_trace(path,identity,session,context_id='context',complete=True)
+    rows,initial=provider_export.validate_admin_export(exported,identity,session,context_id='context')
+    first=next(row for row in rows if row['payload'].get('type')=='custom_tool_call')
+    native=next(row for row in provider._trace_records(path) if row['payload'].get('type')=='custom_tool_call')
+    assert first['payload']['input']==native['payload']['input']
+    assert first['payload']['input'].startswith(WAIT)
+    audited=provider_trace._audit_native_records(rows,identity,session,deliveries,initial,sanitized=True)
+    assert audited['valid'] and audited['gateway_calls']==1 and audited['native_poll_calls']==1
+    assert audited['timing']['execution_wall_seconds']>=15
 
 
 def test_export_contains_no_platform_account_or_reasoning_text(tmp_path):
@@ -309,7 +322,10 @@ def test_explicit_admin_route_admits_then_audits_actual_deliveries(setup_provide
     with pytest.raises(ValueError):
         provider.service_request(box,{'session':'session-01','request':{'admin':'admit_sanitized','export':projected}})
     assert provider.service_request(box,{'admin':'admit_sanitized',**args})['status']=='initial_context_admitted'
-    assert call(box,'task')['status']=='ok'
+    task=call(box,'task')['result']
+    page=call(box,'read_projection',{'offset':0})['result']
+    assert page['sha256']==task['projection']['sha256']
+    assert json.loads(page['text'])==box.session('session-01')['projection']
     assert call(box,'seal_session',{'requests':[]})['status']=='ok'
     complete_trace(box,path)
     state=box.session('session-01')
