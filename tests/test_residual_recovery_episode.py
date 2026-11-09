@@ -19,6 +19,54 @@ from test_residual_recovery_aggregation import _fixture, _receipt
 TASK = "eegmat-residual-recovery-v1"
 
 
+@pytest.fixture
+def paper_export(tmp_path: Path) -> tuple[dict, bytes]:
+    source = tmp_path / "source"
+    (source / "resources").mkdir(parents=True)
+    names = ["train.npz", "validation.npz", "eeg_api.py", "resources/CACHE_SCHEMA.json"]
+    for name in names:
+        (source / name).write_bytes(b"synthetic public input")
+    public = {"schema_version": "paper_task_v1", "task_id": "synthetic-paper-question", "revision": "r1",
+              "question": "What survives the intervention?", "resources": ["Fixed cached inputs"],
+              "constraints": ["Keep the existing split"], "budget": {"seconds": 2700},
+              "report_contract": ["Report uncertainty"]}
+    raw = (json.dumps(public, indent=2) + "\n").encode()
+    (source / "resources/PAPER_TASK.json").write_bytes(raw)
+    (source / "resources/EXTRA.json").write_bytes(b"{}")
+    return {"task_id": TASK, "public_source": str(source), "condition": "no_skill",
+            "public_files": [*names, "resources/PAPER_TASK.json"]}, raw
+
+
+def test_residual_prepare_public_preserves_paper_bytes_and_existing_docs(tmp_path: Path, paper_export: tuple) -> None:
+    config, raw = paper_export
+    public = episode.prepare_public(config, tmp_path / "case", tmp_path / "private")
+    assert (public / "resources/PAPER_TASK.json").read_bytes() == raw
+    manifest = episode.verify_public_bundle(public)
+    assert {row["path"] for row in manifest["files"]} == set(config["public_files"]) | set(episode.DOCS)
+    assert episode.prepare_public(config, tmp_path / "case", tmp_path / "private") == public
+
+
+@pytest.mark.parametrize("change", ["extra_path", "other_task", "private_field", "private_nested_field", "wrong_schema"])
+def test_residual_prepare_public_rejects_unapproved_paper_material(tmp_path: Path, paper_export: tuple, change: str) -> None:
+    config, raw = paper_export
+    if change == "extra_path":
+        config["public_files"].append("resources/EXTRA.json")
+    elif change == "other_task":
+        config["task_id"] = episode.READOUT_TASK
+    else:
+        value = json.loads(raw)
+        if change == "private_field":
+            value["references"] = ["private fragment"]
+        elif change == "private_nested_field":
+            value["report_contract"] = [{"answer": "private fragment"}]
+        else:
+            value["schema_version"] = "paper_workflow_freeze_v1"
+        (Path(config["public_source"]) / "resources/PAPER_TASK.json").write_bytes(canonical_bytes(value))
+    with pytest.raises(ValueError):
+        episode.prepare_public(config, tmp_path / "case", tmp_path / "private")
+    assert not (tmp_path / "case/public").exists()
+
+
 @pytest.mark.parametrize("operation", ["enrollment", "validation", "test", "named_test"])
 def test_generic_worker_paths_do_not_import_optional_science(operation):
     """Fresh process avoids NumPy already loaded by this test module's fixtures."""

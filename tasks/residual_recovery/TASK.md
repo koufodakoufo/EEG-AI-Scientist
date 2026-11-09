@@ -4,6 +4,9 @@ Task ID: `eegmat-residual-recovery-v1`. This is an externally designed,
 adapted EEG development task. It is not automated paper decomposition, a
 FIRE replication, or evidence of recursive self-improvement (RSI).
 
+If present, read `resources/PAPER_TASK.json` for the frozen paper-derived
+question and report contract. Apply the fixed scientific constraints below.
+
 Ask whether six attributes remain recoverable from fixed cached EEG features
 after linear erasure, and whether a flexible readout adds useful recovery
 beyond the declared finite affine comparator. The five independent views,

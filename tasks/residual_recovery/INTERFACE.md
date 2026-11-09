@@ -58,6 +58,7 @@ Keep all source dependencies in the candidate. `method.json` is authored
 before submission and describes the archive schema and recipe selection.
 
 The public allowlist is exactly `train.npz`, `validation.npz`, `eeg_api.py`,
-`resources/CACHE_SCHEMA.json`, plus these four trusted task documents (and
-the enrolled skill only in the skill condition). No hidden truth, historical
-results, old fitted probes, or raw cache is available.
+`resources/CACHE_SCHEMA.json` and these four trusted task documents, with
+`resources/PAPER_TASK.json` only when bound to a frozen paper question and
+the enrolled skill only in the skill condition. Private paper references,
+hidden truth, historical results, old fitted probes and raw cache stay private.

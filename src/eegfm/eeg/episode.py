@@ -52,6 +52,8 @@ SCOPE = {"task": "eegmat-arithmetic-background", "public_resources_only": True,
          "backbone_frozen": True, "head_frozen": True, "selection_split": "validation",
          "test_after_lock_only": True, "gpu": 0}
 DOCS = ("TASK.md", "INTERFACE.md", "API_README.md", "PUBLIC_RESULT_SCHEMA.md")
+PAPER_TASK_RESOURCE = "resources/PAPER_TASK.json"
+PAPER_TASK_MAX_BYTES = 1024 * 1024
 POLICY_HASH = hashlib.sha256(canonical_bytes({"scope": SCOPE, "review": "scope-json-and-substantive-plan-v1"})).hexdigest()
 TASKS = {
     DEFAULT_TASK: ("representation_analysis", "eegmat-arithmetic-background"),
@@ -405,8 +407,27 @@ def review_brief(controller: EpisodeController, projection: dict[str, Any]) -> d
             "policy_sha256": review_policy_hash(controller.task_id, session_guidance=controller.session_guidance)}
 
 
+def validate_residual_paper_public_task(value: Any) -> None:
+    from eegfm.evaluation.paper import PUBLIC_FIELDS, VERSION
+
+    def text(item: Any) -> bool:
+        return isinstance(item, str) and bool(item.strip()) and "\x00" not in item
+
+    if (not isinstance(value, dict) or set(value) != {"schema_version", "task_id", "revision"} | PUBLIC_FIELDS
+            or value["schema_version"] != VERSION):
+        raise ValueError("Expected the paper public task schema and fields")
+    if not all(text(value[key]) for key in ("task_id", "revision", "question")) or any(
+            not isinstance(value[key], list) or not value[key] or not all(map(text, value[key]))
+            for key in ("resources", "constraints", "report_contract")):
+        raise ValueError("Expected paper public question, identity and lists of public text")
+    budget = value["budget"]
+    if not isinstance(budget, dict) or not budget or any(type(cap) not in (int, float) or cap <= 0 for cap in budget.values()):
+        raise ValueError("Expected paper public numeric budget")
+    canonical_bytes(value)  # Also reject nonfinite numbers and invalid Unicode escapes.
+
+
 def prepare_public(config: dict[str, Any], case: Path, private: Path) -> Path:
-    """Explicit public export; only an optional skill changes condition content."""
+    """Export the explicit task allowlist and its enrolled optional resources."""
     task_id = config.get("task_id", DEFAULT_TASK)
     task_scope(task_id)
     evidence_guidance_identity(config)
@@ -417,9 +438,15 @@ def prepare_public(config: dict[str, Any], case: Path, private: Path) -> Path:
     names = config["public_files"]
     if not isinstance(names, list) or len(set(names)) != len(names):
         raise ValueError("Explicit unique public allowlist required")
-    if task_id in {READOUT_TASK, RESIDUAL_RECOVERY_TASK} and set(names) != {
-            "train.npz", "validation.npz", "eeg_api.py", "resources/CACHE_SCHEMA.json"}:
-        raise ValueError("Readout public allowlist must contain only data, schema API and CACHE_SCHEMA")
+    paper_enabled = PAPER_TASK_RESOURCE in names
+    if paper_enabled and task_id != RESIDUAL_RECOVERY_TASK:
+        raise ValueError("The frozen paper task resource is reserved for residual recovery")
+    if task_id in {READOUT_TASK, RESIDUAL_RECOVERY_TASK}:
+        required = {"train.npz", "validation.npz", "eeg_api.py", "resources/CACHE_SCHEMA.json"}
+        if paper_enabled:
+            required.add(PAPER_TASK_RESOURCE)
+        if set(names) != required:
+            raise ValueError("Unexpected resource in the readout public allowlist")
     for name in names:
         safe_relative(name)
         if name not in {"train.npz", "validation.npz", "eeg_api.py"} and not name.startswith("resources/"):
@@ -431,7 +458,16 @@ def prepare_public(config: dict[str, Any], case: Path, private: Path) -> Path:
     from eegfm.common import ROOT
     docs = ROOT / "tasks" / TASKS[task_id][0]
     task_docs = DOCS + (("EVIDENCE_POLICY.json",) if task_id in EVIDENCE_TASKS else ())
-    expected = {name: digest_file(source / name) for name in names}
+    expected = {name: digest_file(source / name) for name in names if name != PAPER_TASK_RESOURCE}
+    if paper_enabled:
+        paper_path = source / PAPER_TASK_RESOURCE
+        _regular(paper_path)
+        with paper_path.open("rb") as stream:
+            paper_bytes = stream.read(PAPER_TASK_MAX_BYTES + 1)
+        if len(paper_bytes) > PAPER_TASK_MAX_BYTES:
+            raise ValueError("Paper public task byte limit exceeded")
+        validate_residual_paper_public_task(json.loads(paper_bytes.decode("utf-8"), object_pairs_hook=_unique_object))
+        expected[PAPER_TASK_RESOURCE] = hashlib.sha256(paper_bytes).hexdigest()
     expected.update({name: digest_file(docs / name) for name in task_docs})
     if condition == "skill":
         expected["SKILL.md"] = binding(config["skill"]).sha256
@@ -447,8 +483,11 @@ def prepare_public(config: dict[str, Any], case: Path, private: Path) -> Path:
     for name in names:
         target = stage / name
         target.parent.mkdir(parents=True, exist_ok=True)
-        _regular(source / name)
-        shutil.copyfile(source / name, target)
+        if name == PAPER_TASK_RESOURCE:
+            target.write_bytes(paper_bytes)
+        else:
+            _regular(source / name)
+            shutil.copyfile(source / name, target)
     for name in task_docs:
         shutil.copyfile(docs / name, stage / name)
     if condition == "skill":
