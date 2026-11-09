@@ -1239,7 +1239,8 @@ def test_comparison_replays_all_calls_before_first_save_without_evidence(tmp_pat
 
     monkeypatch.setattr(assessment.ReplayProvider, 'assert_consumed', check)
     paper_workflow.compare_workflow(work, report_path, output, provider=_compare_response)
-    assert checked == [['extract', 'judge', 'judge', 'judge', 'judge']]
+    # Frozen-reference compatibility replays before the full comparison replay.
+    assert checked == [['extract'], ['extract', 'judge', 'judge', 'judge', 'judge']]
 
 
 def test_comparison_summary_explains_frozen_task_scope_unknown(tmp_path: Path) -> None:
