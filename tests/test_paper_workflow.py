@@ -1057,7 +1057,7 @@ def test_scientific_completion_requires_comparable_claims_and_trusted_checks(tmp
             {'claim_id': 's0001:0', 'status': 'invalid'},
             {'claim_id': 's0001:1', 'status': 'valid'},
         ]),
-        'process_checks': {'methods_verified': True},
+        'process_checks': {'assessment_status': 'complete', 'methods_verified': False},
     }))
     if scenario == 'empty_report_claims':
         report_path.write_bytes(b'A short introduction without scientific claims.')
@@ -1102,3 +1102,143 @@ def test_compare_retains_failed_extraction_when_trusted_verdict_ids_are_unavaila
     assert assessed['dimensions']['numerical_validity']['valid_claim_ids'] == []
     assert assessed['dimensions']['process_quality'] == {'methods_verified': True}
     assert paper_workflow.compare_workflow(work, report_path, output, evidence_path=evidence_path) == result
+
+
+@pytest.mark.parametrize('input_kind', ['report', 'manifest', 'artifact'])
+def test_comparison_protects_caller_input_under_output(tmp_path: Path, input_kind: str) -> None:
+    work, report_path, output = _frozen_compare(tmp_path)
+    output.mkdir()
+    pending_path = output / 'pending.json'
+    evidence_path = None
+    if input_kind == 'report':
+        pending_path.write_bytes(report_path.read_bytes())
+        report_path = pending_path
+    elif input_kind == 'manifest':
+        pending_path.write_bytes(b'{}\r\n')
+        evidence_path = pending_path
+    else:
+        pending_path.write_bytes(b'Checked results\r\n')
+        evidence_path = tmp_path / 'evidence.json'
+        evidence_path.write_bytes(paper_workflow.json_bytes({
+            'artifacts': [{'path': 'comparison/pending.json',
+                           'sha256': hashlib.sha256(pending_path.read_bytes()).hexdigest()}],
+        }))
+    before = pending_path.read_bytes()
+    with pytest.raises(ValueError, match='outside'):
+        paper_workflow.compare_workflow(work, report_path, output, evidence_path=evidence_path)
+    assert pending_path.read_bytes() == before
+    assert list(output.iterdir()) == [pending_path]
+
+
+@pytest.mark.parametrize('input_kind', ['paper', 'resources'])
+def test_prepare_protects_caller_input_under_output(tmp_path: Path, input_kind: str) -> None:
+    paper, resources, output = _prep_inputs(tmp_path)
+    output.mkdir()
+    pending_path = output / 'pending.json'
+    pending_path.write_bytes((paper if input_kind == 'paper' else resources).read_bytes())
+    before = pending_path.read_bytes()
+    with pytest.raises(ValueError, match='outside'):
+        paper_workflow.prepare_workflow(
+            pending_path if input_kind == 'paper' else paper,
+            pending_path if input_kind == 'resources' else resources,
+            output, policy=_policy(),
+        )
+    assert pending_path.read_bytes() == before
+    assert list(output.iterdir()) == [pending_path]
+
+
+@pytest.mark.parametrize('extraction_status', ['complete', 'truncated'])
+@pytest.mark.parametrize('conflicting', [False, True])
+def test_comparison_canonicalizes_trusted_aliases(tmp_path: Path, extraction_status: str, conflicting: bool) -> None:
+    work, report_path, output = _frozen_compare(tmp_path)
+    evidence_path = tmp_path / 'controller-checks.json'
+    evidence_bytes = paper_workflow.json_bytes({
+        'evidence_verdicts': [{'claim_id': 's0001:2', 'status': 'valid'}] + (
+            [{'claim_id': 's0001:0', 'status': 'invalid'}] if conflicting else []
+        ),
+    })
+    evidence_path.write_bytes(evidence_bytes)
+
+    def provider(request: dict) -> str:
+        raw = _compare_response(request)
+        if request['operation'] == 'judge':
+            return raw
+        response = json.loads(raw)
+        response['claims'].append({**response['claims'][0], 'claim_id': 's0001:2'})
+        response['status'] = extraction_status
+        return json.dumps(response)
+
+    paper_workflow.compare_workflow(work, report_path, output, provider=provider, evidence_path=evidence_path)
+    assessed = paper_workflow.read_json(output / 'assessment.json')
+    assert assessed['extraction']['aliases']['s0001:2'] == 's0001:0'
+    validity = assessed['dimensions']['numerical_validity']
+    assert validity['valid_claim_ids'] == ([] if conflicting else ['s0001:0'])
+    assert validity['invalid_claim_ids'] == []
+    assert validity['pending_claim_ids'] == (['s0001:0', 's0001:1'] if conflicting else ['s0001:1'])
+    assert (output / 'evidence.json').read_bytes() == evidence_bytes
+
+
+def test_comparison_replays_all_calls_before_first_save_without_evidence(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    work, report_path, output = _frozen_compare(tmp_path)
+    checked = []
+    original = assessment.ReplayProvider.assert_consumed
+
+    def check(replay: assessment.ReplayProvider) -> None:
+        original(replay)
+        assert not (output / 'assessment.json').exists()
+        checked.append([record['request']['operation'] for record in replay.calls])
+
+    monkeypatch.setattr(assessment.ReplayProvider, 'assert_consumed', check)
+    paper_workflow.compare_workflow(work, report_path, output, provider=_compare_response)
+    assert checked == [['extract', 'judge', 'judge', 'judge', 'judge']]
+
+
+def test_comparison_summary_explains_frozen_task_scope_unknown(tmp_path: Path) -> None:
+    paper, resources, work = _prep_inputs(tmp_path)
+    scope = _compare_scope()
+    task_scope = _compare_scope()
+    task_scope['conditions']['checkpoint'] = None
+    resources.write_bytes(paper_workflow.json_bytes({**_resources(), 'scope': task_scope}))
+
+    def prepare_provider(request: dict) -> str:
+        if request['operation'] == 'draft':
+            return json.dumps(_draft())
+        response = _reference_response(request)
+        response['claims'][0].update(scope=scope, kind='point',
+                                     payload={'metric': 'accuracy', 'estimate': 75, 'unit': 'percent'})
+        return json.dumps(response)
+
+    paper_workflow.prepare_workflow(paper, resources, work, policy=_policy(), provider=prepare_provider)
+    paper_workflow.freeze_workflow(work, _review(tmp_path, work))
+    report_path = tmp_path / 'original.md'
+    report_path.write_bytes(_COMPARE_REPORT.encode())
+    output = tmp_path / 'comparison'
+    result = paper_workflow.compare_workflow(work, report_path, output, provider=_compare_response)
+    assert result['assessment_status'] == 'pending_or_incomplete'
+    summary = (output / 'COMPARISON.md').read_text(encoding='utf-8')
+    assert 'Does the cohort improve?' in summary
+    assert 'urn:synthetic:paper' in summary
+    assert '"task_scope_known": false' in summary
+    assert '"checkpoint": null' in summary
+
+
+@pytest.mark.parametrize('process_checks', [
+    {'recomputed': {'status': 'pending'}},
+    {'assessment_status': 'pending'},
+    {'assessment_status': 'incomplete'},
+])
+def test_comparison_process_completion_requires_explicit_complete_status(tmp_path: Path, process_checks: dict) -> None:
+    work, report_path, output = _frozen_compare(tmp_path)
+    evidence_path = tmp_path / 'evidence.json'
+    evidence_path.write_bytes(paper_workflow.json_bytes({
+        'evidence_verdicts': [{'claim_id': 's0001:0', 'status': 'valid'},
+                              {'claim_id': 's0001:1', 'status': 'valid'}],
+        'process_checks': process_checks,
+    }))
+    result = paper_workflow.compare_workflow(
+        work, report_path, output, provider=_compare_response, evidence_path=evidence_path,
+    )
+    assert result['assessment_status'] == 'scored_dimensions'
+    assert result['scientific_assessment_complete'] is False
+    assessed = paper_workflow.read_json(output / 'assessment.json')
+    assert assessed['dimensions']['process_quality'] == process_checks

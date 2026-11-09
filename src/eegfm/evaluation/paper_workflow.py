@@ -515,6 +515,11 @@ def _work_layout(work: Path) -> None:
         _queue_entry_exists(work / name)
 
 
+def _require_external_input(path: Path, output: Path) -> None:
+    if path.resolve().is_relative_to(output):
+        raise ValueError(f'Caller-supplied input must be outside the output directory: {path}')
+
+
 def _save_files(work: Path, files: dict[str, bytes]) -> None:
     # Preflight the whole group before creating anything beside a conflict.
     for name, data in files.items():
@@ -680,6 +685,8 @@ def prepare_workflow(paper_path: Path, resources_path: Path, output: Path, *, po
     output = output.absolute()
     _work_layout(output)
     output = output.resolve()
+    _require_external_input(paper_path, output)
+    _require_external_input(resources_path, output)
     policy = resolve_policy(policy)
     paper_bytes, paper = read_utf8(paper_path)
     resource_bytes, resource_text = read_utf8(resources_path)
@@ -825,9 +832,10 @@ def freeze_workflow(work: Path, review_path: Path) -> dict[str, Any]:
 _COMPARISON_FILES = ('assessment.json', 'COMPARISON.md', 'COMPARISON.json')
 
 
-def _trusted_evidence(path: Path | None) -> tuple[bytes | None, dict[str, Any]]:
+def _trusted_evidence(path: Path | None, output: Path) -> tuple[bytes | None, dict[str, Any]]:
     if path is None:
         return None, {}
+    _require_external_input(path, output)
     raw, text = read_utf8(path)
     evidence = _parse_json(text)
     if not evidence.keys() <= {'evidence_verdicts', 'process_checks', 'artifacts'}:
@@ -846,7 +854,9 @@ def _trusted_evidence(path: Path | None) -> tuple[bytes | None, dict[str, Any]]:
         if (not _is_text(artifact['path']) or not isinstance(artifact['sha256'], str)
                 or not _SHA256.fullmatch(artifact['sha256'])):
             raise ValueError('Trusted artifacts require a path and a lowercase SHA-256')
-        if _file_hash(path.parent / artifact['path']) != artifact['sha256']:
+        artifact_path = path.parent / artifact['path']
+        _require_external_input(artifact_path, output)
+        if _file_hash(artifact_path) != artifact['sha256']:
             raise ReplayMismatch(f"Trusted artifact bytes changed: {artifact['path']}")
     json_bytes(evidence)
     return raw, evidence
@@ -877,7 +887,7 @@ def _comparison_status(freeze: dict[str, Any], result: dict[str, Any] | None = N
             # are out of scope or the report has no claims.
             and result['judging']['model_calls'] >= len(assessment.DIRECTIONS)
             and not dimensions['numerical_validity']['pending_claim_ids']
-            and bool(dimensions['process_quality'])
+            and dimensions['process_quality'].get('assessment_status') == 'complete'
         )
     return status
 
@@ -903,7 +913,12 @@ def _comparison_markdown(status: dict[str, Any], freeze: dict[str, Any], task: d
     lines = ['# Report comparison', '',
              *(f'- `{key}` = `{status[key]}`' for key in (
                  'task_relation', 'pipeline_status', 'assessment_status', 'scientific_assessment_complete')),
-             '', '## Report claims', '']
+             '', '## Frozen source and task scope', '']
+    question = next(node for node in task['tree'] if node['node_id'] == task['selected_question_id'])
+    lines.extend([block({'selected_question': question['text'], 'source_spans': question['source_spans'],
+                         'paper_uri': task['paper']['uri'], 'task_scope': task['scope'],
+                         'task_scope_known': result['judging']['task_scope_known']}),
+                  '', '## Report claims', ''])
     agents = {claim['claim_id']: claim for claim in result['extraction']['claims']}
     refs = {item['claim']['claim_id']: item['claim'] for item in task['references']}
     reference_manifest = {item['claim_id']: item for item in result['reference_manifest']}
@@ -945,6 +960,7 @@ def _comparison_markdown(status: dict[str, Any], freeze: dict[str, Any], task: d
                   'Numerical validity is not established where a claim has no resolved verdict.', '',
                   block(numerical), '',
                   'Process quality uses caller-supplied checks.' if process else 'Process quality is not established.',
+                  'Scientific assessment completion requires trusted process assessment_status to be complete.',
                   '', block(process), ''])
     return ('\n'.join(lines) + '\n').encode('utf-8')
 
@@ -957,16 +973,17 @@ def compare_workflow(work: Path, report_path: Path, output: Path, *,
     A missing queue response yields an awaiting status only. A completed local
     pipeline preserves the assessor's scientific status verbatim. Scientific
     assessment completion requires an evaluable comparison with at least one
-    judged pair, resolved numerical verdicts and supplied process checks. It
-    can include unfavorable findings.
+    judged pair, resolved numerical verdicts and a trusted process assessment
+    status of complete. It can include unfavorable findings.
     """
     work, output = work.absolute(), output.absolute()
     freeze, policy, private_task = load_frozen_workflow(work)
     output = _comparison_layout(work.resolve(), output)
+    _require_external_input(report_path, output)
     report_bytes, report = read_utf8(report_path)
     if not _is_text(report) or len(report) > policy['max_report_chars']:
         raise ValueError('Report must be nonempty UTF-8 text within max_report_chars')
-    evidence_bytes, evidence = _trusted_evidence(evidence_path)
+    evidence_bytes, evidence = _trusted_evidence(evidence_path, output)
     inputs = {'report.txt': report_bytes}
     if evidence_bytes is not None:
         inputs['evidence.json'] = evidence_bytes
@@ -1058,14 +1075,20 @@ def compare_workflow(work: Path, report_path: Path, output: Path, *,
                 raise ReplayMismatch('Terminal comparison has undelivered responses')
             return _comparison_status(freeze, pending=queue.pending)
 
-    verdicts = tuple(evidence.get('evidence_verdicts', ()))
-    if not assessed['extraction']['eligible_for_scoring']:
-        # Keep the caller's full manifest, but do not apply verdicts whose
-        # claim IDs could not be recovered from the terminal extraction.
-        aliases = assessed['extraction']['aliases']
-        verdicts = tuple(verdict for verdict in verdicts if verdict['claim_id'] in aliases)
-    if verdicts:
-        assessed = assess(ReplayProvider(assessed['calls']), verdicts)
+    extraction = assessed['extraction']
+    aliases = extraction['aliases']
+    # Keep the original manifest and every conflicting verdict. On incomplete
+    # extraction, verdicts for unavailable claims remain in the manifest only.
+    verdicts = tuple(
+        {**verdict, 'claim_id': aliases.get(verdict['claim_id'], verdict['claim_id'])}
+        for verdict in evidence.get('evidence_verdicts', ())
+        if extraction['eligible_for_scoring'] or verdict['claim_id'] in aliases
+    )
+    if verdicts or not isinstance(active, ReplayProvider):
+        replayed = assess(ReplayProvider(assessed['calls']), verdicts)
+        if replayed['calls'] != assessed['calls'] or (not verdicts and replayed != assessed):
+            raise ReplayMismatch('Assessment changed on exact replay')
+        assessed = replayed
 
     status = _comparison_status(freeze, assessed)
     requests, responses = _queue_hashes(output, assessed['calls'])
