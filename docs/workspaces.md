@@ -64,7 +64,7 @@ Windows 状态检查：
 
 ## 环境与验证
 
-当前源码 `0a8456a` 的完整支持套件各收集 880 项：Windows 797 通过 / 83 跳过，NCC 861 / 19，火山云 859 / 21。核验清单在正式本地工程 `.local/research-renewal/coding-episode-validation-v6/VERIFIED.json`，绑定源码、依赖、前后文件身份与清理结果。两台 Linux 在独立冻结副本上验收，不替换旧运行源码。
+最新实现 `cb19082` 的完整支持套件各收集 900 项：Windows 816 通过 / 84 跳过，NCC 881 / 19，火山云 879 / 21。核验清单在正式本地工程 `.local/research-renewal/condition-assessment-v2/validation/VERIFIED.json`，绑定源码、依赖、前后文件身份与清理结果；冻结时记录的是父提交加两项修改，修改内容随后原样提交为 `cb19082`。三台机器均使用独立公开源码快照，Windows 快照也排除了可选私有报告样例；该样例另经本地专项测试。旧真实 EEG 编码运行仍绑定 `0a8456a` 及其原 880 项验收，不替换旧运行源码。
 
 本轮真实 EEG 编码任务使用本地模型会话、NCC 控制器和火山云 Docker，已完成两次公开拟合、两次验证、一次最终测试，随后一次源码重拟合和一次完整预测复算。原始证据分别在两台服务器项目根的 `runs/evidence-guided-research-v1/coding-readout-v6/base-r01/`；本地审阅副本在 `.local/research-renewal/coding-eeg-workflow-v6/`。这条新通道可用；NCC 旧原生模型授权仍未恢复。模型上下文的访问审计不等于其进程受到操作系统隔离。
 

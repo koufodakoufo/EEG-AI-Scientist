@@ -26,7 +26,7 @@
 | `evaluation/public_workbench.py` | 在容器内拟合公开训练数据，核验有限数值参数后交回研究者；与保留标签的科学评价分开，检查共享截止时间 |
 | `evaluation/worker.py`、`evaluation/docker_worker.py` | 受限科学候选执行，支持bwrap或Docker；当前火山云实际使用Docker |
 | `evaluation/paper.py`、`evaluation/assessment.py` | 论文问题、私有参考与公共题包分开；逐项比较报告主张，未知实验条件保留待评；保存真实模型请求与可重放响应 |
-| `evaluation/report_package.py`、`registered_assessment.py` | 新的可选报告入口：保留原文和来源位置，将运行登记与作者主张分开，按明确编号分批比较；旧评价协议不变 |
+| `evaluation/report_package.py`、`registered_assessment.py` | 保留原文和来源位置，将运行登记与作者主张分开，分批比较。可选 v2 将模型/分类头状态、随机对照数量与文件身份分开；未知条件和缺失数值验证仍待评，默认 v1 不变 |
 | `eeg/evidence_policy.py` | 新 v2 任务的验证证据缺口提示；只读取当前验证结果，完成数量不等于科学有效性 |
 | `eeg/erasure.py` | 独立实现的线性概念移除；训练样本上的协方差约束不等于新样本中所有信息消失 |
 | `eeg/motor_imagery.py` | 明确时间窗、通道和标签的运动想象准备；旧开发入口保持训练/验证边界，可信新研究须显式登记准入记录 |
