@@ -756,3 +756,349 @@ def test_reentry_rejects_replaced_identity_before_queueing_another_draft(tmp_pat
     with pytest.raises(assessment.ReplayMismatch):
         prepare(max_prepare_requests=999)
     assert set((work / 'requests').glob('*.json')) == queued_before
+
+_COMPARE_REPORT = "# Results 🚀\r\nObserved accuracy was 75%.\r\n\r\n## Additional observations\r\nNoise decreased. Evidence and process were verified.\r\n"
+
+
+def _compare_scope() -> dict:
+    scope = _resources()['scope']
+    scope['conditions'].update(checkpoint='fixed v1', head='linear', preprocessing='z-score',
+                               representation='features', inference_unit='participant')
+    return scope
+
+
+def _frozen_compare(tmp_path: Path, *, reference_scope: dict | None = None, **policy: object) -> tuple[Path, Path, Path]:
+    paper_path, resources_path, work = _prep_inputs(tmp_path)
+    resources = {**_resources(), 'scope': _compare_scope()}
+    resources_path.write_bytes(json.dumps(resources).encode())
+
+    def provider(request: dict) -> str:
+        if request['operation'] == 'draft':
+            return json.dumps(_draft())
+        response = _reference_response(request)
+        response['claims'][0].update(
+            scope=resources['scope'] if reference_scope is None else reference_scope,
+            kind='point', payload={'metric': 'accuracy', 'estimate': 75, 'unit': 'percent'},
+        )
+        return json.dumps(response)
+
+    paper_workflow.prepare_workflow(paper_path, resources_path, work, policy=_policy(**policy), provider=provider)
+    paper_workflow.freeze_workflow(work, _review(tmp_path, work))
+    report_path = tmp_path / 'complete-report.md'
+    report_path.write_bytes(_COMPARE_REPORT.encode('utf-8'))
+    return work, report_path, tmp_path / 'comparison'
+
+
+def _compare_response(request: dict, *, report_scope: dict | None = None) -> str:
+    if request['operation'] == 'judge':
+        judgment = request['response_contract']['judgment']
+        relation = 'supported' if request['data']['agent_claim']['predicate'] == 'has accuracy' else 'not_covered'
+        return json.dumps({'status': 'complete', 'notes': 'Synthetic comparison.', 'judgment': {
+            **judgment, 'relation': relation,
+        }})
+    segment = request['data']['segment']
+    values = []
+    for index, (quote, predicate, payload) in enumerate((
+        ('Observed accuracy was 75%.', 'has accuracy', {'metric': 'accuracy', 'estimate': 75, 'unit': 'percent'}),
+        ('Noise decreased.', 'has lower noise', {'metric': 'noise', 'estimate': -1, 'unit': 'arbitrary'}),
+    )):
+        if quote in segment['text']:
+            start = segment['start'] + segment['text'].index(quote)
+            values.append({
+                'claim_id': f"{segment['segment_id']}:{index}", 'kind': 'point',
+                'scope': _compare_scope() if report_scope is None else report_scope,
+                'subject': 'report cohort', 'predicate': predicate, 'direction': 'observed',
+                'qualifiers': [], 'payload': payload, 'evidence_ids': ['self-reported-check'],
+                'source_spans': [{'start': start, 'end': start + len(quote), 'quote': quote}],
+            })
+    return json.dumps({'segment_id': segment['segment_id'], 'status': 'complete', 'claims': values, 'notes': ''})
+
+
+def test_compare_unknown_scope_stays_pending(tmp_path: Path) -> None:
+    scope = _compare_scope()
+    scope['conditions']['checkpoint'] = None
+    work, report_path, output = _frozen_compare(tmp_path, reference_scope=scope)
+
+    def provider(request: dict) -> str:
+        assert request['operation'] == 'extract'
+        return _compare_response(request)
+
+    result = paper_workflow.compare_workflow(work, report_path, output, provider=provider)
+    assessed = paper_workflow.read_json(output / 'assessment.json')
+    assert result['pipeline_status'] == 'compared'
+    assert result['assessment_status'] == assessed['status'] == 'pending_or_incomplete'
+    assert assessed['judging']['model_calls'] == 0
+    assert {edge['relation'] for edge in assessed['judgments']} == {'needs_review'}
+    assert assessed['dimensions']['reference_coverage']['f1'] is None
+
+
+def test_compare_known_scope_mismatch_is_noncoverage_not_contradiction(tmp_path: Path) -> None:
+    scope = _compare_scope()
+    scope['conditions']['head'] = 'nonlinear'
+    work, report_path, output = _frozen_compare(tmp_path, reference_scope=scope)
+
+    def provider(request: dict) -> str:
+        assert request['operation'] == 'extract'
+        return _compare_response(request)
+
+    paper_workflow.compare_workflow(work, report_path, output, provider=provider)
+    assessed = paper_workflow.read_json(output / 'assessment.json')
+    assert assessed['judging']['model_calls'] == 0
+    assert {edge['relation'] for edge in assessed['judgments']} == {'not_covered'}
+    assert assessed['dimensions']['contradictions'] == []
+    summary = (output / 'COMPARISON.md').read_text(encoding='utf-8')
+    assert 'conditions.head' in summary and 'nonlinear' in summary and 'linear' in summary
+
+
+def test_compare_exact_scope_calls_both_directions(tmp_path: Path) -> None:
+    work, report_path, output = _frozen_compare(tmp_path, provider_metadata={'model': 'fixture'})
+    reference = paper_workflow.read_json(work / 'private-task.json')['references'][0]['claim']
+    reference_request = paper_workflow.read_json(work / 'reference-extraction.json')['calls'][0]['request']
+    expected = {}
+    judged = []
+
+    def provider(request: dict) -> str:
+        raw = _compare_response(request)
+        if request['operation'] == 'extract':
+            for name in ('instructions', 'prompt_version', 'provider_metadata', 'timeout_seconds', 'provider_id'):
+                assert request[name] == reference_request[name]
+            assert request['data']['segment']['text'] == _COMPARE_REPORT
+            expected.update({value['claim_id']: value for value in json.loads(raw)['claims']})
+        else:
+            data = request['data']
+            assert data['agent_claim'] == expected[data['agent_claim']['claim_id']]
+            assert data['reference_claim'] == reference
+            judged.append((data['agent_claim']['claim_id'], data['direction']))
+        return raw
+
+    result = paper_workflow.compare_workflow(work, report_path, output, provider=provider)
+    assessed = paper_workflow.read_json(output / 'assessment.json')
+    assert result['assessment_status'] == 'scored_dimensions'
+    assert sorted(judged) == [
+        ('s0001:0', 'agent_covers_reference'), ('s0001:0', 'reference_supports_agent'),
+        ('s0001:1', 'agent_covers_reference'), ('s0001:1', 'reference_supports_agent'),
+    ]
+    assert assessed['judging']['model_calls'] == 4
+
+
+def test_compare_preserves_full_report_and_replays(tmp_path: Path) -> None:
+    work, report_path, output = _frozen_compare(tmp_path)
+    result = paper_workflow.compare_workflow(work, report_path, output, provider=_compare_response)
+    assessed_path = output / 'assessment.json'
+    saved_bytes = assessed_path.read_bytes()
+    assessed = json.loads(saved_bytes)
+    assert (output / 'report.txt').read_bytes() == report_path.read_bytes()
+    assert len(assessed['calls']) == 5
+    assert {claim['source_spans'][0]['quote'] for claim in assessed['extraction']['claims']} == {
+        'Observed accuracy was 75%.', 'Noise decreased.',
+    }
+    summary = (output / 'COMPARISON.md').read_text(encoding='utf-8')
+    assert 'Noise decreased.' in summary and 'report.txt' in summary and 'reference.txt' in summary
+    replay = assessment.ReplayProvider(assessed['calls'])
+    assert paper_workflow.compare_workflow(work, report_path, output, provider=replay) == result
+    replay.assert_consumed()
+    fresh_output = tmp_path / 'comparison-replay'
+    fresh_replay = assessment.ReplayProvider(assessed['calls'])
+    assert paper_workflow.compare_workflow(work, report_path, fresh_output, provider=fresh_replay) == result
+    fresh_replay.assert_consumed()
+    assert (fresh_output / 'assessment.json').read_bytes() == saved_bytes
+
+    def unexpected_provider(request: dict) -> str:
+        pytest.fail('Terminal comparison must replay saved calls without calling an injected provider')
+
+    assert paper_workflow.compare_workflow(work, report_path, output, provider=unexpected_provider) == result
+    for defect in ('request', 'raw_response', 'request_sha256', 'response_sha256'):
+        changed = json.loads(saved_bytes)
+        changed['calls'][0][defect] = {} if defect == 'request' else 'changed'
+        assessed_path.write_bytes(paper_workflow.json_bytes(changed))
+        with pytest.raises(assessment.ReplayMismatch):
+            paper_workflow.compare_workflow(work, report_path, output)
+    assessed_path.write_bytes(saved_bytes)
+    report_path.write_bytes(report_path.read_bytes() + b'\n')
+    with pytest.raises(assessment.ReplayMismatch):
+        paper_workflow.compare_workflow(work, report_path, output)
+
+
+@pytest.mark.parametrize('limit', [{'max_judge_calls': 1}, {'max_compare_requests': 2}, {'max_judge_pairs': 1}])
+def test_compare_caps_and_missing_responses_never_create_coverage(tmp_path: Path, limit: dict) -> None:
+    work, report_path, output = _frozen_compare(tmp_path, **limit)
+    pending = paper_workflow.compare_workflow(work, report_path, output)
+    assert pending['pipeline_status'] == 'awaiting_responses'
+    assert pending['assessment_status'] == 'not_run'
+    assert not (output / 'assessment.json').exists()
+    assert not (output / 'COMPARISON.md').exists()
+    assert not (output / 'COMPARISON.json').exists()
+    request = _pending_request(output)
+    assert request['operation'] == 'extract'
+    delivered = _deliver(output, request, _response_record(request, raw=_compare_response(request)))
+    result = paper_workflow.compare_workflow(work, report_path, output)
+    if limit != {'max_judge_pairs': 1}:
+        assert result['pipeline_status'] == 'awaiting_responses'
+        assert result['assessment_status'] == 'not_run'
+        assert not (output / 'assessment.json').exists()
+        original = delivered.read_bytes()
+        delivered.write_bytes(original + b'\n')
+        with pytest.raises(assessment.ReplayMismatch):
+            paper_workflow.compare_workflow(work, report_path, output)
+        delivered.write_bytes(original)
+        request = _pending_request(output)
+        assert request['operation'] == 'judge'
+        _deliver(output, request, _response_record(request, raw=_compare_response(request)))
+        result = paper_workflow.compare_workflow(work, report_path, output)
+    assert result['pipeline_status'] == 'compared'
+    assert result['assessment_status'] == 'pending_or_incomplete'
+    assessed = paper_workflow.read_json(output / 'assessment.json')
+    assert assessed['judging']['model_calls'] == (0 if 'max_judge_pairs' in limit else 1)
+    assert assessed['judging']['completed_directional_edges'] < assessed['judging']['expected_directional_edges']
+    assert assessed['dimensions']['reference_coverage']['f1'] is None
+
+
+def test_report_evidence_does_not_self_validate(tmp_path: Path) -> None:
+    work, report_path, output = _frozen_compare(tmp_path)
+    result = paper_workflow.compare_workflow(work, report_path, output, provider=_compare_response)
+    assessed = paper_workflow.read_json(output / 'assessment.json')
+    assert assessed['dimensions']['numerical_validity'] == {
+        'valid_claim_ids': [], 'invalid_claim_ids': [], 'pending_claim_ids': ['s0001:0', 's0001:1'],
+    }
+    assert assessed['dimensions']['process_quality'] == {}
+    assert result['assessment_status'] == assessed['status'] == 'scored_dimensions'
+    summary = (output / 'COMPARISON.md').read_text(encoding='utf-8')
+    for value in ('task_relation', 'adapted', 'pipeline_status', 'compared', 'assessment_status', 'scored_dimensions'):
+        assert value in summary
+    assert 'not established' in summary
+    assert 'passed' not in summary
+
+
+def test_compare_binds_caller_evidence_and_checks_artifact_bytes(tmp_path: Path) -> None:
+    work, report_path, output = _frozen_compare(tmp_path)
+    artifact = tmp_path / 'checked-numbers.txt'
+    artifact.write_bytes(b'75\r\n')
+    evidence_path = tmp_path / 'evidence.json'
+    evidence_path.write_bytes(json.dumps({
+        'evidence_verdicts': [{'claim_id': 's0001:0', 'status': 'valid'}],
+        'process_checks': {'independent_recomputation': True},
+        'artifacts': [{'path': artifact.name, 'sha256': hashlib.sha256(artifact.read_bytes()).hexdigest()}],
+    }).encode())
+    assert paper_workflow.compare_workflow(
+        work, report_path, output, evidence_path=evidence_path,
+    )['pipeline_status'] == 'awaiting_responses'
+    request = _pending_request(output)
+    _deliver(output, request, _response_record(request, raw=_compare_response(request)))
+    pending = paper_workflow.compare_workflow(work, report_path, output, evidence_path=evidence_path)
+    assert pending['pipeline_status'] == 'awaiting_responses'
+    assert len(pending['pending']) == 4
+    for entry in pending['pending']:
+        request = paper_workflow.read_json(output / entry['request_path'])
+        _deliver(output, request, _response_record(request, raw=_compare_response(request)))
+    paper_workflow.compare_workflow(work, report_path, output, evidence_path=evidence_path)
+    assessed = paper_workflow.read_json(output / 'assessment.json')
+    assert assessed['dimensions']['numerical_validity']['valid_claim_ids'] == ['s0001:0']
+    assert assessed['dimensions']['process_quality'] == {'independent_recomputation': True}
+    assert (output / 'evidence.json').read_bytes() == evidence_path.read_bytes()
+    artifact.write_bytes(b'76\n')
+    with pytest.raises(assessment.ReplayMismatch):
+        paper_workflow.compare_workflow(work, report_path, output, evidence_path=evidence_path)
+
+
+def test_compare_rejects_output_alias_of_frozen_work(tmp_path: Path) -> None:
+    work, report_path, _ = _frozen_compare(tmp_path)
+    alias = work / 'existing' / '..'
+    alias.parent.mkdir()
+    with pytest.raises(ValueError, match='separate'):
+        paper_workflow.compare_workflow(work, report_path, alias)
+    assert not (work / 'report.txt').exists()
+
+
+def test_pending_comparison_rejects_replaced_report_identity_before_new_queue_files(tmp_path: Path) -> None:
+    work, report_path, output = _frozen_compare(tmp_path)
+    assert paper_workflow.compare_workflow(work, report_path, output)['pipeline_status'] == 'awaiting_responses'
+    before = set((output / 'requests').glob('*.json'))
+    changed = report_path.read_bytes() + b'\r\nMore evidence.'
+    report_path.write_bytes(changed)
+    (output / 'report.txt').write_bytes(changed)
+    identity_path = output / 'inputs' / 'IDENTITY.json'
+    identity = paper_workflow.read_json(identity_path)
+    identity['file_hashes']['report.txt'] = hashlib.sha256(changed).hexdigest()
+    identity_path.write_bytes(paper_workflow.json_bytes(identity))
+    with pytest.raises(assessment.ReplayMismatch):
+        paper_workflow.compare_workflow(work, report_path, output)
+    assert set((output / 'requests').glob('*.json')) == before
+
+
+def test_compare_records_explicit_terminal_failure_without_retry(tmp_path: Path) -> None:
+    work, report_path, output = _frozen_compare(tmp_path)
+    paper_workflow.compare_workflow(work, report_path, output)
+    request = _pending_request(output)
+    _deliver(output, request, _response_record(
+        request, raw=None, status='service_failure',
+        failure={'type': 'SyntheticOutage', 'message': 'No report extraction was delivered.'},
+    ))
+    result = paper_workflow.compare_workflow(work, report_path, output)
+    assert result['pipeline_status'] == 'compared'
+    assert result['assessment_status'] == 'pending_or_incomplete'
+    assert result['scientific_assessment_complete'] is False
+    assert result['pending'] == []
+    assessed = paper_workflow.read_json(output / 'assessment.json')
+    assert len(assessed['calls']) == 1 and assessed['calls'][0]['status'] == 'service_failure'
+    assert assessed['dimensions']['reference_coverage']['f1'] is None
+    assert paper_workflow.compare_workflow(work, report_path, output) == result
+    assert paper_workflow.read_json(output / 'assessment.json') == assessed
+
+
+@pytest.mark.parametrize('scenario', ['same_scope', 'different_scope', 'empty_report_claims'])
+def test_scientific_completion_requires_comparable_claims_and_trusted_checks(tmp_path: Path, scenario: str) -> None:
+    scope = _compare_scope()
+    if scenario == 'different_scope':
+        scope['conditions']['head'] = 'nonlinear'
+    work, report_path, output = _frozen_compare(tmp_path, reference_scope=scope)
+    evidence_path = tmp_path / 'controller-checks.json'
+    evidence_path.write_bytes(paper_workflow.json_bytes({
+        'evidence_verdicts': ([] if scenario == 'empty_report_claims' else [
+            {'claim_id': 's0001:0', 'status': 'invalid'},
+            {'claim_id': 's0001:1', 'status': 'valid'},
+        ]),
+        'process_checks': {'methods_verified': True},
+    }))
+    if scenario == 'empty_report_claims':
+        report_path.write_bytes(b'A short introduction without scientific claims.')
+    result = paper_workflow.compare_workflow(
+        work, report_path, output, provider=_compare_response, evidence_path=evidence_path,
+    )
+    assert result['pipeline_status'] == 'compared'
+    assert result['assessment_status'] == 'scored_dimensions'
+    assert result['scientific_assessment_complete'] is (scenario == 'same_scope')
+    assert paper_workflow.read_json(output / 'COMPARISON.json')['scientific_assessment_complete'] is (scenario == 'same_scope')
+
+
+def test_compare_checks_frozen_reference_before_queueing(tmp_path: Path) -> None:
+    work, report_path, output = _frozen_compare(tmp_path)
+    frozen = work / 'reference.txt'
+    frozen.write_bytes(frozen.read_bytes() + b'\r\n')
+    with pytest.raises(assessment.ReplayMismatch):
+        paper_workflow.compare_workflow(work, report_path, output)
+    assert not output.exists()
+
+
+def test_compare_retains_failed_extraction_when_trusted_verdict_ids_are_unavailable(tmp_path: Path) -> None:
+    work, report_path, output = _frozen_compare(tmp_path)
+    evidence_path = tmp_path / 'controller-checks.json'
+    evidence_path.write_bytes(paper_workflow.json_bytes({
+        'evidence_verdicts': [{'claim_id': 's0001:0', 'status': 'valid'}],
+        'process_checks': {'methods_verified': True},
+    }))
+    calls = []
+
+    def provider(request: dict) -> str:
+        calls.append(request)
+        raise RuntimeError('Synthetic failure during extraction.')
+
+    result = paper_workflow.compare_workflow(
+        work, report_path, output, provider=provider, evidence_path=evidence_path,
+    )
+    assert len(calls) == 1
+    assert result['assessment_status'] == 'pending_or_incomplete'
+    assessed = paper_workflow.read_json(output / 'assessment.json')
+    assert assessed['calls'][0]['failure']['message'] == 'Synthetic failure during extraction.'
+    assert assessed['dimensions']['numerical_validity']['valid_claim_ids'] == []
+    assert assessed['dimensions']['process_quality'] == {'methods_verified': True}
+    assert paper_workflow.compare_workflow(work, report_path, output, evidence_path=evidence_path) == result

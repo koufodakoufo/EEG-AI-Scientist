@@ -820,3 +820,266 @@ def freeze_workflow(work: Path, review_path: Path) -> dict[str, Any]:
         load_frozen_workflow(work)
     _save_files(work, outputs)
     return _pipeline('frozen')
+
+
+_COMPARISON_FILES = ('assessment.json', 'COMPARISON.md', 'COMPARISON.json')
+
+
+def _trusted_evidence(path: Path | None) -> tuple[bytes | None, dict[str, Any]]:
+    if path is None:
+        return None, {}
+    raw, text = read_utf8(path)
+    evidence = _parse_json(text)
+    if not evidence.keys() <= {'evidence_verdicts', 'process_checks', 'artifacts'}:
+        raise ValueError('Unexpected trusted evidence field')
+    verdicts = evidence.get('evidence_verdicts', [])
+    checks = evidence.get('process_checks', {})
+    artifacts = evidence.get('artifacts', [])
+    if not isinstance(verdicts, list) or not isinstance(checks, dict) or not isinstance(artifacts, list):
+        raise ValueError('Trusted evidence requires lists of verdicts and artifacts, and a process checks object')
+    for verdict in verdicts:
+        _fields(verdict, {'claim_id', 'status'}, 'Evidence verdict')
+        if not _is_text(verdict['claim_id']) or verdict['status'] not in ('valid', 'invalid', 'pending'):
+            raise ValueError('Invalid trusted claim verdict')
+    for artifact in artifacts:
+        _fields(artifact, {'path', 'sha256'}, 'Evidence artifact')
+        if (not _is_text(artifact['path']) or not isinstance(artifact['sha256'], str)
+                or not _SHA256.fullmatch(artifact['sha256'])):
+            raise ValueError('Trusted artifacts require a path and a lowercase SHA-256')
+        if _file_hash(path.parent / artifact['path']) != artifact['sha256']:
+            raise ReplayMismatch(f"Trusted artifact bytes changed: {artifact['path']}")
+    json_bytes(evidence)
+    return raw, evidence
+
+
+def _comparison_layout(work: Path, output: Path) -> Path:
+    for directory in (*reversed(output.parents), output, output / 'inputs',
+                      output / 'requests', output / 'responses'):
+        _queue_entry_exists(directory, directory=True)
+    output = output.resolve()
+    if output == work or work in output.parents or output in work.parents:
+        raise ValueError('Comparison requires an output directory separate from preparation')
+    for name in (_INPUT_IDENTITY, 'report.txt', 'evidence.json', 'pending.json', *_COMPARISON_FILES):
+        _queue_entry_exists(output / name)
+    return output
+
+
+def _comparison_status(freeze: dict[str, Any], result: dict[str, Any] | None = None, *,
+                       pending: list[dict[str, str]] | None = None) -> dict[str, Any]:
+    status = _pipeline('compared' if result is not None else 'awaiting_responses', pending=pending)
+    status.update(task_relation=freeze['task_relation'], scientific_assessment_complete=False)
+    if result is not None:
+        dimensions = result['dimensions']
+        status['assessment_status'] = result['status']
+        status['scientific_assessment_complete'] = (
+            result['status'] == 'scored_dimensions'
+            # A scored assessment can have zero modeled edges when all pairs
+            # are out of scope or the report has no claims.
+            and result['judging']['model_calls'] >= len(assessment.DIRECTIONS)
+            and not dimensions['numerical_validity']['pending_claim_ids']
+            and bool(dimensions['process_quality'])
+        )
+    return status
+
+
+def _scope_differences(agent: dict[str, Any], reference: dict[str, Any]) -> dict[str, Any]:
+    def values(claim: dict[str, Any]) -> dict[str, Any]:
+        scope = claim['scope']
+        return {'kind': claim['kind'], **{key: scope[key] for key in ('dataset', 'model', 'split')},
+                **{f'conditions.{key}': value for key, value in scope['conditions'].items()}}
+
+    sides = {'report': values(agent), 'reference': values(reference)}
+    keys = sides['report'].keys() | sides['reference'].keys()
+    return {key: {side: fields[key] for side, fields in sides.items() if key in fields}
+            for key in sorted(keys) if sides['report'].get(key, ...) != sides['reference'].get(key, ...)}
+
+
+def _comparison_markdown(status: dict[str, Any], freeze: dict[str, Any], task: dict[str, Any],
+                         result: dict[str, Any]) -> bytes:
+    def block(value: Any) -> str:
+        # Indented code keeps quotes and model strings inert in Markdown.
+        return '\n'.join('    ' + line for line in json_bytes(value).decode('utf-8').split('\n')[:-1])
+
+    lines = ['# Report comparison', '',
+             *(f'- `{key}` = `{status[key]}`' for key in (
+                 'task_relation', 'pipeline_status', 'assessment_status', 'scientific_assessment_complete')),
+             '', '## Report claims', '']
+    agents = {claim['claim_id']: claim for claim in result['extraction']['claims']}
+    refs = {item['claim']['claim_id']: item['claim'] for item in task['references']}
+    reference_manifest = {item['claim_id']: item for item in result['reference_manifest']}
+    for claim in agents.values():
+        lines.extend([block({'file': 'report.txt', 'claim': claim}), ''])
+    if not agents:
+        lines.extend(['No report claims were available for judgment.', ''])
+
+    lines.extend(['## Frozen reference claims', '',
+                  f"The reference.txt passage begins at code point {freeze['reference_span']['start']} "
+                  'of the original paper. The displayed spans are relative to the passage.', ''])
+    for claim_id, claim in refs.items():
+        lines.extend([block({'file': 'reference.txt', 'claim': claim,
+                             'provenance': reference_manifest[claim_id]['provenance']}), ''])
+
+    judging = result['judging']
+    lines.extend(['## Directional judgments', '',
+                  f"{judging['completed_directional_edges']} of {judging['expected_directional_edges']} "
+                  'directional edges have a recorded disposition.', '',
+                  'A scope mismatch limits direct comparison. An unmatched claim can still be scientifically valid.', '',
+                  *[f'- {note}' for note in judging['notes']], ''])
+    if result['judgments']:
+        lines.extend([block(result['judgments']), ''])
+
+    boundaries = judging['boundary_noncoverage'] + judging['boundary_review']
+    pairs = {(item['agent_claim_id'], item['reference_claim_id']): item['reason'] for item in boundaries}
+    if pairs:
+        lines.extend(['## Scope and claim-kind boundaries', ''])
+        for (agent_id, ref_id), reason in pairs.items():
+            lines.extend([block({'agent_claim_id': agent_id, 'reference_claim_id': ref_id, 'reason': reason,
+                                 'differences': _scope_differences(agents[agent_id], refs[ref_id])}), ''])
+
+    dimensions = result['dimensions']
+    numerical = dimensions['numerical_validity']
+    process = dimensions['process_quality']
+    lines.extend(['## Evidence dimensions', '',
+                  'Semantic calibration is not established by this validator.', '',
+                  'Numerical validity uses caller-supplied evidence verdicts.',
+                  'Numerical validity is not established where a claim has no resolved verdict.', '',
+                  block(numerical), '',
+                  'Process quality uses caller-supplied checks.' if process else 'Process quality is not established.',
+                  '', block(process), ''])
+    return ('\n'.join(lines) + '\n').encode('utf-8')
+
+
+def compare_workflow(work: Path, report_path: Path, output: Path, *,
+                     provider: assessment.Provider | None = None,
+                     evidence_path: Path | None = None) -> dict[str, Any]:
+    """Compare a complete UTF-8 report to frozen references and record exact replay evidence.
+
+    A missing queue response yields an awaiting status only. A completed local
+    pipeline preserves the assessor's scientific status verbatim. Scientific
+    assessment completion requires an evaluable comparison with at least one
+    judged pair, resolved numerical verdicts and supplied process checks. It
+    can include unfavorable findings.
+    """
+    work, output = work.absolute(), output.absolute()
+    freeze, policy, private_task = load_frozen_workflow(work)
+    output = _comparison_layout(work.resolve(), output)
+    report_bytes, report = read_utf8(report_path)
+    if not _is_text(report) or len(report) > policy['max_report_chars']:
+        raise ValueError('Report must be nonempty UTF-8 text within max_report_chars')
+    evidence_bytes, evidence = _trusted_evidence(evidence_path)
+    inputs = {'report.txt': report_bytes}
+    if evidence_bytes is not None:
+        inputs['evidence.json'] = evidence_bytes
+    input_hashes = {name: bytes_sha256(data) for name, data in inputs.items()}
+    input_identity = {'freeze_sha256': bytes_sha256(json_bytes(freeze)), 'file_hashes': input_hashes}
+    source_id = 'complete-report:' + canonical_sha256(input_identity)
+    settings = _extraction_settings(policy)
+    plan = claims.build_extraction_plan(report, source_id, segment_chars=settings['segment_chars'])
+    remaining = policy['max_compare_requests'] - len(plan['segments'])
+    if remaining < 0:
+        raise ValueError('Report extraction would exceed max_compare_requests')
+
+    queue = FileProvider(output, max_requests=policy['max_compare_requests'], bind_responses=True)
+    queued = set((output / 'requests').glob('*.json'))
+    if queued:
+        # The first-stage requests bind the comparison inputs independently of
+        # the on-disk identity and before any requests can be added to the queue.
+        extract_sources = set()
+        for path in queued:
+            request = read_json(path)
+            if request.get('operation') == 'extract':
+                extract_sources.add(request['data']['source_id'])
+        if extract_sources != {source_id}:
+            raise ReplayMismatch('Queued extraction binds different comparison inputs')
+    identity = output / _INPUT_IDENTITY
+    saved_path, summary_path, receipt_path = (output / name for name in _COMPARISON_FILES)
+    mode = 'queue' if provider is None else 'injected'
+    existing = identity.is_file()
+    if existing:
+        mode = read_json(identity).get('provider_mode')
+        if mode not in ('queue', 'injected'):
+            raise ReplayMismatch('Invalid comparison provider mode')
+        if any(_file_hash(output / name) != digest for name, digest in input_hashes.items()):
+            raise ReplayMismatch('Comparison input bytes changed')
+    elif queued or any(path.is_file() for path in (saved_path, summary_path, receipt_path)):
+        raise ReplayMismatch('Comparison input identity is missing')
+    inputs[_INPUT_IDENTITY] = json_bytes({
+        'schema_version': 'paper_workflow_compare_inputs_v1',
+        **input_identity, 'provider_mode': mode,
+    })
+    if existing and identity.read_bytes() != inputs[_INPUT_IDENTITY]:
+        raise ReplayMismatch('Comparison input identity changed')
+    if evidence_bytes is None and (output / 'evidence.json').exists():
+        raise ReplayMismatch('Existing trusted evidence requires the same evidence manifest')
+    _save_files(output, inputs)
+
+    saved = None
+    if receipt_path.is_file():
+        receipt = read_json(receipt_path)
+        for path in (saved_path, summary_path, identity):
+            if _file_hash(path) != receipt.get('file_hashes', {}).get(path.relative_to(output).as_posix()):
+                raise ReplayMismatch('Terminal comparison evidence changed')
+    if saved_path.is_file():
+        saved = read_json(saved_path)
+    elif summary_path.is_file():
+        raise ReplayMismatch('Comparison summary exists without its assessment')
+    if mode == 'injected' and (queued or queue.response_file_hashes):
+        raise ReplayMismatch('Injected comparison contains unexpected queue evidence')
+
+    if saved is not None:
+        active = provider if isinstance(provider, ReplayProvider) else ReplayProvider(saved['calls'])
+    elif mode == 'queue':
+        if provider is not None:
+            raise ValueError('Cannot switch a queued comparison to an injected provider')
+        active = queue
+    elif isinstance(provider, ReplayProvider) or (provider is not None and not existing):
+        active = provider
+    else:
+        raise ValueError('An interrupted injected comparison requires an exact replay or a new output')
+
+    def assess(active_provider: assessment.Provider, verdicts: tuple[dict[str, Any], ...] = ()) -> dict[str, Any]:
+        result = assessment.assess_report(
+            private_task, report, active_provider, source_id=source_id, **settings,
+            max_judge_calls=min(policy['max_judge_calls'], remaining),
+            max_judge_pairs=policy['max_judge_pairs'],
+            evidence_verdicts=verdicts, process_checks=evidence.get('process_checks'),
+        )
+        if isinstance(active_provider, ReplayProvider):
+            active_provider.assert_consumed()
+        return result
+
+    assessed = assess(active)
+    if mode == 'queue':
+        actual = {path.stem for path in (output / 'requests').glob('*.json')}
+        if actual != {call['request_sha256'] for call in assessed['calls']}:
+            raise ReplayMismatch('Comparison calls differ from queued requests')
+        if queue.pending:
+            if saved is not None:
+                raise ReplayMismatch('Terminal comparison has undelivered responses')
+            return _comparison_status(freeze, pending=queue.pending)
+
+    verdicts = tuple(evidence.get('evidence_verdicts', ()))
+    if not assessed['extraction']['eligible_for_scoring']:
+        # Keep the caller's full manifest, but do not apply verdicts whose
+        # claim IDs could not be recovered from the terminal extraction.
+        aliases = assessed['extraction']['aliases']
+        verdicts = tuple(verdict for verdict in verdicts if verdict['claim_id'] in aliases)
+    if verdicts:
+        assessed = assess(ReplayProvider(assessed['calls']), verdicts)
+
+    status = _comparison_status(freeze, assessed)
+    requests, responses = _queue_hashes(output, assessed['calls'])
+    # The assessor serializes failure metadata into segment notes. Keep the
+    # original key order so failure records recreate exactly the same notes.
+    assessment_bytes = (json.dumps(assessed, indent=2, ensure_ascii=False, allow_nan=False) + '\n').encode('utf-8')
+    files = {'assessment.json': assessment_bytes,
+             'COMPARISON.md': _comparison_markdown(status, freeze, private_task, assessed)}
+    receipt = {
+        'schema_version': 'paper_workflow_comparison_v1', **status,
+        'task_id': freeze['task_id'], 'revision': freeze['revision'],
+        'freeze_sha256': input_identity['freeze_sha256'],
+        'file_hashes': {name: bytes_sha256(data) for name, data in {**inputs, **files}.items()},
+        'request_file_hashes': requests, 'response_file_hashes': responses,
+    }
+    _save_files(output, {**files, 'COMPARISON.json': json_bytes(receipt)})
+    return status
