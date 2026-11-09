@@ -56,6 +56,10 @@ Windows 状态检查：
 
 本轮新证据另外保存在 NCC 的 `runs/evidence-guided-research-v1/backup/`：`completed-science-v1/` 和 `spatial-pretraining-v1/` 保存已完成的 EEG 分析；`coding-evidence-v2/` 保存 411 个筛选后的编码流程、失败、报告评价及研究决策证据文件，约 31 MB。后一份已从 NCC 下载到本地恢复检查目录，逐文件与原件核对一致。原生会话正文、平台背景、认证和缓存不包含在此备份中；原文件没有移动或删除。本地核验入口为 `.local/research-renewal/evidence-backup-v2/RESTORE_VERIFIED.json`。
 
+后续增量使用同一备份根下的独立目录：`condition-evidence-v2/` 保存 156 个报告评价及失败运行证据文件和 9 份审查元数据；`spatial-transfer-recovery-v1/` 保存 46 个已关闭恢复运行的证据文件。两份都已从 NCC 下载，核对完整清单、文件哈希和原件未变；本地恢复回执分别为 `.local/research-renewal/condition-evidence-backup/RESTORE_VERIFIED.json`、`.local/research-renewal/spatial-transfer-recovery-v1/backup/RESTORE_VERIFIED.json`。它们没有覆盖旧备份，也不包含仍在准备的新实验。
+
+已知机制的分类头校准另存于 `head-dependence-calibration-v1/`：128 个文件及 `head-dependence-calibration-v1-terminal-addendum/` 中的一份完成记录均已完整下载还原核对。包括数值构造、独立复算和启动失败证据，不含原始 EEG、输入缓存、基础模型权重或原生会话正文；本地回执集中在 `.local/research-renewal/head-dependence-calibration-v1/backup/`。对应两次基线检查的 36 个文件另存于 `head-dependence-baseline-v1/`，也已下载还原核对，本地回执在同名研究目录的 `backup/`。原生会话正文只留本地，因此这些筛选备份不能独立完成全部会话审计重放。
+
 ## 运行命名与历史
 
 新运行名按 `study-v<protocol>-g<generation>-<condition>-r<repeat>` 组合，例如 `method-transfer-v1-g1-learned-r01`。当前控制器要求单层 run_id，不允许斜杠；研究、协议和代际的层次同时作为元数据字段，不能把多层路径直接传作 run_id。创建时间、模型版本、代码 commit、资源与父策略也写入元数据；正文用研究问题和条件名。

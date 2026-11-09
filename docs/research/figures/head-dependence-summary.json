@@ -1,0 +1,187 @@
+{
+  "anchor_fold": 0,
+  "heads": [
+    {
+      "folds": [
+        {
+          "identity": {
+            "balanced_accuracy": 1.0,
+            "logit_absolute_change": 0.0
+          },
+          "leace": {
+            "balanced_accuracy": 0.45645863570391876,
+            "logit_absolute_change": 0.8047941358953682
+          },
+          "leace_random2301": {
+            "balanced_accuracy": 0.8915612689197595,
+            "logit_absolute_change": 0.31885555977636343
+          },
+          "leace_random2302": {
+            "balanced_accuracy": 0.9088741447232014,
+            "logit_absolute_change": 0.3341957574614897
+          },
+          "leace_random2303": {
+            "balanced_accuracy": 0.8200290275761974,
+            "logit_absolute_change": 0.45502877807898046
+          },
+          "probe_direction": {
+            "balanced_accuracy": 0.5,
+            "logit_absolute_change": 0.7046907353378603
+          },
+          "probe_direction_random2301": {
+            "balanced_accuracy": 0.9811320754716981,
+            "logit_absolute_change": 0.06505913744785682
+          },
+          "probe_direction_random2302": {
+            "balanced_accuracy": 1.0,
+            "logit_absolute_change": 0.06943887870466159
+          },
+          "probe_direction_random2303": {
+            "balanced_accuracy": 0.9756375699771926,
+            "logit_absolute_change": 0.09468439259276266
+          }
+        },
+        {
+          "identity": {
+            "balanced_accuracy": 1.0,
+            "logit_absolute_change": 0.0
+          },
+          "leace": {
+            "balanced_accuracy": 0.6449305411569562,
+            "logit_absolute_change": 0.6106091091386419
+          },
+          "leace_random2301": {
+            "balanced_accuracy": 0.8790172092058884,
+            "logit_absolute_change": 0.3298259275753937
+          },
+          "leace_random2302": {
+            "balanced_accuracy": 0.8711382956665976,
+            "logit_absolute_change": 0.3216530397919227
+          },
+          "leace_random2303": {
+            "balanced_accuracy": 0.8200290275761974,
+            "logit_absolute_change": 0.4291886560948264
+          },
+          "probe_direction": {
+            "balanced_accuracy": 0.8476052249637156,
+            "logit_absolute_change": 0.3957384294640309
+          },
+          "probe_direction_random2301": {
+            "balanced_accuracy": 0.9850715322413436,
+            "logit_absolute_change": 0.06260019159963742
+          },
+          "probe_direction_random2302": {
+            "balanced_accuracy": 0.9905660377358491,
+            "logit_absolute_change": 0.06430021858653825
+          },
+          "probe_direction_random2303": {
+            "balanced_accuracy": 0.9716981132075472,
+            "logit_absolute_change": 0.08909720280754936
+          }
+        }
+      ],
+      "label": "Depends on fitted Q"
+    },
+    {
+      "folds": [
+        {
+          "identity": {
+            "balanced_accuracy": 1.0,
+            "logit_absolute_change": 0.0
+          },
+          "leace": {
+            "balanced_accuracy": 0.8266448003087015,
+            "logit_absolute_change": 0.46941261617053875
+          },
+          "leace_random2301": {
+            "balanced_accuracy": 0.9790661778892533,
+            "logit_absolute_change": 0.0732819194673366
+          },
+          "leace_random2302": {
+            "balanced_accuracy": 0.9790661778892533,
+            "logit_absolute_change": 0.032835643083262436
+          },
+          "leace_random2303": {
+            "balanced_accuracy": 0.9931506849315068,
+            "logit_absolute_change": 0.0326649167681863
+          },
+          "probe_direction": {
+            "balanced_accuracy": 1.0,
+            "logit_absolute_change": 2.9683046144492033e-16
+          },
+          "probe_direction_random2301": {
+            "balanced_accuracy": 1.0,
+            "logit_absolute_change": 0.015243615706213591
+          },
+          "probe_direction_random2302": {
+            "balanced_accuracy": 1.0,
+            "logit_absolute_change": 0.006809026403680803
+          },
+          "probe_direction_random2303": {
+            "balanced_accuracy": 0.9931506849315068,
+            "logit_absolute_change": 0.006700955663586096
+          }
+        },
+        {
+          "identity": {
+            "balanced_accuracy": 1.0,
+            "logit_absolute_change": 0.0
+          },
+          "leace": {
+            "balanced_accuracy": 0.8747829442407872,
+            "logit_absolute_change": 0.310366624751488
+          },
+          "leace_random2301": {
+            "balanced_accuracy": 0.9790661778892533,
+            "logit_absolute_change": 0.06875198922332942
+          },
+          "leace_random2302": {
+            "balanced_accuracy": 0.9790661778892533,
+            "logit_absolute_change": 0.032426824155559815
+          },
+          "leace_random2303": {
+            "balanced_accuracy": 0.9931506849315068,
+            "logit_absolute_change": 0.03264851581278567
+          },
+          "probe_direction": {
+            "balanced_accuracy": 1.0,
+            "logit_absolute_change": 0.004844008375250149
+          },
+          "probe_direction_random2301": {
+            "balanced_accuracy": 1.0,
+            "logit_absolute_change": 0.013713159358142064
+          },
+          "probe_direction_random2302": {
+            "balanced_accuracy": 1.0,
+            "logit_absolute_change": 0.0062366656817636895
+          },
+          "probe_direction_random2303": {
+            "balanced_accuracy": 0.9931506849315068,
+            "logit_absolute_change": 0.006300057574873895
+          }
+        }
+      ],
+      "label": "Orthogonal to fitted Q"
+    }
+  ],
+  "numerical_audit": {
+    "comparisons": 3672,
+    "heads": 2,
+    "logit_vectors": 36,
+    "maximum_absolute_error": 1.7763568394002505e-14,
+    "projected_rows": 360,
+    "rank_partitions": 6,
+    "recovery_rows": 108,
+    "rows_per_vector": 144
+  },
+  "provenance": {
+    "independent_audit_sha256": "8ef9fb25701ce6a9b3c0ff047aceead9bf0fd06eaf38bc234e6bbdee8873b730",
+    "qualified_private_sha256": "30d503add178252ceb055d49be8b5f41f909926de3afcbad6f42eb6336823ace"
+  },
+  "reverse_fold": "Sensitivity only; same validation rows",
+  "scope": "Engineered heads on historical EEGMAT representations; fitted subspace sensitivity only, not original-head accuracy or biological attribute independence.",
+  "study": "head-dependence-calibration-v1",
+  "surrogate_BA": "Preservation of each head baseline decisions, not EEG task accuracy",
+  "validation_participants": 6,
+  "validation_rows": 144
+}
