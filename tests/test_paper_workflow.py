@@ -654,3 +654,105 @@ def test_prepare_does_not_queue_reference_over_request_budget(tmp_path: Path) ->
     assert extraction['status'] == 'not_run'
     assert extraction['calls'] == []
     assert not (work / 'PREPARED.json').exists()
+
+
+@pytest.mark.parametrize('failure_stage', ['draft', 'extraction'])
+@pytest.mark.parametrize('changed_input', [None, 'paper.txt', 'resources.json', 'policy.json', 'policy-and-identity'])
+def test_revision_checks_failed_parent_original_inputs(
+    tmp_path: Path, failure_stage: str, changed_input: str | None,
+) -> None:
+    paper_path, resources_path, parent = _prep_inputs(tmp_path)
+
+    if failure_stage == 'draft':
+        assert paper_workflow.prepare_workflow(
+            paper_path, resources_path, parent, policy=_policy(),
+        )['pipeline_status'] == 'awaiting_responses'
+        request = _pending_request(parent)
+        _deliver(parent, request, _response_record(
+            request, raw=None, status='service_failure',
+            failure={'type': 'SyntheticOutage', 'message': 'No draft was delivered.'},
+        ))
+        provider = None
+        terminal = parent / 'draft.json'
+    else:
+        def provider(request: dict) -> str:
+            if request['operation'] == 'extract':
+                return json.dumps(_reference_response(request, status='service_failure', count=0))
+            return _synthetic_response(request)
+
+        terminal = parent / 'reference-extraction.json'
+
+    assert paper_workflow.prepare_workflow(
+        paper_path, resources_path, parent, policy=_policy(), provider=provider,
+    )['pipeline_status'] == 'prepare_failed'
+    terminal_bytes = terminal.read_bytes()
+    original_hashes = {
+        f'inputs/{name}': hashlib.sha256((parent / 'inputs' / name).read_bytes()).hexdigest()
+        for name in ('paper.txt', 'resources.json', 'policy.json')
+    }
+    if changed_input is not None:
+        target = parent / 'inputs' / ('policy.json' if changed_input == 'policy-and-identity' else changed_input)
+        if changed_input == 'paper.txt':
+            target.write_bytes(target.read_bytes() + b'\n')
+        else:
+            revised = json.loads(target.read_bytes())
+            if changed_input == 'resources.json':
+                revised.update(revision='relabelled-parent', budget={'calls': 999})
+            else:
+                # This field never appears in the draft request payload.
+                revised['max_prepare_requests'] = 999
+            target.write_bytes(json.dumps(revised).encode())
+        if changed_input == 'policy-and-identity':
+            # Even a matching rewrite of the identity cannot replace the one
+            # bound by the already recorded draft request.
+            identity_path = parent / 'inputs' / 'IDENTITY.json'
+            identity = json.loads(identity_path.read_bytes())
+            identity['file_hashes']['inputs/policy.json'] = hashlib.sha256(target.read_bytes()).hexdigest()
+            identity_path.write_bytes(paper_workflow.json_bytes(identity))
+
+    child = tmp_path / 'revision'
+    resources_path.write_bytes(json.dumps({**_resources(), 'revision': 'r02'}).encode())
+
+    def prepare_child() -> dict:
+        return paper_workflow.prepare_workflow(
+            paper_path, resources_path, child, parent=parent, policy=_policy(revision_reason='New revision'),
+            provider=_synthetic_response,
+        )
+
+    if changed_input is not None:
+        with pytest.raises(assessment.ReplayMismatch):
+            prepare_child()
+        assert not child.exists()
+    else:
+        assert prepare_child()['pipeline_status'] == 'prepared'
+        lineage = json.loads((child / 'PREPARED.json').read_bytes())['parent']
+        assert lineage['revision'] == 'r01'
+        assert lineage['input_hashes'] == original_hashes
+    assert terminal.read_bytes() == terminal_bytes
+
+
+def test_reentry_rejects_replaced_identity_before_queueing_another_draft(tmp_path: Path) -> None:
+    paper_path, resources_path, work = _prep_inputs(tmp_path)
+
+    def prepare(**overrides: object) -> dict:
+        return paper_workflow.prepare_workflow(paper_path, resources_path, work, policy=_policy(**overrides))
+
+    assert prepare()['pipeline_status'] == 'awaiting_responses'
+    draft = _pending_request(work)
+    _deliver(work, draft, _response_record(draft, raw=json.dumps(_draft())))
+    assert prepare()['pipeline_status'] == 'awaiting_responses'
+    queued_before = set((work / 'requests').glob('*.json'))
+
+    policy_path = work / 'inputs' / 'policy.json'
+    resolved = json.loads(policy_path.read_bytes())
+    resolved['max_prepare_requests'] = 999
+    new_policy = paper_workflow.json_bytes(resolved)
+    policy_path.write_bytes(new_policy)
+    identity_path = work / 'inputs' / 'IDENTITY.json'
+    identity = json.loads(identity_path.read_bytes())
+    identity['file_hashes']['inputs/policy.json'] = hashlib.sha256(new_policy).hexdigest()
+    identity_path.write_bytes(paper_workflow.json_bytes(identity))
+
+    with pytest.raises(assessment.ReplayMismatch):
+        prepare(max_prepare_requests=999)
+    assert set((work / 'requests').glob('*.json')) == queued_before

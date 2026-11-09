@@ -373,7 +373,8 @@ _REPORT_GUIDE = (
     'identifiers when they describe what you used; explain changes and explicitly say what is unknown.'
 )
 _INPUT_FILES = ('inputs/paper.txt', 'inputs/resources.json', 'inputs/policy.json')
-_PREPARED_FILES = (*_INPUT_FILES, 'draft.json', 'reference.txt', 'reference-extraction.json')
+_INPUT_IDENTITY = 'inputs/IDENTITY.json'
+_PREPARED_FILES = (*_INPUT_FILES, _INPUT_IDENTITY, 'draft.json', 'reference.txt', 'reference-extraction.json')
 _REVIEW_FLAGS = {'question_source_supported', 'adaptation_and_resources_correct',
                  'public_no_answer_leakage', 'reference_faithful_unknowns_preserved'}
 _PRIMARY_SOURCE = 'original-paper'
@@ -524,6 +525,32 @@ def _save_files(work: Path, files: dict[str, bytes]) -> None:
         write_immutable(work / name, data)
 
 
+def _input_identity_bytes(file_hashes: dict[str, str]) -> bytes:
+    return json_bytes({'schema_version': 'paper_workflow_inputs_v1', 'file_hashes': file_hashes})
+
+
+def _verify_input_identity(work: Path) -> tuple[dict[str, str], str]:
+    hashes = {name: _file_hash(work / name) for name in _INPUT_FILES}
+    identity_hash = _file_hash(work / _INPUT_IDENTITY)
+    if identity_hash != bytes_sha256(_input_identity_bytes(hashes)):
+        raise ReplayMismatch('Preparation input bytes differ from the original identity')
+    return hashes, identity_hash
+
+
+def _draft_request_id(identity_hash: str, parent: dict[str, Any] | None) -> str:
+    request_id = f'paper-draft:{identity_hash}'
+    if parent is not None:
+        request_id += ':' + canonical_sha256(parent)
+    return request_id
+
+
+def _verify_draft_input_binding(draft: dict[str, Any], identity_hash: str) -> None:
+    call = draft['call']
+    if call['request']['request_id'] != _draft_request_id(identity_hash, draft['parent']):
+        raise ReplayMismatch('Saved draft request binds a different input identity or parent')
+    ReplayProvider([call])  # Verify the complete saved request and raw response hashes.
+
+
 def _pipeline(status: str, *, pending: list[dict[str, str]] | None = None,
               reason: str | None = None) -> dict[str, Any]:
     result: dict[str, Any] = {'pipeline_status': status, 'assessment_status': 'not_run', 'pending': pending or []}
@@ -591,6 +618,8 @@ def _load_prepared(work: Path) -> tuple[dict[str, Any], dict[str, Any], dict[str
     resources = load_resources(work / 'inputs/resources.json')
     _, paper = read_utf8(work / 'inputs/paper.txt')
     draft = read_json(work / 'draft.json')
+    _, identity_hash = _verify_input_identity(work)
+    _verify_draft_input_binding(draft, identity_hash)
     extracted = read_json(work / 'reference-extraction.json')
     requests, responses = _queue_hashes(work, [draft['call'], *extracted['calls']])
     if requests != prepared['request_file_hashes'] or responses != prepared['response_file_hashes']:
@@ -618,6 +647,7 @@ def _parent_record(work: Path, parent: Path | None, resources: dict[str, Any],
     parent = parent.resolve()
     if work == parent or work in parent.parents or parent in work.parents:
         raise ValueError('New revision and parent require separate work directories')
+    input_hashes, identity_hash = _verify_input_identity(parent)
     old = load_resources(parent / 'inputs/resources.json')
     if old['task_id'] != resources['task_id'] or old['revision'] == resources['revision']:
         raise ValueError('Parent requires the same task_id and a different revision')
@@ -629,6 +659,7 @@ def _parent_record(work: Path, parent: Path | None, resources: dict[str, Any],
         artifact = 'PREPARED.json'
     else:
         draft = read_json(parent / 'draft.json')
+        _verify_draft_input_binding(draft, identity_hash)
         if (parent / 'reference-extraction.json').is_file():
             extraction = read_json(parent / 'reference-extraction.json')
             _queue_hashes(parent, [draft['call'], *extraction['calls']])
@@ -639,7 +670,7 @@ def _parent_record(work: Path, parent: Path | None, resources: dict[str, Any],
         else:
             raise ValueError('Parent has no terminal preparation or freeze receipt')
     return {'revision': old['revision'], 'artifact': artifact, 'sha256': _file_hash(parent / artifact),
-            'input_hashes': {name: _file_hash(parent / name) for name in _INPUT_FILES},
+            'input_hashes': input_hashes, 'input_identity_sha256': identity_hash,
             'reason': policy['revision_reason']}
 
 
@@ -655,16 +686,20 @@ def prepare_workflow(paper_path: Path, resources_path: Path, output: Path, *, po
     resources = _validate_resources(_parse_json(resource_text))
     lineage = _parent_record(output, None if parent is None else parent.absolute(), resources, policy)
     request = draft_request(paper, resources, policy)
-    if lineage is not None:
-        request.pop('request_sha256')
-        request['request_id'] += ':' + canonical_sha256(lineage)
-        request['request_sha256'] = canonical_sha256(request)
 
     input_files = dict(zip(_INPUT_FILES, (paper_bytes, resource_bytes, json_bytes(policy))))
+    input_hashes = {name: bytes_sha256(data) for name, data in input_files.items()}
+    input_files[_INPUT_IDENTITY] = _input_identity_bytes(input_hashes)
+    identity_hash = bytes_sha256(input_files[_INPUT_IDENTITY])
+    request.pop('request_sha256')
+    request['request_id'] = _draft_request_id(identity_hash, lineage)
+    request['request_sha256'] = canonical_sha256(request)
+
     queued = set((output / 'requests').glob('*.json'))
     draft_path = output / 'draft.json'
-    if queued or draft_path.is_file() or (output / 'PREPARED.json').is_file():
-        if any(_file_hash(output / name) != bytes_sha256(data) for name, data in input_files.items()):
+    if (output / _INPUT_IDENTITY).is_file() or queued or draft_path.is_file() or (output / 'PREPARED.json').is_file():
+        original_hashes, _ = _verify_input_identity(output)
+        if original_hashes != input_hashes:
             raise ReplayMismatch('Existing preparation inputs differ')
     if (output / 'FREEZE.json').is_file():
         load_frozen_workflow(output)
@@ -681,6 +716,8 @@ def prepare_workflow(paper_path: Path, resources_path: Path, output: Path, *, po
     saved = read_json(draft_path) if draft_path.is_file() else None
     if saved is None and any(path.stem != request['request_sha256'] for path in queued):
         raise ReplayMismatch('An incompatible draft request already exists')
+    if saved is not None and saved['call']['request'] != request:
+        raise ReplayMismatch('The draft request differs from the saved call')
     draft_provider = queue if provider is None else provider
     if saved is not None and not queued:
         draft_provider = ReplayProvider([saved['call']])
