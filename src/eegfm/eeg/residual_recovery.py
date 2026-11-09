@@ -132,6 +132,9 @@ def validate_method_manifest(document: dict[str, Any]) -> dict[str, Any]:
                 raise ValueError("Declare one to four recipes per family and view")
             for recipe in recipes:
                 _require_fields(recipe, {"preprocessing", "hyperparameters"}, "recipe")
+                for field, value in recipe.items():
+                    if not isinstance(value, dict):
+                        raise ValueError(f"Recipe {field} must be a JSON object")
     schema = document["parameter_schema"]
     selected_keys = {family + "__selected" for family in families}
     models = BASELINE_MODELS if document["phase"] == "baseline" else MODELS

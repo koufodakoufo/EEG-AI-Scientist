@@ -1,7 +1,41 @@
 import numpy as np
 import pytest
 
-from eegfm.eeg.residual_recovery import fixed_target_mask, score_recovery
+from eegfm.eeg.residual_recovery import (
+    METHOD_SCHEMA,
+    VIEWS,
+    fixed_target_mask,
+    score_recovery,
+    validate_method_manifest,
+)
+
+
+@pytest.fixture
+def baseline_method() -> dict:
+    return {
+        "schema_version": METHOD_SCHEMA,
+        "phase": "baseline",
+        "baseline_sources": ["linear.py"],
+        "families": {"linear": {
+            "description": "Regularized linear regression",
+            "recipes": {view: [{"preprocessing": {}, "hyperparameters": {}}] for view in VIEWS},
+        }},
+        "parameter_schema": {
+            "linear__selected": {"dtype": "int64", "shape": [5], "purpose": "Selected recipes"},
+        },
+    }
+
+
+@pytest.mark.parametrize("field", ["preprocessing", "hyperparameters"])
+@pytest.mark.parametrize("value", [None, [1, 2], "grid deferred", 1], ids=["null", "list", "string", "number"])
+def test_method_manifest_rejects_non_object_recipe_fields(baseline_method: dict, field: str, value: object) -> None:
+    baseline_method["families"]["linear"]["recipes"]["leace"][0][field] = value
+    with pytest.raises(ValueError, match=rf"{field}.*object"):
+        validate_method_manifest(baseline_method)
+
+
+def test_method_manifest_accepts_empty_recipe_objects(baseline_method: dict) -> None:
+    assert validate_method_manifest(baseline_method) == baseline_method
 
 
 def _predictions(y, model_count=4):
