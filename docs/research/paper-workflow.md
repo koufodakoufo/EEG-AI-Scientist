@@ -30,15 +30,15 @@ eegfm paper compare --work WORK --report report.md --out COMPARE
 
 七项条件都要提供；未知条件写 `null`。最小政策为 `{"schema_version":"paper_workflow_policy_v1","provider_id":"your-bridge-id"}`，可加非敏感的 `provider_metadata`。默认 `timeout_seconds=900`、`segment_chars=4000`，准备/比较请求上限 `max_prepare_requests=8` / `max_compare_requests=80`，判定上限 `max_judge_calls=64` / `max_judge_pairs=256`，论文/参考/报告字符上限 `max_paper_chars=128000` / `max_reference_chars=16000` / `max_report_chars=32000`。超限不自动放宽。论文、资源、政策文件须位于 `WORK` 之外。首个请求前，`inputs/IDENTITY.json` 绑定论文和资源的原始字节及解析后的完整政策。准备阶段从论文选一个连续的逐字参考段，按与报告相同的契约抽取主张；参考保留论文自己的条件。换题、换源或换政策时，在新目录用 `--parent WORK`，沿用 `task_id`、改 `revision`，并在新政策中写 `revision_reason`。
 
-**交付请求（准备和比较共用）。** 命令返回 exit 3 时，读取输出目录 `pending.json`（或 stdout 的 `pending` 列表）。每项给出相对该目录的 `request_path`、`response_path` 和 `request_sha256`。外部 bridge 从 `requests/<sha>.json` 读取完整请求，按其中的 `instructions`、`data` 和 `response_contract` 运行，向 `responses/<sha>.json` 交付现有 call record，字段如下：
+**交付请求（准备和比较共用）。** 命令返回 exit 3 时，读取输出目录 `pending.json`（或 stdout 的 `pending` 列表）。每项给出相对该目录的 `request_path`、`response_path` 和 `request_sha256`。外部 bridge 从 `requests/<sha>.json` 读取完整请求，按其中的 `instructions`、`data` 和 `response_contract` 运行，向 `responses/<sha>.json` 交付 call record。记录必须恰好包含以下六个字段。
 
 | 字段 | 值 |
 | --- | --- |
 | `request`, `request_sha256` | 原请求对象及其原有哈希 |
-| `raw_response`, `response_sha256` | 原始响应字符串及该字符串 UTF-8 字节的 SHA-256；无原文的终端服务失败两项均为 `null` |
-| `status`, `failure` | `complete` / `truncated` / `service_failure` / `invalid_output`；通常 `failure` 为 `null`，无原文的服务失败和带原文的无效输出填写 `{"type":"…","message":"…"}` |
+| `raw_response`, `response_sha256` | 原始响应字符串及该字符串 UTF-8 字节的 SHA-256。无原文时两项均为 `null`。 |
+| `status`, `failure` | 有原文时，`status` 为 `complete`、`truncated`、`service_failure` 或 `invalid_output`。只有 `invalid_output` 要求 `failure` 为 `{"type":"…","message":"…"}`，其他状态必须填 `null`。无原文时只接受 `service_failure`，且必须提供该 `failure` 对象。 |
 
-原样保留响应，包括换行和空白；只有 `pending.json` 是可更新的视图。消费响应时，`requests/<sha>.response-sha256` 绑定响应文件的完整字节，重入会校验。一次只由一个调用者推进该目录，bridge 在原子交付后再重跑同一命令；可能陆续出现新的待交付项。未交付不算失败，终端失败不会自动重试。真实模型调用、独立上下文、超时、权限与实际用量记录由外部 bridge 负责；这里的请求上限按唯一请求哈希计数。
+有原文时，评估器根据原文和请求契约判定结果状态。单独修改 call record 外层的 `status` 无法把已有响应标为截断或失败。原样保留响应，包括换行和空白；只有 `pending.json` 是可更新的视图。消费响应时，`requests/<sha>.response-sha256` 绑定响应文件的完整字节，重入会校验。一次只由一个调用者推进该目录，bridge 在原子交付后再重跑同一命令；可能陆续出现新的待交付项。未交付不算失败，终端失败不会自动重试。真实模型调用、独立上下文、超时、权限与实际用量记录由外部 bridge 负责；这里的请求上限按唯一请求哈希计数。
 
 **2. 审阅并冻结。** `prepared` 后，独立审阅者检查 `PREPARED.json` 的拟公开题包、原文锚点、资源适配和参考抽取。外部 `review.json` 提供 `schema_version: "paper_workflow_review_v1"`、`prepared_sha256`（`PREPARED.json` 原始字节）、`paper_sha256`（论文原始字节）、`reviewer_id`、`reviewer_kind`（`ai` 或 `human`）和字符串 `notes`。以下四项须经审阅确认为 `true`：`question_source_supported`、`adaptation_and_resources_correct`、`public_no_answer_leakage`、`reference_faithful_unknowns_preserved`。在首次释放题目前，把 `FREEZE.json`、`public-task.json` 和既有 runner 的公开接口绑定到运行记录；只向研究者交付公开内容。冻结文件本身不能证明释放顺序。
 

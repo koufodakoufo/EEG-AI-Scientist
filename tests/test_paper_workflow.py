@@ -1390,6 +1390,30 @@ def test_cli_rejects_policy_inside_resolved_output(tmp_path: Path) -> None:
     assert policy.read_bytes() == original
 
 
+@pytest.mark.parametrize('option', ['--policy', '--out'])
+def test_cli_rejects_cyclic_junction(tmp_path: Path, option: str) -> None:
+    winapi = pytest.importorskip('_winapi', reason='Windows junction probe')
+    prepare = list(_cli_prepare_args(tmp_path))
+    before = set(tmp_path.iterdir())
+    original, first, second = (tmp_path / name for name in ('original', 'first', 'second'))
+    original.mkdir()
+    try:
+        winapi.CreateJunction(str(original), str(first))
+        winapi.CreateJunction(str(first), str(second))
+        original.rmdir()
+        second.rename(original)
+        prepare[prepare.index(option) + 1] = first
+        _cli_status(_paper_cli(tmp_path, *prepare), 2, 'input_error')
+    finally:
+        for path in (first, second, original):
+            # Remove the directory entry itself, without following the junction.
+            try:
+                path.rmdir()
+            except FileNotFoundError:
+                pass
+    assert set(tmp_path.iterdir()) == before
+
+
 def test_cli_prepare_terminal_failure_is_distinct_from_waiting(tmp_path: Path) -> None:
     prepare = _cli_prepare_args(tmp_path)
     work = tmp_path / 'work'

@@ -515,8 +515,16 @@ def _work_layout(work: Path) -> None:
         _queue_entry_exists(work / name)
 
 
+def _resolve_guard_path(path: Path) -> Path:
+    try:
+        return path.resolve()
+    except RuntimeError as exc:
+        # Python 3.12 and earlier use RuntimeError for symlink loops.
+        raise ValueError(f'Cannot resolve path {path}: {exc}') from exc
+
+
 def _require_external_input(path: Path, output: Path) -> None:
-    if path.resolve().is_relative_to(output):
+    if _resolve_guard_path(path).is_relative_to(output):
         raise ValueError(f'Caller-supplied input must be outside the output directory: {path}')
 
 
@@ -1115,7 +1123,7 @@ def main() -> int:
     args = task_parser('paper').parse_args()
     try:
         if args.command == 'prepare':
-            _require_external_input(args.policy, args.out.resolve())
+            _require_external_input(args.policy, _resolve_guard_path(args.out))
             result = prepare_workflow(args.paper, args.resources, args.out,
                                       policy=read_json(args.policy), parent=args.parent)
         elif args.command == 'freeze':
