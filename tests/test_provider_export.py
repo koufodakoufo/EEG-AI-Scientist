@@ -88,17 +88,53 @@ def test_partial_prefix_has_separate_consumed_bytes_and_complete_async_reuses_it
 def test_only_enrolled_hashes_for_instruction_bearing_metadata_cross_boundary(tmp_path):
     path,identity,session,_=fixture(tmp_path)
     rows=[json.loads(line) for line in path.read_text().splitlines()]
-    tool={'type':'additional_tools','role':'developer','content':'PRIVATE_TOOL_INSTRUCTIONS'}
+    definitions={'type':'additional_tools','role':'developer','tools':[{'description':'PRIVATE_TOOL_INSTRUCTIONS'}]}
+    tool={**definitions,'id':'at_00000000-0000-0000-0000-000000000001'}
     world={'full':True,'state':'PRIVATE_WORLD_STATE'}
     rows[1:1]=[{'type':'response_item','payload':tool},{'type':'world_state','payload':world}]
     path.write_text(''.join(json.dumps(row)+'\n' for row in rows))
     with pytest.raises(ValueError,match='initial metadata'):
         provider_export.sanitize_admin_trace(path,identity,session,context_id='context')
-    identity['trace_export']['initial_metadata']=[{'kind':'additional_tools','payload_sha256':provider._hash(tool)},
+    identity['trace_export']['initial_metadata']=[{'kind':'additional_tools','payload_sha256':provider._hash(definitions)},
                                                   {'kind':'world_state','payload_sha256':provider._hash(world)}]
     result=provider_export.sanitize_admin_trace(path,identity,session,context_id='context')
     assert 'PRIVATE_' not in json.dumps(result)
     assert [row['payload']['kind'] for row in result['records'] if row['type']=='sanitized_metadata']==['additional_tools','world_state']
+    tool['id']='at_00000000-0000-0000-0000-000000000002'
+    path.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+    another=provider_export.sanitize_admin_trace(path,identity,session,context_id='context')
+    assert another['records'][1]['payload']['payload_sha256']==result['records'][1]['payload']['payload_sha256']
+    assert another['records'][1]['payload']['record_sha256']!=result['records'][1]['payload']['record_sha256']
+    assert another['source']['raw_sha256']!=result['source']['raw_sha256']
+
+
+@pytest.mark.parametrize('mutation',['invalid_id','non_string_id','missing_id','extra_key','role','tools','world_state'])
+def test_only_valid_tool_nonce_is_excluded_from_initial_metadata_hash(tmp_path,mutation):
+    path,identity,session,_=fixture(tmp_path)
+    rows=[json.loads(line) for line in path.read_text().splitlines()]
+    definitions={'type':'additional_tools','role':'developer','tools':[{'name':'synthetic'}]}
+    tool={**definitions,'id':'at_00000000-0000-0000-0000-000000000001'}
+    world={'full':True,'state':'original'}
+    identity['trace_export']['initial_metadata']=[{'kind':'additional_tools','payload_sha256':provider._hash(definitions)},
+                                                  {'kind':'world_state','payload_sha256':provider._hash(world)}]
+    if mutation=='invalid_id':tool['id']='PRIVATE_NOT_A_NATIVE_ID'
+    elif mutation=='non_string_id':tool['id']=1
+    elif mutation=='missing_id':del tool['id']
+    elif mutation=='extra_key':tool['extra']='PRIVATE_EXTRA'
+    elif mutation=='role':tool['role']='system'
+    elif mutation=='tools':tool['tools']=[{'name':'changed'}]
+    else:world['state']='changed'
+    rows[1:1]=[{'type':'response_item','payload':tool},{'type':'world_state','payload':world}]
+    path.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+    with pytest.raises(ValueError,match='initial metadata|additional_tools'):
+        provider_export.sanitize_admin_trace(path,identity,session,context_id='context')
+
+
+def test_old_full_payload_export_binding_requires_a_separate_enrollment(tmp_path):
+    path,identity,session,_=fixture(tmp_path)
+    identity['trace_export']['schema_version']='trusted_admin_trace_v1'
+    with pytest.raises(ValueError,match='sanitizer/profile binding'):
+        provider_export.sanitize_admin_trace(path,identity,session,context_id='context')
 
 
 @pytest.mark.parametrize('changed_content',[False,True])

@@ -16,7 +16,7 @@ from eegfm.agent.provider import _audit_initial_records, _hash, _regular, _trace
 from eegfm.agent.provider_trace import SHELL_PREFIX, _audit_native_records, _envelope, _json, command, parse_tool
 from eegfm.evaluation.bundle import canonical_bytes
 
-SCHEMA = 'trusted_admin_trace_v1'
+SCHEMA = 'trusted_admin_trace_v2'
 PROFILE_KEYS = ('episode_id', 'run_id', 'model', 'effort', 'parent_thread', 'agent_prefix', 'inherited_context')
 METADATA = {'world_state', 'inter_agent_communication_metadata', 'token_usage_record', 'token_count',
             'reasoning', 'Reasoning', 'assistant_commentary', 'additional_tools'}
@@ -29,6 +29,18 @@ def source_sha256() -> str:
 
 def audit_profile(identity: dict) -> dict:
     return {key: identity[key] for key in PROFILE_KEYS}
+
+
+def initial_metadata_sha256(kind: str, payload: dict) -> str:
+    """Hash instruction-bearing data, omitting only the native tool-catalog nonce."""
+    if kind == 'world_state':
+        return _hash(payload)
+    if (kind != 'additional_tools' or set(payload) != {'type', 'id', 'role', 'tools'}
+            or payload['type'] != kind or payload['role'] != 'developer' or not isinstance(payload['tools'], list)
+            or not isinstance(payload['id'], str)
+            or re.fullmatch(r'at_[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', payload['id']) is None):
+        raise ValueError('Unexpected native additional_tools payload')
+    return _hash({key: payload[key] for key in ('type', 'role', 'tools')})
 
 
 def validate_binding(identity: dict) -> None:
@@ -172,7 +184,7 @@ def sanitize_admin_trace(path: Path, identity: dict, session: dict, *, context_i
         if metadata:
             out['type'], payload = 'sanitized_metadata', {'kind': metadata, 'record_sha256': _hash(row)}
             if metadata in INITIAL_METADATA:
-                payload['payload_sha256'] = _hash(item)
+                payload['payload_sha256'] = initial_metadata_sha256(metadata, item)
         out['payload'] = payload
         projected.append(out)
     result = {'schema_version': SCHEMA, 'binding': identity['trace_export'], 'source': source, 'prior_source': prior_source,
