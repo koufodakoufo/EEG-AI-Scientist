@@ -40,7 +40,7 @@ def validate_parameters(data: bytes) -> None:
     try:
         with zipfile.ZipFile(io.BytesIO(data)) as archive:
             entries = archive.infolist()
-            if not 1 <= len(entries) <= 128 or sum(item.file_size for item in entries) > MAX_EXPANDED:
+            if len(entries) > 128 or sum(item.file_size for item in entries) > MAX_EXPANDED:
                 raise ValueError("Public parameter expanded cap exceeded")
             if len({item.filename for item in entries}) != len(entries):
                 raise ValueError("Duplicate numeric parameter")

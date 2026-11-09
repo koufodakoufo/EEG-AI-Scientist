@@ -27,6 +27,19 @@ def context(tmp_path):
 def parameters(path,**values):np.savez(path,**(values or {'weights':np.array([1.,2.]),'intercept':np.array(0.)}))
 
 
+def test_original_only_fit_can_release_a_valid_empty_npz(tmp_path):
+    path=tmp_path/'parameters.npz'
+    np.savez(path)
+    record=public.encode_parameters(path)
+    data=public.decode_parameters(record)
+    assert data==path.read_bytes()
+    with np.load(io.BytesIO(data),allow_pickle=False) as archive:
+        assert archive.files==[]
+    path.write_bytes(b'')
+    with pytest.raises(ValueError):
+        public.encode_parameters(path)
+
+
 def test_numeric_parameters_are_bounded_and_public_export_is_typed(tmp_path):
     out=tmp_path/'out';out.mkdir();parameters(out/'parameters.npz')
     record=public.encode_parameters(out/'parameters.npz')
