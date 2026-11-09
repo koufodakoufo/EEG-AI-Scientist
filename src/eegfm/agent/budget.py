@@ -161,7 +161,9 @@ def run_bounded(argv: Sequence[str], *, cwd: Path, output_dir: Path, timeout_sec
     available = sorted(os.sched_getaffinity(0))[:threads]
     lock_affinity=affinity_lock()
     def limit_child() -> None:
-        os.sched_setaffinity(0, available)
+        # An inherited lock denies even no-op affinity writes.
+        if os.sched_getaffinity(0) != set(available):
+            os.sched_setaffinity(0, available)
         lock_affinity()
         if limit_address_space:
             resource.setrlimit(resource.RLIMIT_AS, (memory_limit_bytes, memory_limit_bytes))
