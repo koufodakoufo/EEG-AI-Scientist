@@ -23,12 +23,13 @@ PROVIDER = "delegated_audited_v1"
 MAX_CHUNK = 4096
 PROJECTION_PAGE_CHARS = 6000
 PROJECTION_PAGE_JSON_BYTES = 6000
+SUPPORTED_NATIVE_IDENTITIES = (("gpt-6.1-sol", "medium"), ("gpt-6.1-sol", "high"),
+                               ("gpt-6-astra", "ultra"))
 
 
 def supported_native_identity(model: Any, effort: Any) -> bool:
     """Explicitly qualified identities; the native trace must still match exactly."""
-    return ((model == "gpt-6.1-sol" and effort in ("medium", "high"))
-            or (model == "gpt-6-astra" and effort == "ultra"))
+    return (model, effort) in SUPPORTED_NATIVE_IDENTITIES
 
 
 def _id(value: Any) -> str:

@@ -69,6 +69,97 @@ def test_registered_astra_identity_is_admitted_without_relaxing_budget(tmp_path)
             episode.validate_delegated_config({**value, **change})
 
 
+@pytest.mark.parametrize('task', [episode.READOUT_TASK, episode.RESIDUAL_RECOVERY_TASK])
+@pytest.mark.parametrize('model,effort', [('gpt-6.1-sol', 'high'), ('gpt-6-astra', 'ultra')])
+def test_delegated_entry_constructs_real_driver_mailbox_and_service(
+        tmp_path, setup_provider, monkeypatch, task, model, effort):
+    """Exercise every startup identity gate; stop at the model dispatch boundary."""
+    from eegfm.agent import provider
+    from eegfm.agent.controller import ResearchDriver
+    from eegfm.evaluation import ssh_worker
+    from eegfm.evaluation.public_workbench import MODE
+    from test_residual_recovery_episode import config as residual_config
+
+    value = residual_config(tmp_path) if task == episode.RESIDUAL_RECOVERY_TASK else config(tmp_path)
+    _, _, enrollment = setup_provider
+    case_root, trusted = tmp_path / 'startup-case', tmp_path / 'startup-trusted'
+    source = tmp_path / 'startup-public-source'
+    (source / 'resources').mkdir(parents=True)
+    for key, name in (('train_input', 'train.npz'), ('public_validation_input', 'validation.npz')):
+        (source / name).write_bytes(Path(value[key]['path']).read_bytes())
+    (source / 'eeg_api.py').write_text('# Synthetic public interface; never executed\n')
+    (source / 'resources/CACHE_SCHEMA.json').write_text('{}')
+    trusted.mkdir()
+    budget = trusted / 'budget.json'
+    budget.write_text(json.dumps({'deadline_at': '1970-01-01T01:01:40+00:00',
+                                 'stop_new_research_at': '1970-01-01T00:54:40+00:00'}))
+    value.update(model=model, reasoning_effort=effort, episode_id='startup-episode',
+        run_id='startup-run', case_root=str(case_root), trusted_root=str(trusted),
+        budget_path=str(budget), episode_timeout_seconds=2700, episode_deadline_epoch=3700,
+        condition='no_skill', public_source=str(source),
+        public_files=['train.npz', 'validation.npz', 'eeg_api.py', 'resources/CACHE_SCHEMA.json'],
+        provider={key: enrollment[key] for key in ('parent_thread', 'agent_prefix', 'gateway', 'inherited_context')})
+    remote = {'config': value['split_manifest'], 'known_hosts': value['split_manifest'],
+              'host': 'synthetic', 'port': 22, 'user': 'synthetic', 'python': '/python', 'code': '/code'}
+    value.update(cloud_worker=remote, public_fit_worker=remote)
+    aggregate = SimpleNamespace(train_truth=episode.binding(value['train_truth']),
+        truth={split: episode.binding(binding) for split, binding in value['truth_by_split'].items()},
+        inference={split: episode.binding(binding) for split, binding in value['inference_by_split'].items()},
+        source_bindings=[])
+    if task == episode.RESIDUAL_RECOVERY_TASK:
+        aggregate.qualification = episode.binding(value['residual_data_qualification'])
+    else:
+        aggregate.test_cohort = episode.binding(value['test_cohort'])
+    worker_calls = []
+
+    def forbidden_execution(*args, **kwargs):
+        raise AssertionError('Startup regression must not execute science or a model')
+
+    def worker(**kwargs):
+        worker_calls.append(kwargs)
+        identity = {'episode_id': value['episode_id'], 'run_id': value['run_id'],
+            'episode_deadline_epoch': 3700,
+            'public_manifest_sha256': digest_file(case_root / 'public/PUBLIC_MANIFEST.json'),
+            'worker': {'public_artifact_mode': MODE, 'allowed_splits': ['validation']}}
+        return SimpleNamespace(identity=identity, timeout=90, deadline_epoch=None,
+            _enrollment=lambda: identity, submit=forbidden_execution, poll=forbidden_execution)
+
+    observed = []
+
+    def stop_before_model_dispatch(driver):
+        assert isinstance(driver, ResearchDriver)
+        assert driver.adapter.model == model
+        assert driver.session_provider == provider.PROVIDER
+        assert driver.episode_deadline == 3700
+        assert isinstance(driver.launch, provider.ProviderLaunch)
+        mailbox = driver.launch.mailbox
+        assert isinstance(mailbox, provider.ProviderMailbox)
+        assert (mailbox.identity['model'], mailbox.identity['effort']) == (model, effort)
+        mailbox.verify()
+        service_path = mailbox.root / 'SERVICE.json'
+        service = provider.load_service(service_path, digest_file(service_path))
+        assert service.identity == mailbox.identity
+        assert json.loads(service_path.read_bytes())['episode_deadline_epoch'] == 3700
+        with mailbox.transaction() as database:
+            assert database.execute('SELECT COUNT(*) FROM sessions').fetchone()[0] == 0
+        observed.append(driver)
+        return 0
+
+    # Scientific transport/aggregation is synthetic; startup objects remain real.
+    monkeypatch.setattr(episode, 'os', SimpleNamespace(name='posix'))
+    monkeypatch.setattr(episode.time, 'time', lambda: 1000)
+    monkeypatch.setattr(episode, 'load_aggregator', lambda *args, **kwargs: aggregate)
+    monkeypatch.setattr(episode, 'validate_cloud_bindings', lambda *args: None)
+    monkeypatch.setattr(ssh_worker, 'scientific_identity', lambda *args, **kwargs: {})
+    monkeypatch.setattr(ssh_worker, 'SshWorkerEvaluator', worker)
+    monkeypatch.setattr(provider.ProviderLaunch, '__call__', forbidden_execution)
+    monkeypatch.setattr(episode.EpisodeDriver, 'loop', stop_before_model_dispatch)
+    result = episode.run_episode(value)
+    assert len(worker_calls) == 2 and len(observed) == 1
+    assert result['exit_code'] == 0 and result['state']['status'] == 'brief'
+    assert json.loads((trusted / 'EPISODE_RESULT.json').read_bytes()) == result
+
+
 @pytest.mark.parametrize('deadline', [True, 0, -1, 2500.0, float('inf'), '2500'])
 def test_absolute_deadline_requires_positive_integer_epoch(tmp_path, deadline):
     value = config(tmp_path)

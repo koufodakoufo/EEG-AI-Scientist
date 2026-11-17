@@ -719,8 +719,9 @@ class ResearchDriver(Driver):
         if type(max_sessions) is not int or not 1 <= max_sessions <= 6:
             raise ValueError('Blind episode permits one to six model sessions')
         if session_provider is not None:
-            from eegfm.agent.provider import PROVIDER
-            if session_provider != PROVIDER or provider_model != 'gpt-6.1-sol' or type(provider_timeout_seconds) is not int or not 1 <= provider_timeout_seconds <= 240:
+            from eegfm.agent.provider import PROVIDER, SUPPORTED_NATIVE_IDENTITIES
+            if (session_provider != PROVIDER or not any(provider_model == model for model, _ in SUPPORTED_NATIVE_IDENTITIES)
+                    or type(provider_timeout_seconds) is not int or not 1 <= provider_timeout_seconds <= 240):
                 raise ValueError('Explicit audited provider and bounded model required')
         self.session_provider, self.provider_timeout_seconds = session_provider, provider_timeout_seconds
         adapter = _AdapterIdentity('delegated-audited', provider_model) if session_provider else _AdapterIdentity()

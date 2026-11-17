@@ -45,6 +45,17 @@ def test_astra_mailbox_preserves_enrolled_identity(setup_provider):
                                      public_root=old.public, enrollment={**new, **change})
 
 
+def test_episode_driver_accepts_registered_astra_and_rejects_unknown_model(setup_provider):
+    controller, _, _ = setup_provider
+    driver = ResearchDriver(controller, launch=lambda _: None,
+                            session_provider=provider.PROVIDER, provider_model='gpt-6-astra')
+    assert driver.session_provider == provider.PROVIDER
+    assert driver.adapter.model == 'gpt-6-astra'
+    with pytest.raises(ValueError, match='bounded model'):
+        ResearchDriver(controller, launch=lambda _: None,
+                       session_provider=provider.PROVIDER, provider_model='unknown')
+
+
 def open_session(box,timeout=240,*,register=True,projection=None):
     if projection is None:
         projection={'episode_id':'episode','run_id':'run','state':{'status':'brief','version':0},'lock':None}
