@@ -6,16 +6,20 @@ GitHub 的 `main` 是已验证代码的共同主线。本地与服务器各有�
 |---|---|---|
 | Windows | `X:/projects/EEG-AI-Scientist` | 开发、阅读、发布 |
 | 火山云 | `/vePFS-0x0d/home/duandh/projects/EEG-AI-Scientist/code` | Docker科学候选执行、可信评分及原生Builder分析；目录登记由用户办理 |
-| nccserver0 | `/data/duandh/EEG-AI-Scientist/code` | 模型会话、可信研究控制器、调用账本及CPU验证 |
+| nccserver0 | `/data/duandh/EEG-AI-Scientist/code` | 历史控制器、调用账本及 CPU 验证；当前本地网络无法连接 |
 | GitHub | `koufodakoufo/EEG-AI-Scientist`，`main` | 版本化源码与可公开文档 |
 
 此前完整研究使用“NCC 控制器 → SSH 传输冻结候选 → 火山云 Docker 执行 → 可信评分返回”。SSH 认证留在可信控制层，不进入候选容器。第一项研究的六个目标 episode 已沿此路径完成；[方法迁移结果](research/method-transfer-results.md)和[Builder 读出结果](research/readout-bottleneck-results.md)保留原证据。
 
-本轮科学计算在火山云个人工程根的 `runs/evidence-guided-research-v1/`：`builder/` 保存 Builder 分析，`coding-readout-v6/base-r01/` 保存独立编码研究者的真实 EEG 作业。本地 `.local/research-renewal/` 保存协议、审查和研究者记录。NCC 旧原生模型通道授权失效；新通道使用本地独立上下文，经 NCC 控制器调用火山云。合成及真实 EEG 流程和预测复算均已完成。模型上下文接受访问审计，科学候选使用 Docker，两种边界不能混为模型进程的 OS 隔离。
+已完成的科学计算在火山云个人工程根的 `runs/evidence-guided-research-v1/`：`builder/` 保存 Builder 分析，`coding-readout-v6/base-r01/` 保存独立编码研究者的真实 EEG 作业。本地 `.local/research-renewal/` 保存协议、审查和研究者记录。此前使用本地独立上下文，经 NCC 控制器调用火山云；NCC 旧原生模型通道授权未恢复。合成及真实 EEG 流程和预测复算均已完成。模型上下文接受访问审计，科学候选使用 Docker，两种边界不能混为模型进程的 OS 隔离。
+
+本次论文工作流试验将可信控制器也放到火山云，本地保留模型会话。公网 SSH 连接控制器，控制器经已固定主机密钥的本机 SSH 连接独立工作目录；认证不进入候选容器。NCC 的连接失败与云端执行分开记录，没有修改校园网、VPN 或代理。
 
 ## 火山云存储
 
 协作者的代码实践是个人 vePFS 目录、Git 同步和固定版本发布。普通 `/home/duandh` 位于开发机临时文件系统，实例释放可能丢失。代码工作副本在 vePFS，环境/缓存/临时文件在 `/home/duandh/projects/EEG-AI-Scientist`；代码始终另有 GitHub 和本地副本。
+
+2026-11-17 实际检查发现 vePFS 可用空间为零。本次残余属性试验临时使用 `/home/duandh/projects/EEG-AI-Scientist/tmp/residual-recovery-v1/`，原 vePFS 数据和历史成果只读。活动区和历史区分别限定 512 MiB，总限额仍为 1 GiB；活动区保留 8 GiB 空间下限。新产物核对导出到 Windows，临时目录不算持久备份。持久文件系统恢复空间前，新的云端代码同步和备份不能记为完成；不通过删除公共或他人文件腾空间。
 
 资源规范要求 vePFS 目录登记归属和计划结束日期。用户于2026-11-02明确自行办理，并要求继续推进；当前记为 `registration_status=user_handling`，不作为开发、测试和后续研究准备的阻塞项，也不反复请求确认。原2026-11-15是准备阶段预计日期，后续以用户办理的登记为准。源码与独有实验成果仍按正常科研流程保留可恢复副本。
 

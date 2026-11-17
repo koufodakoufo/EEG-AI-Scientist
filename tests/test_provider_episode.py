@@ -72,10 +72,11 @@ def test_registered_astra_identity_is_admitted_without_relaxing_budget(tmp_path)
 @pytest.mark.parametrize('context_seconds', [180, 480])
 @pytest.mark.parametrize('task', [episode.READOUT_TASK, episode.RESIDUAL_RECOVERY_TASK])
 @pytest.mark.parametrize('model,effort', [('gpt-6.1-sol', 'high'), ('gpt-6-astra', 'ultra')])
+@pytest.mark.parametrize('session_context_policy', [None, 'trusted_root_pre_task_v1'])
 def test_delegated_entry_constructs_real_driver_mailbox_and_service(
-        tmp_path, setup_provider, monkeypatch, task, model, effort, context_seconds):
+        tmp_path, setup_provider, monkeypatch, task, model, effort, context_seconds, session_context_policy):
     """Exercise every startup identity gate; stop at the model dispatch boundary."""
-    from eegfm.agent import provider
+    from eegfm.agent import provider, provider_export
     from eegfm.agent.controller import ResearchDriver
     from eegfm.evaluation import ssh_worker
     from eegfm.evaluation.public_workbench import MODE
@@ -103,6 +104,15 @@ def test_delegated_entry_constructs_real_driver_mailbox_and_service(
         condition='no_skill', public_source=str(source),
         public_files=['train.npz', 'validation.npz', 'eeg_api.py', 'resources/CACHE_SCHEMA.json'],
         provider={key: enrollment[key] for key in ('parent_thread', 'agent_prefix', 'gateway', 'inherited_context')})
+    if session_context_policy is not None:
+        profile = {**value['provider'], 'episode_id': value['episode_id'], 'run_id': value['run_id'],
+                   'model': model, 'effort': effort}
+        value['provider']['trace_export'] = {
+            'schema_version': provider_export.SCHEMA,
+            'client_source_sha256': 'a' * 64,
+            'sanitizer_source_sha256': provider_export.source_sha256(),
+            'audit_profile_sha256': provider._hash(provider_export.audit_profile(profile)),
+            'initial_metadata': [], 'session_context_policy': session_context_policy}
     remote = {'config': value['split_manifest'], 'known_hosts': value['split_manifest'],
               'host': 'synthetic', 'port': 22, 'user': 'synthetic', 'python': '/python', 'code': '/code'}
     value.update(cloud_worker=remote, public_fit_worker=remote)
@@ -145,6 +155,7 @@ def test_delegated_entry_constructs_real_driver_mailbox_and_service(
         service_path = mailbox.root / 'SERVICE.json'
         service = provider.load_service(service_path, digest_file(service_path))
         assert service.identity == mailbox.identity
+        assert service.identity.get('trace_export', {}).get('session_context_policy') == session_context_policy
         assert json.loads(service_path.read_bytes())['episode_deadline_epoch'] == deadline
         with mailbox.transaction() as database:
             assert database.execute('SELECT COUNT(*) FROM sessions').fetchone()[0] == 0

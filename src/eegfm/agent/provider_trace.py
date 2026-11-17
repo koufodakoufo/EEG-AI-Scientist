@@ -121,7 +121,7 @@ def native_turn_start(records: list[dict]) -> float:
     return epoch
 
 
-def _timing(records: list[dict], session: dict) -> dict:
+def _timing(records: list[dict], session: dict, *, require_complete: bool = True) -> dict:
     """Prove execution against its original reservation, not ingestion time."""
     start, duration = session.get('started_epoch'), session.get('timeout_seconds')
     native = (session.get('registered_context') or {}).get('native_timing')
@@ -147,10 +147,10 @@ def _timing(records: list[dict], session: dict) -> dict:
         previous = epoch
         if kind == 'event_msg' and ptype == 'task_complete':
             completion = epoch
-    if completion is None:
+    if completion is None and require_complete:
         raise ValueError('Timestamped native completion required')
     return {'started_epoch': start, 'deadline_epoch': deadline, 'completion_epoch': completion,
-            'execution_wall_seconds': completion - start}
+            'execution_wall_seconds': completion - start if completion is not None else None}
 
 
 def audit_native_context(path: Path, identity: dict, session: dict, deliveries: list[dict], *,
@@ -168,11 +168,16 @@ def audit_native_context(path: Path, identity: dict, session: dict, deliveries: 
 
 
 def _audit_native_records(records: list[dict], identity: dict, session: dict, deliveries: list[dict] | None,
-                          initial: dict, *, sanitized: bool) -> dict:
+                          initial: dict, *, sanitized: bool, pre_task: bool = False) -> dict:
     issues = list(initial['issues'])
     timing = None
     try:
-        timing = _timing(records, session)
+        timing_session = session
+        if pre_task and 'native_timing' in identity:
+            started = native_turn_start(records)
+            timing_session = {**session, 'registered_context': {'native_timing': {
+                'started_epoch': started, 'actor_deadline_epoch': started + session['timeout_seconds']}}}
+        timing = _timing(records, timing_session, require_complete=not pre_task)
     except ValueError as error:
         issues.append(str(error))
     calls, outputs, shells, contexts, finals, complete = [], {}, [], [], [], []
@@ -223,8 +228,9 @@ def _audit_native_records(records: list[dict], identity: dict, session: dict, de
         elif kind != 'session_meta':
             issues.append('Unexpected native top-level record')
     if (len(contexts) != 1 or contexts[0][1:] != (identity['model'], identity['effort'])
-            or len(finals) != 1 or finals[0][1] != 'SESSION_SEALED' or len(complete) != 1
-            or finals[0][2] != complete[0][1] or contexts[0][0] != complete[0][1] or finals[0][0] >= complete[0][0]):
+            or (bool(finals or complete) if pre_task else
+                len(finals) != 1 or finals[0][1] != 'SESSION_SEALED' or len(complete) != 1
+                or finals[0][2] != complete[0][1] or contexts[0][0] != complete[0][1] or finals[0][0] >= complete[0][0])):
         issues.append('One completed declared context and SESSION_SEALED required')
     pending, logical, polls, verified, seen = None, [], 0, [], set()
     for index, (position, item) in enumerate(calls):
@@ -235,11 +241,13 @@ def _audit_native_records(records: list[dict], identity: dict, session: dict, de
             retained = outputs.get(item['call_id'], [])
             if len(retained) != 1 or retained[0][1].get('type') != 'custom_tool_call_output' or retained[0][0] <= position:
                 raise ValueError('Exactly one later native tool output required')
-            if not finals or retained[0][0] >= finals[0][0]:
+            if not pre_task and (not finals or retained[0][0] >= finals[0][0]):
                 raise ValueError('Every native tool output must precede SESSION_SEALED')
             if index + 1 < len(calls) and retained[0][0] >= calls[index + 1][0]:
                 raise ValueError('Native calls cannot overlap or precede previous output')
             operation, value = parse_tool(item.get('input'), identity, session['session_id'])
+            if pre_task and operation == 'call' and value['operation'] not in {'task', 'request_status'}:
+                raise ValueError('Only task and status gateway calls may precede task release')
             envelope = _envelope(retained[0][1].get('output'))
             if operation == 'call':
                 if pending is not None:
@@ -273,11 +281,22 @@ def _audit_native_records(records: list[dict], identity: dict, session: dict, de
         issues.append('Unresolved native transport session remains')
     if set(outputs) != seen:
         issues.append('Orphan, encrypted or missing native outputs')
-    if not calls or len(calls) > 192 or len(shells) != len(logical) or (deliveries is not None and len(logical) != len(deliveries)):
+    if (not calls or len(calls) > 192 or len(shells) != len(logical)
+            or deliveries is not None and (len(logical) > len(deliveries) if pre_task else len(logical) != len(deliveries))):
         issues.append('Native gateway/delivery/command count mismatch')
+    waiting = []
     for index, actual in enumerate(logical):
         try:
             expected_stdout = actual['stdout']
+            if pre_task:
+                response = _json(expected_stdout)
+                request = actual['request']
+                if request['operation'] == 'task':
+                    expected_response = {'request_id': request['request_id'],
+                        'request_sha256': hashlib.sha256(canonical_bytes(request)).hexdigest(), 'status': 'awaiting_context_admission'}
+                    if request != {'request_id': 'task', 'operation': 'task', 'payload': {}} or response != expected_response:
+                        raise ValueError('Task must have completed only an awaiting-context response')
+                    waiting.append({'request': request, 'response': response})
             if deliveries is not None:
                 delivered = deliveries[index]
                 if canonical_bytes(actual['request']) != canonical_bytes(delivered['request']):
@@ -301,6 +320,8 @@ def _audit_native_records(records: list[dict], identity: dict, session: dict, de
                 raise ValueError('Native command/output/chronology mismatch')
         except (ValueError, TypeError, KeyError, IndexError, UnicodeError) as error:
             issues.append(str(error))
+    if pre_task and not waiting:
+        issues.append('Completed awaiting-context task delivery required before admission')
     return {'valid': not issues, 'issues': sorted(set(issues)), 'context_id': initial['context_id'],
             'gateway_calls': len(logical), 'native_poll_calls': polls, 'actual_tool_calls': len(calls),
             'initial_context': initial, 'deliveries': verified,

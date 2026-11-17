@@ -236,13 +236,27 @@ class ProviderMailbox:
             return published
 
     def register_context(self, identifier: str, *, context_id: str, trace_path: Path,
-                         trusted_admin_initial: dict | None = None, export_source: dict | None = None) -> None:
+                         trusted_admin_initial: dict | None = None, export_source: dict | None = None,
+                         context_enrollment: dict | None = None) -> None:
+        with self.transaction() as db:
+            self._register_context(db, identifier, context_id=context_id, trace_path=trace_path,
+                trusted_admin_initial=trusted_admin_initial, export_source=export_source, context_enrollment=context_enrollment)
+
+    def _register_context(self, db: sqlite3.Connection, identifier: str, *, context_id: str, trace_path: Path,
+                          trusted_admin_initial: dict | None = None, export_source: dict | None = None,
+                          context_enrollment: dict | None = None) -> None:
         """Root-only mapping, not an operation accepted by handle()."""
         self.verify()
-        session = self.session(identifier)
+        session = self._session(db, identifier)
         sanitized = 'trace_export' in self.identity
         if (trusted_admin_initial is not None) != sanitized or (export_source is not None) != sanitized:
             raise ValueError('Initial audit transport differs from enrollment')
+        opted_in = self.identity.get('trace_export', {}).get('session_context_policy') is not None
+        if opted_in != (context_enrollment is not None):
+            raise ValueError('Context enrollment differs from immutable session context policy')
+        if opted_in:
+            from eegfm.agent.provider_export import derive_session_context_identity
+            effective = derive_session_context_identity(self.identity, session, context_id=context_id, context_enrollment=context_enrollment)
         audit = trusted_admin_initial if trusted_admin_initial is not None else audit_initial_context(
             trace_path, identity=self.identity, agent_path=session['agent_path'], context_id=context_id, session_id=identifier)
         if not audit['valid']:
@@ -251,6 +265,9 @@ class ProviderMailbox:
         value = {"context_id": context_id, "trace_path": str(Path(trace_path).resolve())}
         if export_source is not None:
             value['export_source'] = export_source
+        if opted_in:
+            value['context_enrollment'] = json.loads(canonical_bytes(context_enrollment))
+            value['context_enrollment_sha256'] = _hash(context_enrollment)
         policy = self.identity.get('native_timing')
         if policy is not None:
             from eegfm.agent.provider_trace import native_turn_start
@@ -258,34 +275,50 @@ class ProviderMailbox:
             actor_deadline = start + session['timeout_seconds']
             value['native_timing'] = {'started_epoch': start, 'actor_deadline_epoch': actor_deadline,
                                       'receipt_deadline_epoch': actor_deadline + policy['receipt_grace_seconds']}
-        with self.transaction() as db:
-            session = self._session(db, identifier)
-            if session["registered_context"] is not None:
-                previous = session['registered_context']
-                if (previous != {**value, 'initial_audit_sha256': digest_file(_regular(audit_path))}
-                        or json.loads(audit_path.read_text(encoding='utf-8')) != audit):
-                    raise ValueError("Context reservation cannot be replaced")
-                return
-            admission_deadline = None
-            if policy is not None:
-                now = time.time()
-                admission_deadline = min(session['dispatch_deadline_epoch'], actor_deadline)
-                if not session['started_epoch'] <= start <= now < admission_deadline:
-                    raise ValueError('Native admission outside original dispatch or actor deadline')
-            write_atomic(audit_path, audit)
-            value['initial_audit_sha256'] = digest_file(audit_path)
-            session["registered_context"] = value
-            pending = list(db.execute('SELECT id,digest,request FROM requests WHERE session=? AND response IS NULL', (identifier,)))
-            for request_id, digest, raw in pending:
-                request = json.loads(raw)
-                if request['operation'] != 'task' or request['payload']:
-                    raise ValueError('Only the deferred public task may await context admission')
-                result = self._action(session, 'task', {})
-                response = {'request_id': request_id, 'request_sha256': digest, 'status': 'ok', 'result': result}
-                db.execute('UPDATE requests SET response=? WHERE session=? AND id=?', (json.dumps(response), identifier, request_id))
-            if admission_deadline is not None and time.time() >= admission_deadline:
+        session = self._session(db, identifier)
+        if session["registered_context"] is not None:
+            previous = session['registered_context']
+            if (previous != {**value, 'initial_audit_sha256': digest_file(_regular(audit_path))}
+                    or json.loads(audit_path.read_text(encoding='utf-8')) != audit):
+                raise ValueError("Context reservation cannot be replaced")
+            return
+        if opted_in:
+            # The review, pristine state, durable waiting delivery and task
+            # release are checked/frozen under this single SQLite transaction.
+            if (session['status'] != 'open' or session['task_read'] or session['written_bytes'] or session['uploads']
+                    or session['fit_jobs'] or session['sealed'] is not None or session['receipt_sha256'] is not None
+                    or tree_manifest(self._pending_root(identifier)) != session['original_manifest']
+                    or db.execute('SELECT COUNT(*) FROM fits WHERE session=?', (identifier,)).fetchone()[0]):
+                raise ValueError('Pre-task context enrollment requires pristine unadmitted session')
+            deliveries = [{'request': json.loads(row[0]), 'response': json.loads(row[1])} for row in db.execute(
+                'SELECT request,response FROM deliveries WHERE session=? ORDER BY sequence', (identifier,))]
+            from eegfm.agent.provider_trace import _audit_native_records
+            waiting = _audit_native_records(_trace_records(trace_path, allow_partial=False), effective, session,
+                                            deliveries, audit, sanitized=True, pre_task=True)
+            pending_task = db.execute('SELECT request,response FROM requests WHERE session=? AND id=?', (identifier, 'task')).fetchone()
+            if (not waiting['valid'] or not pending_task or pending_task[1] is not None
+                    or json.loads(pending_task[0]) != {'request_id': 'task', 'operation': 'task', 'payload': {}}):
+                raise ValueError('Completed durable awaiting-context task delivery required before admission')
+        admission_deadline = None
+        if policy is not None:
+            now = time.time()
+            admission_deadline = min(session['dispatch_deadline_epoch'], actor_deadline)
+            if not session['started_epoch'] <= start <= now < admission_deadline:
                 raise ValueError('Native admission outside original dispatch or actor deadline')
-            self._save_session(db, session)
+        write_atomic(audit_path, audit)
+        value['initial_audit_sha256'] = digest_file(audit_path)
+        session["registered_context"] = value
+        pending = list(db.execute('SELECT id,digest,request FROM requests WHERE session=? AND response IS NULL', (identifier,)))
+        for request_id, digest, raw in pending:
+            request = json.loads(raw)
+            if request['operation'] != 'task' or request['payload']:
+                raise ValueError('Only the deferred public task may await context admission')
+            result = self._action(session, 'task', {})
+            response = {'request_id': request_id, 'request_sha256': digest, 'status': 'ok', 'result': result}
+            db.execute('UPDATE requests SET response=? WHERE session=? AND id=?', (json.dumps(response), identifier, request_id))
+        if admission_deadline is not None and time.time() >= admission_deadline:
+            raise ValueError('Native admission outside original dispatch or actor deadline')
+        self._save_session(db, session)
 
     def _pending_root(self, identifier: str) -> Path:
         return self.root / "sessions" / _id(identifier) / "case" / "output"
@@ -519,6 +552,7 @@ class ProviderMailbox:
         from eegfm.agent.provider_trace import audit_native_context
         self.verify()
         session = self.session(identifier)
+        effective = _session_context_identity(self.identity, session)
         sanitized = 'trace_export' in self.identity
         if (trusted_admin_initial is not None) != sanitized or (export_source is not None) != sanitized:
             raise ValueError('Complete audit transport differs from enrollment')
@@ -533,13 +567,15 @@ class ProviderMailbox:
         initial_path = self.root / 'audits' / f'{identifier}-initial.json'
         if digest_file(_regular(initial_path)) != session['registered_context']['initial_audit_sha256']:
             raise ValueError('Initial context admission changed')
-        audit = audit_native_context(trace_path, self.identity, session, self.deliveries(identifier), trusted_admin_initial=trusted_admin_initial)
+        audit = audit_native_context(trace_path, effective, session, self.deliveries(identifier), trusted_admin_initial=trusted_admin_initial)
         if audit['initial_context'] != json.loads(initial_path.read_text()):
             raise ValueError('Native initial inputs changed after admission')
         audit_path = self.root / 'audits' / f'{identifier}.json'
         if export_source is not None:
-            audit['trace_export'] = {'binding': self.identity['trace_export'], 'source': export_source,
+            audit['trace_export'] = {'binding': effective['trace_export'], 'source': export_source,
                                      'admitted_source': session['registered_context']['export_source']}
+            if 'context_enrollment_sha256' in session['registered_context']:
+                audit['trace_export']['context_enrollment_sha256'] = session['registered_context']['context_enrollment_sha256']
         write_atomic(audit_path, audit)
         if not audit['valid']:
             raise ValueError('Complete native provider trace failed qualification; reservation remains unresolved')
@@ -568,6 +604,8 @@ class ProviderMailbox:
                    'trusted_audit_sha256': digest_file(audit_path), 'trace_sha256': audit['trace_sha256'],
                    'authored_manifest_sha256': _hash(sealed['source_manifest']), 'sealed_batch_sha256': _hash(sealed),
                    'gateway_transports_terminal': True, 'requests': sealed['requests']}
+        if 'context_enrollment_sha256' in session['registered_context']:
+            receipt['context_enrollment_sha256'] = session['registered_context']['context_enrollment_sha256']
         receipt_path = self.root / 'receipts' / f'{identifier}.json'
         with receipt_path.open('xb') as stream:
             stream.write(canonical_bytes(receipt))
@@ -782,6 +820,18 @@ def _audit_initial_records(records: list[dict], *, identity: dict, agent_path: s
             'disclosure': identity['inherited_context']['disclosure']}
 
 
+def _session_context_identity(identity: dict, session: dict) -> dict:
+    """Completion cannot accept replacement review material from its caller."""
+    if 'session_context_policy' not in identity.get('trace_export', {}):
+        return identity
+    from eegfm.agent.provider_export import derive_session_context_identity
+    registered = session.get('registered_context') or {}
+    enrollment = registered.get('context_enrollment')
+    if not isinstance(enrollment, dict) or registered.get('context_enrollment_sha256') != _hash(enrollment):
+        raise ValueError('Stored context enrollment hash differs')
+    return derive_session_context_identity(identity, session, context_id=registered['context_id'], context_enrollment=enrollment)
+
+
 def read_trusted_receipt(pointer: dict, *, controller_run: Path, reservation_id: str,
                          episode_id: str, run_id: str) -> dict:
     if not isinstance(pointer, dict) or set(pointer) != {"provider", "receipt_path", "receipt_sha256"} or pointer["provider"] != PROVIDER:
@@ -808,6 +858,37 @@ def read_trusted_receipt(pointer: dict, *, controller_run: Path, reservation_id:
         audit = _regular(root / "audits" / f"{reservation_id}.json")
         if digest_file(audit) != receipt.get("trusted_audit_sha256") or json.loads(audit.read_text()).get("valid") is not True:
             raise ValueError("Successful delegated receipt requires its trusted audit")
+        enrollment = json.loads(_regular(root / 'ENROLLMENT.json').read_text())
+        if 'session_context_policy' in enrollment.get('trace_export', {}):
+            from eegfm.agent.provider_export import validate_admin_export
+            from eegfm.agent.provider_trace import _audit_native_records
+            effective = _session_context_identity(enrollment, state)
+            registered = state['registered_context']
+            if receipt.get('context_enrollment_sha256') != registered['context_enrollment_sha256']:
+                raise ValueError('Receipt differs from stored context enrollment')
+            directory = root / 'sessions' / reservation_id
+            admitted = json.loads(_regular(directory / 'admitted-export.json').read_text())
+            completed = json.loads(_regular(directory / 'complete-export.json').read_text())
+            context_id = registered['context_id']
+            _, initial = validate_admin_export(admitted, effective, state, context_id=context_id)
+            records, final_initial = validate_admin_export(completed, effective, state, context_id=context_id,
+                                                          prior_source=registered['export_source'])
+            observed = json.loads(audit.read_text())
+            reviewed = registered['context_enrollment']['reviewed_source']
+            with closing(sqlite3.connect(_regular(root / 'mailbox.sqlite3'))) as db:
+                deliveries = [{'request': json.loads(a), 'response': json.loads(b)} for a,b in db.execute(
+                    'SELECT request,response FROM deliveries WHERE session=? ORDER BY sequence', (reservation_id,))]
+            checked = _audit_native_records(records, effective, state, deliveries, initial, sanitized=True)
+            if (not checked['valid'] or any(observed.get(key) != value for key,value in checked.items())
+                    or final_initial != initial or records[:len(admitted['records'])] != admitted['records']
+                    or any(admitted['source'].get(key) != value for key,value in reviewed.items())
+                    or admitted['source'] != registered['export_source']
+                    or observed.get('trace_export') != {'binding': effective['trace_export'], 'source': completed['source'],
+                                                        'admitted_source': admitted['source'],
+                                                        'context_enrollment_sha256': registered['context_enrollment_sha256']}
+                    or receipt.get('model_context_id') != context_id
+                    or receipt.get('trace_sha256') != digest_file(_regular(directory / 'native.jsonl'))):
+                raise ValueError('Receipt requires its stored effective context export audit')
     return receipt
 
 
@@ -898,7 +979,9 @@ def service_request(mailbox: ProviderMailbox, request: dict) -> dict:
         if 'receipt_timing' in state:
             keys += ('receipt_timing',)
         return {key: state[key] for key in keys}
-    if request.get('admin') in {'admit_sanitized', 'accept_sanitized'} and set(request) == {'admin', 'session', 'context_id', 'export'}:
+    if (request.get('admin') in {'admit_sanitized', 'accept_sanitized'}
+            and (set(request) == {'admin', 'session', 'context_id', 'export'}
+                 or request.get('admin') == 'admit_sanitized' and set(request) == {'admin', 'session', 'context_id', 'export', 'context_enrollment'})):
         return _admin_export(mailbox, request)
     if request.get('admin') in {'admit', 'accept'} and set(request) == {'admin', 'session', 'context_id', 'trace_base64'}:
         if 'trace_export' in mailbox.identity:
@@ -926,20 +1009,45 @@ def service_request(mailbox: ProviderMailbox, request: dict) -> dict:
 
 
 def _admin_export(mailbox: ProviderMailbox, request: dict) -> dict:
+    """Serialize the entire admission, including proof writes and task release."""
+    if request['admin'] == 'admit_sanitized':
+        with mailbox.transaction() as db:
+            return _admin_export_context(mailbox, request, admission_db=db)
+    return _admin_export_context(mailbox, request)
+
+
+def _admin_export_context(mailbox: ProviderMailbox, request: dict, *, admission_db: sqlite3.Connection | None = None) -> dict:
     """Explicit trusted-root route for private projected native evidence."""
-    from eegfm.agent.provider_export import validate_admin_export
+    from eegfm.agent.provider_export import validate_admin_export, derive_session_context_identity
 
     mailbox.verify()
     identifier = _id(request['session'])
     context_id, exported = _id(request['context_id']), request['export']
-    session = mailbox.session(identifier)
+    session = mailbox._session(admission_db, identifier) if admission_db is not None else mailbox.session(identifier)
     registered = session['registered_context']
     complete = request['admin'] == 'accept_sanitized'
+    if not complete and session['status'] != 'open':
+        raise ValueError('Initial context admission is closed for sealed or accepted sessions')
     if complete and (not registered or registered['context_id'] != context_id or session['status'] not in {'sealed', 'accepted'}):
         raise ValueError('Sealed previously admitted context required')
     prior = registered['export_source'] if complete else None
-    records, initial = validate_admin_export(exported, mailbox.identity, session, context_id=context_id, prior_source=prior)
+    opted_in = 'session_context_policy' in mailbox.identity.get('trace_export', {})
+    context_enrollment = request.get('context_enrollment')
+    if opted_in:
+        if complete:
+            effective = _session_context_identity(mailbox.identity, session)
+        else:
+            if registered and context_enrollment != registered.get('context_enrollment'):
+                raise ValueError('Context reservation cannot be replaced')
+            effective = derive_session_context_identity(mailbox.identity, session, context_id=context_id, context_enrollment=context_enrollment)
+    else:
+        if 'context_enrollment' in request:
+            raise ValueError('Context enrollment requires explicit immutable policy')
+        effective = mailbox.identity
+    records, initial = validate_admin_export(exported, effective, session, context_id=context_id, prior_source=prior)
     source = exported['source']
+    if opted_in and not complete and any(source.get(key) != value for key,value in context_enrollment['reviewed_source'].items()):
+        raise ValueError('Admission export differs from the exact root-reviewed raw prefix')
     directory = mailbox.root / 'sessions' / identifier
     admit_proof = directory / 'admitted-export.json'
     proof = directory / 'complete-export.json' if complete else admit_proof
@@ -965,10 +1073,13 @@ def _admin_export(mailbox: ProviderMailbox, request: dict) -> dict:
         temporary.replace(path)
     if complete:
         return mailbox.accept_trace(identifier, path, trusted_admin_initial=initial, export_source=source)
-    mailbox.register_context(identifier, context_id=context_id, trace_path=path, trusted_admin_initial=initial, export_source=source)
+    mailbox._register_context(admission_db, identifier, context_id=context_id, trace_path=path, trusted_admin_initial=initial, export_source=source,
+                             context_enrollment=context_enrollment)
     response = {'status': 'initial_context_admitted', 'context_id': context_id}
+    if opted_in:
+        response['context_enrollment_sha256'] = mailbox._session(admission_db, identifier)['registered_context']['context_enrollment_sha256']
     if 'native_timing' in mailbox.identity:
-        response['native_timing'] = mailbox.session(identifier)['registered_context']['native_timing']
+        response['native_timing'] = mailbox._session(admission_db, identifier)['registered_context']['native_timing']
     return response
 
 

@@ -6,6 +6,7 @@ general DLP over authorized scientific payloads. Raw audit APIs stay separate.
 from __future__ import annotations
 
 import hashlib
+import copy
 from datetime import datetime
 import math
 from pathlib import Path
@@ -21,6 +22,8 @@ PROFILE_KEYS = ('episode_id', 'run_id', 'model', 'effort', 'parent_thread', 'age
 METADATA = {'world_state', 'inter_agent_communication_metadata', 'token_usage_record', 'token_count',
             'reasoning', 'Reasoning', 'assistant_commentary', 'additional_tools'}
 INITIAL_METADATA = {'world_state', 'additional_tools'}
+SESSION_CONTEXT_POLICY = 'trusted_root_pre_task_v1'
+CONTEXT_ENROLLMENT_SCHEMA = 'trusted_root_pre_task_context_v1'
 
 
 def source_sha256() -> str:
@@ -67,6 +70,61 @@ def _primary_context(identity: dict) -> dict:
             'initial_metadata': identity['trace_export']['initial_metadata']}
 
 
+def _validate_compatible_context(identity: dict, bundle: dict) -> None:
+    """Keep fixed structure, memory and environment across reviewed platform text."""
+    primary = _primary_context(identity)
+    shape = _message_shape(primary['initial_messages'])
+    if (not isinstance(bundle, dict) or set(bundle) != set(primary)
+            or not _sha(primary['memory_summary_sha256']) or sum(role == 'user' for role, _ in shape) != 1
+            or not any('memories.instructions' in kinds for _, kinds in shape)
+            or _message_shape(bundle['initial_messages']) != shape
+            or not _metadata_profile(bundle['initial_metadata'])
+            or [row['kind'] for row in bundle['initial_metadata']] != [row['kind'] for row in primary['initial_metadata']]
+            or bundle['memory_summary_sha256'] != primary['memory_summary_sha256']
+            or any(actual != expected for actual, expected in zip(bundle['initial_messages'], primary['initial_messages'])
+                   if not (expected['role'] == 'developer' and ('generic.developer_instructions' in expected['kinds']
+                       or set(expected['kinds']) <= {'host_skills.instructions', 'tools.deferred_namespaces', 'plugins.recommendations'})))):
+        raise ValueError('Context enrollment requires common ordered structure, memory and environment')
+
+
+def base_profile_sha256(identity: dict) -> str:
+    """Bind the immutable base identity, sanitizer, gateway and opt-in policy."""
+    return _hash({'audit_profile': audit_profile(identity), 'trace_export': identity['trace_export'], 'gateway': identity['gateway']})
+
+
+def derive_session_context_identity(identity: dict, session: dict, *, context_id: str, context_enrollment: dict) -> dict:
+    """Root review is trusted provenance, not a server-side semantic proof.
+
+    The raw encrypted bootstrap cannot prove the root's plaintext spawn request;
+    its published bytes and separate root-owned spawn evidence are hash-bound.
+    """
+    from eegfm.agent.provider import bootstrap
+    validate_binding(identity)
+    required = {'schema_version', 'base_profile_sha256', 'episode_id', 'run_id', 'session_id', 'context_id', 'agent_path',
+                'context_bundle', 'reviewed_source', 'bootstrap_sha256', 'spawn_evidence_sha256', 'review_sha256'}
+    value = context_enrollment
+    if (identity['trace_export'].get('session_context_policy') != SESSION_CONTEXT_POLICY
+            or not isinstance(value, dict) or set(value) != required or value['schema_version'] != CONTEXT_ENROLLMENT_SCHEMA
+            or value['base_profile_sha256'] != base_profile_sha256(identity)
+            or any(value[key] != identity[key] for key in ('episode_id', 'run_id'))
+            or value['session_id'] != session['session_id'] or value['agent_path'] != session['agent_path']
+            or not _identifier(context_id) or value['context_id'] != context_id
+            or value['bootstrap_sha256'] != hashlib.sha256(bootstrap(identity, session['session_id']).encode()).hexdigest()
+            or not _sha(value['spawn_evidence_sha256']) or not _sha(value['review_sha256'])):
+        raise ValueError('Explicit bound trusted-root pre-task context enrollment required')
+    source = value['reviewed_source']
+    if (not isinstance(source, dict) or set(source) != {'path_sha256', 'prefix_bytes', 'prefix_sha256'}
+            or type(source['prefix_bytes']) is not int or not 0 < source['prefix_bytes'] <= 64 * 1024**2
+            or not _sha(source['path_sha256']) or not _sha(source['prefix_sha256'])):
+        raise ValueError('Exact reviewed raw prefix provenance required')
+    _validate_compatible_context(identity, value['context_bundle'])
+    result = copy.deepcopy(identity)
+    result['inherited_context']['initial_messages'] = copy.deepcopy(value['context_bundle']['initial_messages'])
+    result['trace_export']['initial_metadata'] = copy.deepcopy(value['context_bundle']['initial_metadata'])
+    result['trace_export']['audit_profile_sha256'] = _hash(audit_profile(result))
+    return result
+
+
 def _validate_context_variants(identity: dict) -> None:
     binding = identity['trace_export']
     if 'context_variants' not in binding:
@@ -109,7 +167,7 @@ def matches_context_bundle(identity: dict, messages: list, metadata: list, memor
 def validate_binding(identity: dict) -> None:
     binding = identity.get('trace_export')
     required = {'schema_version', 'client_source_sha256', 'sanitizer_source_sha256', 'audit_profile_sha256', 'initial_metadata'}
-    if (not isinstance(binding, dict) or not required <= set(binding) or set(binding) - required - {'context_variants'}
+    if (not isinstance(binding, dict) or not required <= set(binding) or set(binding) - required - {'context_variants', 'session_context_policy'}
             or binding['schema_version'] != SCHEMA
             or any(not isinstance(binding[key], str) or re.fullmatch('[0-9a-f]{64}', binding[key]) is None
                    for key in ('client_source_sha256', 'sanitizer_source_sha256', 'audit_profile_sha256'))
@@ -117,6 +175,10 @@ def validate_binding(identity: dict) -> None:
             or binding['audit_profile_sha256'] != _hash(audit_profile(identity))
             or not _metadata_profile(binding['initial_metadata'])):
         raise ValueError('Prospective trusted-admin sanitizer/profile binding required')
+    if 'session_context_policy' in binding:
+        if binding['session_context_policy'] != SESSION_CONTEXT_POLICY or 'context_variants' in binding:
+            raise ValueError('Session context policy must be explicit and excludes context variants')
+        _validate_compatible_context(identity, _primary_context(identity))
     _validate_context_variants(identity)
 
 
@@ -165,9 +227,15 @@ def _shell(native: dict, identity: dict, session: dict, requests: list) -> dict:
 
 
 def sanitize_admin_trace(path: Path, identity: dict, session: dict, *, context_id: str,
-                         prior_source: dict | None = None, complete: bool = False) -> dict:
+                         prior_source: dict | None = None, complete: bool = False,
+                         context_enrollment: dict | None = None) -> dict:
     """Local admin only: verify raw initial content and grammar before export."""
     validate_binding(identity)
+    opted_in = 'session_context_policy' in identity['trace_export']
+    if opted_in != (context_enrollment is not None):
+        raise ValueError('Context enrollment differs from immutable session context policy')
+    if opted_in:
+        identity = derive_session_context_identity(identity, session, context_id=context_id, context_enrollment=context_enrollment)
     raw = _regular(Path(path)).read_bytes()
     if len(raw) > 64 * 1024**2:
         raise ValueError('Local native trace byte cap')
@@ -176,6 +244,12 @@ def sanitize_admin_trace(path: Path, identity: dict, session: dict, *, context_i
     source = {'raw_sha256': hashlib.sha256(raw).hexdigest(), 'raw_bytes': len(raw),
               'prefix_sha256': hashlib.sha256(raw[:prefix_bytes]).hexdigest(), 'prefix_bytes': prefix_bytes,
               'path_sha256': _hash(str(Path(path).resolve()))}
+    if opted_in:
+        reviewed = context_enrollment['reviewed_source']
+        if (reviewed['path_sha256'] != source['path_sha256'] or reviewed['prefix_bytes'] > source['prefix_bytes']
+                or hashlib.sha256(raw[:reviewed['prefix_bytes']]).hexdigest() != reviewed['prefix_sha256']
+                or not raw[:reviewed['prefix_bytes']].endswith(b'\n')):
+            raise ValueError('Local raw source differs from the reviewed prefix')
     if prior_source is not None and (source['path_sha256'] != prior_source['path_sha256']
             or len(raw) < prior_source['raw_bytes']
             or hashlib.sha256(raw[:prior_source['raw_bytes']]).hexdigest() != prior_source['raw_sha256']
@@ -252,6 +326,17 @@ def sanitize_admin_trace(path: Path, identity: dict, session: dict, *, context_i
     result = {'schema_version': SCHEMA, 'binding': identity['trace_export'], 'source': source, 'prior_source': prior_source,
               'initial_audit': initial, 'records': projected}
     validate_admin_export(result, identity, session, context_id=context_id, prior_source=prior_source)
+    if opted_in and not complete:
+        # Check the full available tail above, including pending allowed status
+        # calls, then export only the exact completed prefix reviewed by root.
+        prefix_records = _trace_records_from_bytes(raw[:reviewed['prefix_bytes']], allow_partial=False)
+        result['records'] = projected[:len(prefix_records)]
+        result['source'] = {**source, 'raw_bytes': reviewed['prefix_bytes'], 'prefix_bytes': reviewed['prefix_bytes'],
+                            'raw_sha256': reviewed['prefix_sha256'], 'prefix_sha256': reviewed['prefix_sha256']}
+        validate_admin_export(result, identity, session, context_id=context_id, prior_source=prior_source)
+        pre_task = _audit_native_records(result['records'], identity, session, None, initial, sanitized=True, pre_task=True)
+        if not pre_task['valid']:
+            raise ValueError('Reviewed prefix lacks a completed pre-task waiting gateway delivery: ' + '; '.join(pre_task['issues']))
     if complete:
         execution = _audit_native_records(projected, identity, session, None, initial, sanitized=True)
         if not execution['valid']:
@@ -328,9 +413,13 @@ def validate_admin_export(value: dict, identity: dict, session: dict, *, context
                 calls.add(item['call_id'])
                 operation, request = parse_tool(item['input'], identity, session['session_id'])
                 if operation == 'call':
-                    if ('native_timing' in identity and prior_source is None
+                    if (('native_timing' in identity or 'session_context_policy' in identity['trace_export']) and prior_source is None
                             and request['operation'] not in {'task', 'request_status'}):
                         raise ValueError('Only task delivery and status may precede native admission')
+                    if 'session_context_policy' in identity['trace_export'] and prior_source is None:
+                        if (request['operation'] == 'task' and request != {'request_id': 'task', 'operation': 'task', 'payload': {}}
+                                or request['operation'] == 'request_status' and request['payload'] != {'request_id': 'task'}):
+                            raise ValueError('Pre-task gateway must follow the exact task bootstrap')
                     requests.append(canonical_bytes(request))
             elif ptype == 'custom_tool_call_output':
                 if (set(item) != {'type', 'call_id', 'output'} or item['call_id'] not in calls or item['call_id'] in outputs
