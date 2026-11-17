@@ -31,6 +31,20 @@ def setup_provider(tmp_path):
     return controller,box,enrollment
 
 
+def test_astra_mailbox_preserves_enrolled_identity(setup_provider):
+    controller, old, enrollment = setup_provider
+    new = {**enrollment, 'model': 'gpt-6-astra', 'effort': 'ultra'}
+    box = provider.ProviderMailbox(root=controller.run/'astra-provider', case_root=old.case,
+                                   public_root=old.public, enrollment=new)
+    assert box.identity['model'] == 'gpt-6-astra'
+    assert box.identity['effort'] == 'ultra'
+    for index, change in enumerate(({'model': 'unknown'}, {'effort': 'invented'},
+                                    {'session_timeout_seconds': 241})):
+        with pytest.raises(ValueError):
+            provider.ProviderMailbox(root=controller.run/f'invalid-{index}', case_root=old.case,
+                                     public_root=old.public, enrollment={**new, **change})
+
+
 def open_session(box,timeout=240,*,register=True,projection=None):
     if projection is None:
         projection={'episode_id':'episode','run_id':'run','state':{'status':'brief','version':0},'lock':None}

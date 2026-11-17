@@ -83,6 +83,20 @@ def test_full_result_session_id_chunks_recover_without_resubmission(tmp_path):
     assert result['valid'] and result['gateway_calls']==1 and result['native_poll_calls']==1
 
 
+def test_astra_trace_must_match_exact_registered_model_and_effort(tmp_path):
+    path, identity, session, deliveries = trace(tmp_path)
+    rows = [json.loads(line) for line in path.read_text().splitlines()]
+    for row in rows:
+        if row['type'] == 'turn_context':
+            row['payload'].update(model='gpt-6-astra', effort='ultra')
+    path.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+    assert not provider_trace.audit_native_context(path, identity, session, deliveries)['valid']
+    identity.update(model='gpt-6-astra', effort='ultra')
+    assert provider_trace.audit_native_context(path, identity, session, deliveries)['valid']
+    identity['effort'] = 'high'
+    assert not provider_trace.audit_native_context(path, identity, session, deliveries)['valid']
+
+
 def test_unowned_transport_poll_and_external_hint_reject(tmp_path):
     path,identity,session,deliveries=trace(tmp_path)
     path.write_text(path.read_text().replace('session_id:345','session_id:999'))

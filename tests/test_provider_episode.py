@@ -60,6 +60,15 @@ def test_historical_exact_roles_and_allocation_are_required(tmp_path):
         with pytest.raises(ValueError):episode.validate_delegated_config({**value,**update})
 
 
+def test_registered_astra_identity_is_admitted_without_relaxing_budget(tmp_path):
+    value = {**config(tmp_path), 'model': 'gpt-6-astra', 'reasoning_effort': 'ultra'}
+    assert episode.validate_delegated_config(value)['previous_successful_test_job']
+    for change in ({'model': 'unregistered'}, {'reasoning_effort': 'invented'},
+                   {'session_timeout_seconds': 241}):
+        with pytest.raises(ValueError):
+            episode.validate_delegated_config({**value, **change})
+
+
 @pytest.mark.parametrize('deadline', [True, 0, -1, 2500.0, float('inf'), '2500'])
 def test_absolute_deadline_requires_positive_integer_epoch(tmp_path, deadline):
     value = config(tmp_path)

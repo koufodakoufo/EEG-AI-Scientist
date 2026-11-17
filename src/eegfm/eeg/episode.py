@@ -25,6 +25,7 @@ from eegfm.agent.budget import BudgetExceeded
 from eegfm.agent.budget import mark_call
 from eegfm.agent.budget import reserve_call
 from eegfm.agent.budget import write_atomic
+from eegfm.agent.provider import supported_native_identity
 from eegfm.evaluation.bundle import canonical_bytes
 from eegfm.evaluation.bundle import create_public_bundle
 from eegfm.evaluation.bundle import digest_file
@@ -861,7 +862,7 @@ def run_episode(config: dict[str, Any]) -> dict[str, Any]:
 def validate_delegated_config(config: dict[str, Any]) -> dict[str, Any]:
     """Explicit historical-readout admission; never inspect native credentials."""
     if (config.get('schema_version') != 'audited_coding_episode_v1' or config.get('task_id') not in {READOUT_TASK, RESIDUAL_RECOVERY_TASK}
-            or config.get('model') != MODEL or config.get('reasoning_effort') not in {'medium', 'high'}):
+            or not supported_native_identity(config.get('model'), config.get('reasoning_effort'))):
         raise ValueError('Explicit audited historical-readout provider required')
     if any(name in config for name in ('auth_source', 'auth_mode', 'native_binary', 'isolation_report', 'proxy_url', 'bwrap')):
         raise ValueError('Audited provider config must not carry native authentication/isolation fields')
@@ -1024,7 +1025,7 @@ def run_delegated_episode(config: dict[str, Any]) -> dict[str, Any]:
 
     provider = config['provider']
     provider_enrollment = {**provider, 'episode_id': config['episode_id'], 'run_id': config['run_id'],
-        'model': MODEL, 'effort': config['reasoning_effort'], 'session_limit': len(config['call_ids']),
+        'model': config['model'], 'effort': config['reasoning_effort'], 'session_limit': len(config['call_ids']),
         'session_timeout_seconds': timeout,
         'study_disclosure': 'Historical readout train/validation/test bytes have previously been used by this project. Test is withheld from this researcher until lock for workflow replay only; it is not project-unseen confirmation. Common inherited project history may include high-level prior readout findings. No blind capability or research-gain claim follows.'}
     if residual:
@@ -1044,7 +1045,7 @@ def run_delegated_episode(config: dict[str, Any]) -> dict[str, Any]:
         write_atomic(service_path, service)
     launcher = ProviderLaunch(mailbox, budget_path=Path(config['budget_path']), call_ids=config['call_ids'])
     driver = EpisodeDriver(controller, launch=launcher, reviewer=lambda projection: review_brief(controller, projection),
-        max_sessions=len(config['call_ids']), session_provider=PROVIDER, provider_model=MODEL, provider_timeout_seconds=timeout, poll=1.)
+        max_sessions=len(config['call_ids']), session_provider=PROVIDER, provider_model=config['model'], provider_timeout_seconds=timeout, poll=1.)
     driver.episode_deadline = deadline
     try:
         exit_code = driver.loop()

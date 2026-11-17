@@ -25,6 +25,12 @@ PROJECTION_PAGE_CHARS = 6000
 PROJECTION_PAGE_JSON_BYTES = 6000
 
 
+def supported_native_identity(model: Any, effort: Any) -> bool:
+    """Explicitly qualified identities; the native trace must still match exactly."""
+    return ((model == "gpt-6.1-sol" and effort in ("medium", "high"))
+            or (model == "gpt-6-astra" and effort == "ultra"))
+
+
 def _id(value: Any) -> str:
     if not isinstance(value, str) or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,99}", value) is None:
         raise ValueError("Invalid provider identifier")
@@ -101,7 +107,7 @@ class ProviderMailbox:
                 raise ValueError('Bounded native timing requires trusted sanitized enrollment')
         for name in ("episode_id", "run_id"):
             _id(enrollment[name])
-        if (enrollment["model"] != "gpt-6.1-sol" or enrollment["effort"] not in {"medium", "high"}
+        if (not supported_native_identity(enrollment["model"], enrollment["effort"])
                 or type(enrollment["session_limit"]) is not int or not 1 <= enrollment["session_limit"] <= 6
                 or type(enrollment["session_timeout_seconds"]) is not int or not 1 <= enrollment["session_timeout_seconds"] <= 240
                 or not re.fullmatch(r"/root/[A-Za-z0-9_-]+", enrollment["agent_prefix"])):
