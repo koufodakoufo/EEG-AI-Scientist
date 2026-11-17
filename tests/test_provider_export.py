@@ -37,6 +37,15 @@ def test_qualified_shell_paths_preserve_full_trace_and_export_audit(tmp_path, sh
     assert provider_trace._audit_native_records(records, identity, session, deliveries, initial, sanitized=True)['valid']
 
 
+def test_explicit_longer_reservation_survives_both_trace_audits(tmp_path):
+    path, identity, session, deliveries = fixture(tmp_path)
+    session['timeout_seconds'] = 480
+    assert provider_trace.audit_native_context(path, identity, session, deliveries)['valid']
+    provider_export.sanitize_admin_trace(path, identity, session, context_id='context', complete=True)
+    session['timeout_seconds'] = 481
+    assert not provider_trace.audit_native_context(path, identity, session, deliveries)['valid']
+
+
 @pytest.mark.parametrize('prefix', [
     [r'C:\unreviewed\pwsh.exe', '-Command'],
     [PACKAGED_SHELL.replace('26-1112-611-0', '26-9999-999-0'), '-Command'],

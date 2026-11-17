@@ -39,7 +39,7 @@ def test_astra_mailbox_preserves_enrolled_identity(setup_provider):
     assert box.identity['model'] == 'gpt-6-astra'
     assert box.identity['effort'] == 'ultra'
     for index, change in enumerate(({'model': 'unknown'}, {'effort': 'invented'},
-                                    {'session_timeout_seconds': 241})):
+                                    {'session_timeout_seconds': 481})):
         with pytest.raises(ValueError):
             provider.ProviderMailbox(root=controller.run/f'invalid-{index}', case_root=old.case,
                                      public_root=old.public, enrollment={**new, **change})
@@ -54,6 +54,24 @@ def test_episode_driver_accepts_registered_astra_and_rejects_unknown_model(setup
     with pytest.raises(ValueError, match='bounded model'):
         ResearchDriver(controller, launch=lambda _: None,
                        session_provider=provider.PROVIDER, provider_model='unknown')
+
+
+def test_longer_context_requires_new_enrollment_and_keeps_old_reservations(setup_provider):
+    controller, old, enrollment = setup_provider
+    projection = {'episode_id': 'episode', 'run_id': 'run', 'state': {'status': 'brief', 'version': 0}, 'lock': None}
+    with pytest.raises(ValueError):
+        old.publish('session-01', projection, timeout_seconds=480)
+    box = provider.ProviderMailbox(root=controller.run/'calibrated-provider', case_root=old.case,
+        public_root=old.public, enrollment={**enrollment, 'session_timeout_seconds': 480})
+    driver = ResearchDriver(controller, launch=lambda _: None, session_provider=provider.PROVIDER,
+        provider_model='gpt-6-astra', provider_timeout_seconds=480)
+    assert driver.provider_timeout_seconds == 480
+    reservation = controller.reserve_session(6, provider=provider.PROVIDER, timeout_seconds=480)
+    assert box.publish(reservation, projection, timeout_seconds=480)['timeout_seconds'] == 480
+    assert old.identity['session_timeout_seconds'] == 240
+    with pytest.raises(ValueError):
+        ResearchDriver(controller, launch=lambda _: None, session_provider=provider.PROVIDER,
+            provider_model='gpt-6-astra', provider_timeout_seconds=481)
 
 
 def open_session(box,timeout=240,*,register=True,projection=None):

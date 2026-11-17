@@ -25,7 +25,7 @@ from eegfm.agent.budget import BudgetExceeded
 from eegfm.agent.budget import mark_call
 from eegfm.agent.budget import reserve_call
 from eegfm.agent.budget import write_atomic
-from eegfm.agent.provider import supported_native_identity
+from eegfm.agent.provider import supported_native_identity, MAX_DELEGATED_SESSION_SECONDS, MAX_DELEGATED_EPISODE_SECONDS
 from eegfm.evaluation.bundle import canonical_bytes
 from eegfm.evaluation.bundle import create_public_bundle
 from eegfm.evaluation.bundle import digest_file
@@ -254,10 +254,13 @@ def episode_time_limits(config: dict[str, Any]) -> tuple[int, int]:
     task_id = config.get("task_id", DEFAULT_TASK)
     task_scope(task_id)
     wall_cap, session_cap = (2700, 600) if task_id == READOUT_TASK else (5400, 900)
+    wall_default, session_default = wall_cap, session_cap
     if task_id == RESIDUAL_RECOVERY_TASK:
-        wall_cap, session_cap = 2700, 240
-    wall = config.get("episode_timeout_seconds", wall_cap)
-    session = config.get("session_timeout_seconds", session_cap)
+        wall_cap, session_cap = MAX_DELEGATED_EPISODE_SECONDS, MAX_DELEGATED_SESSION_SECONDS
+        # Existing callers retain their allocation unless a new config declares it.
+        wall_default, session_default = 2700, 240
+    wall = config.get("episode_timeout_seconds", wall_default)
+    session = config.get("session_timeout_seconds", session_default)
     if (type(wall) is not int or not 0 < wall <= wall_cap
             or type(session) is not int or not 0 < session <= session_cap):
         raise ValueError("Invalid episode/session timeout")
@@ -867,8 +870,8 @@ def validate_delegated_config(config: dict[str, Any]) -> dict[str, Any]:
     if any(name in config for name in ('auth_source', 'auth_mode', 'native_binary', 'isolation_report', 'proxy_url', 'bwrap')):
         raise ValueError('Audited provider config must not carry native authentication/isolation fields')
     wall, timeout = episode_time_limits(config)
-    if not 180 <= timeout <= 240 or wall > 2700:
-        raise ValueError('Audited session allocation must be 180-240 seconds within 2700 seconds')
+    if not 180 <= timeout <= MAX_DELEGATED_SESSION_SECONDS or wall > MAX_DELEGATED_EPISODE_SECONDS:
+        raise ValueError('Audited session allocation must be 180-480 seconds within 4200 seconds')
     if 'episode_deadline_epoch' in config and (type(config['episode_deadline_epoch']) is not int
                                                or config['episode_deadline_epoch'] <= 0):
         raise ValueError('Absolute episode deadline must be a positive integer epoch')

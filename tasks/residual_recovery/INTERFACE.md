@@ -28,8 +28,9 @@ Paths below are relative to `output/`, with no links or path escapes.
 | test | `{"candidate_digest":"FROM_RESPONSE","split":"test"}` | Matching lock; once |
 | report | `{"path":"REPORT.md"}` | Successful baseline, final validation and test; negative results allowed |
 
-At most six contexts, each at most 240 seconds, fit inside the original
-2,700-second episode deadline. Exactly two public-fit reservations (at most
+At most six contexts, each at most 480 seconds, fit inside the enrolled
+4,200-second episode ceiling. The launch records the exact allocation; existing
+240-second/2,700-second registrations keep their original deadlines. Exactly two public-fit reservations (at most
 90 seconds each), one baseline validation, one final validation, one locked
 test (scientific workers at most 120 seconds each), and two independent replay
 slots (at most 90 seconds each) are available. `max_attempts=1`; no retries or extra fits. Failed or

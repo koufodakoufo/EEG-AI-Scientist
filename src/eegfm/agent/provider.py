@@ -20,6 +20,8 @@ from eegfm.agent.budget import write_atomic
 from eegfm.evaluation.bundle import canonical_bytes, digest_file, safe_relative, verify_public_bundle
 
 PROVIDER = "delegated_audited_v1"
+MAX_DELEGATED_SESSION_SECONDS = 480
+MAX_DELEGATED_EPISODE_SECONDS = 4200
 MAX_CHUNK = 4096
 PROJECTION_PAGE_CHARS = 6000
 PROJECTION_PAGE_JSON_BYTES = 6000
@@ -110,7 +112,7 @@ class ProviderMailbox:
             _id(enrollment[name])
         if (not supported_native_identity(enrollment["model"], enrollment["effort"])
                 or type(enrollment["session_limit"]) is not int or not 1 <= enrollment["session_limit"] <= 6
-                or type(enrollment["session_timeout_seconds"]) is not int or not 1 <= enrollment["session_timeout_seconds"] <= 240
+                or type(enrollment["session_timeout_seconds"]) is not int or not 1 <= enrollment["session_timeout_seconds"] <= MAX_DELEGATED_SESSION_SECONDS
                 or not re.fullmatch(r"/root/[A-Za-z0-9_-]+", enrollment["agent_prefix"])):
             raise ValueError("Invalid frozen provider model/budget/context")
         inherited = enrollment["inherited_context"]

@@ -64,15 +64,16 @@ def test_registered_astra_identity_is_admitted_without_relaxing_budget(tmp_path)
     value = {**config(tmp_path), 'model': 'gpt-6-astra', 'reasoning_effort': 'ultra'}
     assert episode.validate_delegated_config(value)['previous_successful_test_job']
     for change in ({'model': 'unregistered'}, {'reasoning_effort': 'invented'},
-                   {'session_timeout_seconds': 241}):
+                   {'session_timeout_seconds': 481}):
         with pytest.raises(ValueError):
             episode.validate_delegated_config({**value, **change})
 
 
+@pytest.mark.parametrize('context_seconds', [180, 480])
 @pytest.mark.parametrize('task', [episode.READOUT_TASK, episode.RESIDUAL_RECOVERY_TASK])
 @pytest.mark.parametrize('model,effort', [('gpt-6.1-sol', 'high'), ('gpt-6-astra', 'ultra')])
 def test_delegated_entry_constructs_real_driver_mailbox_and_service(
-        tmp_path, setup_provider, monkeypatch, task, model, effort):
+        tmp_path, setup_provider, monkeypatch, task, model, effort, context_seconds):
     """Exercise every startup identity gate; stop at the model dispatch boundary."""
     from eegfm.agent import provider
     from eegfm.agent.controller import ResearchDriver
@@ -81,6 +82,9 @@ def test_delegated_entry_constructs_real_driver_mailbox_and_service(
     from test_residual_recovery_episode import config as residual_config
 
     value = residual_config(tmp_path) if task == episode.RESIDUAL_RECOVERY_TASK else config(tmp_path)
+    wall_seconds = 4200 if task == episode.RESIDUAL_RECOVERY_TASK and context_seconds == 480 else 2700
+    deadline = 1000 + wall_seconds
+    from datetime import datetime, timezone
     _, _, enrollment = setup_provider
     case_root, trusted = tmp_path / 'startup-case', tmp_path / 'startup-trusted'
     source = tmp_path / 'startup-public-source'
@@ -91,11 +95,11 @@ def test_delegated_entry_constructs_real_driver_mailbox_and_service(
     (source / 'resources/CACHE_SCHEMA.json').write_text('{}')
     trusted.mkdir()
     budget = trusted / 'budget.json'
-    budget.write_text(json.dumps({'deadline_at': '1970-01-01T01:01:40+00:00',
-                                 'stop_new_research_at': '1970-01-01T00:54:40+00:00'}))
+    budget.write_text(json.dumps({'deadline_at': datetime.fromtimestamp(deadline, timezone.utc).isoformat(),
+                                 'stop_new_research_at': datetime.fromtimestamp(deadline-420, timezone.utc).isoformat()}))
     value.update(model=model, reasoning_effort=effort, episode_id='startup-episode',
         run_id='startup-run', case_root=str(case_root), trusted_root=str(trusted),
-        budget_path=str(budget), episode_timeout_seconds=2700, episode_deadline_epoch=3700,
+        budget_path=str(budget), episode_timeout_seconds=wall_seconds, session_timeout_seconds=context_seconds, episode_deadline_epoch=deadline,
         condition='no_skill', public_source=str(source),
         public_files=['train.npz', 'validation.npz', 'eeg_api.py', 'resources/CACHE_SCHEMA.json'],
         provider={key: enrollment[key] for key in ('parent_thread', 'agent_prefix', 'gateway', 'inherited_context')})
@@ -118,7 +122,7 @@ def test_delegated_entry_constructs_real_driver_mailbox_and_service(
     def worker(**kwargs):
         worker_calls.append(kwargs)
         identity = {'episode_id': value['episode_id'], 'run_id': value['run_id'],
-            'episode_deadline_epoch': 3700,
+            'episode_deadline_epoch': deadline,
             'public_manifest_sha256': digest_file(case_root / 'public/PUBLIC_MANIFEST.json'),
             'worker': {'public_artifact_mode': MODE, 'allowed_splits': ['validation']}}
         return SimpleNamespace(identity=identity, timeout=90, deadline_epoch=None,
@@ -130,16 +134,18 @@ def test_delegated_entry_constructs_real_driver_mailbox_and_service(
         assert isinstance(driver, ResearchDriver)
         assert driver.adapter.model == model
         assert driver.session_provider == provider.PROVIDER
-        assert driver.episode_deadline == 3700
+        assert driver.episode_deadline == deadline
         assert isinstance(driver.launch, provider.ProviderLaunch)
         mailbox = driver.launch.mailbox
         assert isinstance(mailbox, provider.ProviderMailbox)
         assert (mailbox.identity['model'], mailbox.identity['effort']) == (model, effort)
+        assert mailbox.identity['session_timeout_seconds'] == context_seconds
+        assert driver.provider_timeout_seconds == context_seconds
         mailbox.verify()
         service_path = mailbox.root / 'SERVICE.json'
         service = provider.load_service(service_path, digest_file(service_path))
         assert service.identity == mailbox.identity
-        assert json.loads(service_path.read_bytes())['episode_deadline_epoch'] == 3700
+        assert json.loads(service_path.read_bytes())['episode_deadline_epoch'] == deadline
         with mailbox.transaction() as database:
             assert database.execute('SELECT COUNT(*) FROM sessions').fetchone()[0] == 0
         observed.append(driver)

@@ -153,13 +153,21 @@ def test_residual_task_admission(tmp_path):
     assert episode.episode_time_limits({"task_id": TASK}) == (2700, 240)
     assert episode.validate_delegated_config(value)["task_id"] == TASK
     for update in ({"task_id": "unknown"}, {"max_attempts": 2}, {"recovery_policy": "validation-recovery-v1"},
-                   {"session_timeout_seconds": 241}, {"call_ids": [f"call-{i}" for i in range(7)]},
+                   {"session_timeout_seconds": 481}, {"episode_timeout_seconds": 4201},
+                   {"call_ids": [f"call-{i}" for i in range(7)]},
                    {"test_input": value["validation_input"]}):
         with pytest.raises(ValueError):
             episode.validate_delegated_config({**value, **update})
     assert episode.episode_time_limits({"task_id": episode.READOUT_TASK}) == (2700, 600)
     with pytest.raises(ValueError, match="audited|delegated"):
         episode.run_episode({"schema_version": "real_episode_config_v1", "task_id": TASK})
+
+
+def test_explicit_residual_time_calibration_preserves_defaults(tmp_path):
+    value = {**config(tmp_path), 'session_timeout_seconds': 480, 'episode_timeout_seconds': 4200}
+    assert episode.episode_time_limits(value) == (4200, 480)
+    assert episode.validate_delegated_config(value)['task_id'] == TASK
+    assert episode.episode_time_limits({'task_id': TASK}) == (2700, 240)
 
 
 @pytest.mark.parametrize("task,science,fit,allowed", [

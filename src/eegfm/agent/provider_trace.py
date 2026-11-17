@@ -13,7 +13,7 @@ from pathlib import Path
 import re
 from urllib.parse import quote, unquote_to_bytes
 
-from eegfm.agent.provider import WAIT_STATUS_PREFIX, _trace_records, audit_initial_context, call_template, poll_template, command
+from eegfm.agent.provider import MAX_DELEGATED_SESSION_SECONDS, WAIT_STATUS_PREFIX, _trace_records, audit_initial_context, call_template, poll_template, command
 from eegfm.evaluation.bundle import canonical_bytes
 
 SHELL_PREFIX = [r"C:\Users\14090\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\powershell\pwsh.exe", "-Command"]
@@ -130,7 +130,7 @@ def _timing(records: list[dict], session: dict) -> dict:
         if start != native['started_epoch'] or start + duration != native['actor_deadline_epoch']:
             raise ValueError('Native start differs from admitted timing')
     if (type(start) not in (int, float) or not math.isfinite(start)
-            or type(duration) is not int or not 1 <= duration <= 240):
+            or type(duration) is not int or not 1 <= duration <= MAX_DELEGATED_SESSION_SECONDS):
         raise ValueError('Original finite native session reservation required')
     deadline, previous, completion = start + duration, start, None
     for record in records:
