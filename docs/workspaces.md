@@ -6,14 +6,14 @@ GitHub 的 `main` 是已验证代码的共同主线。本地与服务器各有�
 |---|---|---|
 | Windows | `X:/projects/EEG-AI-Scientist` | 开发、阅读、发布 |
 | 火山云 | `/vePFS-0x0d/home/duandh/projects/EEG-AI-Scientist/code` | Docker科学候选执行、可信评分及原生Builder分析；目录登记由用户办理 |
-| nccserver0 | `/data/duandh/EEG-AI-Scientist/code` | 历史控制器、调用账本及 CPU 验证；当前本地网络无法连接 |
+| nccserver0 | `/data/duandh/EEG-AI-Scientist/code` | 历史控制器、调用账本及 CPU 验证；收尾时已恢复连接 |
 | GitHub | `koufodakoufo/EEG-AI-Scientist`，`main` | 版本化源码与可公开文档 |
 
 此前完整研究使用“NCC 控制器 → SSH 传输冻结候选 → 火山云 Docker 执行 → 可信评分返回”。SSH 认证留在可信控制层，不进入候选容器。第一项研究的六个目标 episode 已沿此路径完成；[方法迁移结果](research/method-transfer-results.md)和[Builder 读出结果](research/readout-bottleneck-results.md)保留原证据。
 
 已完成的科学计算在火山云个人工程根的 `runs/evidence-guided-research-v1/`：`builder/` 保存 Builder 分析，`coding-readout-v6/base-r01/` 保存独立编码研究者的真实 EEG 作业。本地 `.local/research-renewal/` 保存协议、审查和研究者记录。此前使用本地独立上下文，经 NCC 控制器调用火山云；NCC 旧原生模型通道授权未恢复。合成及真实 EEG 流程和预测复算均已完成。模型上下文接受访问审计，科学候选使用 Docker，两种边界不能混为模型进程的 OS 隔离。
 
-本次论文工作流试验将可信控制器也放到火山云，本地保留模型会话。公网 SSH 连接控制器，控制器经已固定主机密钥的本机 SSH 连接独立工作目录；认证不进入候选容器。NCC 的连接失败与云端执行分开记录，没有修改校园网、VPN 或代理。
+本次论文工作流试验将可信控制器也放到火山云，本地保留模型会话。公网 SSH 连接控制器，控制器经已固定主机密钥的本机 SSH 连接独立工作目录；认证不进入候选容器。NCC 在执行准备期间不可达，2026-11-17 收尾时重新检查已恢复连接；没有修改校园网、VPN 或代理。
 
 ## 火山云存储
 
@@ -45,9 +45,15 @@ Windows 状态检查：
 
 单端可用 `-Target huoshanyun` 或 `-Target nccserver0`。ncc 使用当前校园网地址；多地址时显式传 `-CampusAddress`，不改全局路由。
 
+`-Publish` 会先检查所选服务器，某端不可达会在 GitHub 推送前停止。阶段收尾可先单独推送 GitHub，再逐端记录同步状态；GitHub 发布成功不代表服务器已同步。2026-11-17 本轮收尾检查时，火山云持久 checkout 为干净的 `main`，停留在 `2a02ab4`；因 vePFS 空间为零，未向其推送新版本。临时执行源码另有固定身份，不能当作持久 checkout 已更新。
+
 如果在服务器开发，先提交在主题分支，本地用 Git-over-SSH fetch 取回并审阅，再合到 main 发布。不要在多端同时编辑同一个主线文件，也不要把服务器的未提交文件覆盖回本地。
 
 ## 研究证据与备份
+
+本次论文工作流试验的证据入口为本地 `.local/research-renewal/phase-completion-v1/`。原远端拟合和失败记录保留；精选副本排除输入数组、权重、认证、原生会话和平台记忆。火山云持久备份目前受空间为零及目标父目录尚未创建阻碍；NCC 在最终检查时恢复连接，本轮备份结果紧接下文；再往后的备份条目属于此前阶段。
+
+本轮新增的 **452 个精选文件，8,534,107 字节**已保存在 NCC 的 `runs/evidence-guided-research-v1/backup/paper-workflow-trial-v1/`，并全部下载、逐文件核对哈希和原件未变。恢复回执为本地 `.local/research-renewal/phase-completion-v1/backup/RESTORE_VERIFIED.json`。这包含最后一次拟合的代码、小型参数、失败和论文比较材料；不等于完整科研重放或科学验证通过。
 
 源码和公开报告走Git；私有研究证据按研究主题保存在各工程根的`runs/`。2026-11-02收尾时，下列审阅副本已在火山云、NCC逐文件核对大小与SHA256，本地原件保留：
 
@@ -73,6 +79,8 @@ Windows 状态检查：
 旧 ncc 部署根及其中 integration checkout、旧火山云 dated 根和旧环境保持原位，仅用于冻结证据和恢复，不再作为新开发入口。旧分支由 `archive/*` 标签保留，原始目录映射见 [历史索引](history/README.md)。
 
 ## 环境与验证
+
+本次启动与会话核验修复绑定源码 `19d379d`：Windows 完整套件 **1188 通过 / 85 跳过**；私有执行辅助程序 **195 / 2**；火山云 Linux 实际启动、资源边界和清理专项 **262 / 0**。Linux 数字是专项，不是完整套件。原 SSH 回复中断后核对的是同一个已完成任务，没有重复提交。回执在 `.local/research-renewal/phase-completion-v1/`。最后一次残余恢复运行只有一次基线拟合，没有完成科学评分、测试和报告，详见[阶段收尾](research/phase-completion.md)。以下各版本记录为历史验收。
 
 论文工作流与嵌套执行修复的生产代码为 `913e3bc`，测试预期修正为 `986d316`。三端完整检查各收集 1177 项：Windows 1091 通过 / 85 跳过 / 1 失败，NCC 1149 / 27 / 1，火山云 1147 / 29 / 1。唯一失败均为旧测试未计入新增的参考重放；独立审阅后只改测试预期，整个论文模块随后在 Windows 129 项通过，两台 Linux 各 121 通过 / 8 跳过，生产代码未变。全部远端源码前后身份一致，火山云断开的 SSH 回复从原终端回执恢复，未重复运行。精确范围见 `.local/research-renewal/paper-workflow-v1/development/VERIFIED.json`。
 
