@@ -20,11 +20,15 @@ from eegfm.agent.budget import write_atomic
 from eegfm.evaluation.bundle import canonical_bytes, digest_file, safe_relative, verify_public_bundle
 
 PROVIDER = "delegated_audited_v1"
-MAX_DELEGATED_SESSION_SECONDS = 480
-MAX_DELEGATED_EPISODE_SECONDS = 4200
+MAX_DELEGATED_SESSION_SECONDS = 1200
+MAX_DELEGATED_EPISODE_SECONDS = 10800
 MAX_CHUNK = 4096
 PROJECTION_PAGE_CHARS = 6000
 PROJECTION_PAGE_JSON_BYTES = 6000
+PUBLIC_RESOURCE_DELIVERY = 'manifest_text_bundle_v1'
+PUBLIC_TEXT_PATHS = ('API_README.md', 'INTERFACE.md', 'PUBLIC_RESULT_SCHEMA.md', 'TASK.md',
+                     'eeg_api.py', 'resources/CACHE_SCHEMA.json', 'resources/PAPER_TASK.json')
+PUBLIC_TEXT_BYTES = 64 * 1024
 SUPPORTED_NATIVE_IDENTITIES = (("gpt-6.1-sol", "medium"), ("gpt-6.1-sol", "high"),
                                ("gpt-6-astra", "ultra"))
 
@@ -98,8 +102,10 @@ class ProviderMailbox:
         manifest = verify_public_bundle(self.public)
         required = {"episode_id", "run_id", "model", "effort", "parent_thread", "agent_prefix", "session_limit",
                     "session_timeout_seconds", "gateway", "inherited_context"}
-        if not required <= set(enrollment) or set(enrollment) - required - {'study_disclosure', 'trace_export', 'native_timing'}:
+        if not required <= set(enrollment) or set(enrollment) - required - {'study_disclosure', 'trace_export', 'native_timing', 'public_resource_delivery'}:
             raise ValueError("Explicit provider enrollment fields required")
+        if 'public_resource_delivery' in enrollment and enrollment['public_resource_delivery'] != PUBLIC_RESOURCE_DELIVERY:
+            raise ValueError('Unknown public resource delivery policy')
         if 'native_timing' in enrollment:
             timing = enrollment['native_timing']
             if ('trace_export' not in enrollment or not isinstance(timing, dict)
@@ -392,7 +398,7 @@ class ProviderMailbox:
             snapshot = canonical_bytes(session["projection"])
             descriptor = {"sha256": hashlib.sha256(snapshot).hexdigest(), "characters": len(snapshot.decode("utf-8")),
                           "page_chars": PROJECTION_PAGE_CHARS, "read_operation": "read_projection"}
-            return {"session_id": session["session_id"], "projection": descriptor, "files": manifest["files"],
+            result = {"session_id": session["session_id"], "projection": descriptor, "files": manifest["files"],
                     "own_files": tree_manifest(pending), "inherited_context": {key:self.identity['inherited_context'][key] for key in ('memory_summary_sha256', 'disclosure')},
                     'boundary_override': 'The native OS-isolation/global-memory-unavailable/process-cleanup descriptions in copied TASK/INTERFACE are superseded for this opted-in provider. Common inherited platform/project history is prospectively enrolled; requests are ingested only after a complete delegated-context/gateway audit. A typed receipt is not native-process isolation. Candidate fitting/inference still execute only in the separate restricted scientific Docker worker.',
                     'study_disclosure': self.identity.get('study_disclosure', self.identity['inherited_context']['disclosure']),
@@ -406,7 +412,26 @@ class ProviderMailbox:
                         "fit_submit": {"job_id": "fit-1", "candidate_dir": "candidate"}, "fit_poll": {"job_id": "fit-1"},
                         "request_status": {"request_id": "the original gateway request ID"},
                         "seal_session": {"requests_path": "requests.json", "sha256": "sealed request-file SHA256"}},
-                    "poll_template": poll_template(123456)}
+                    "poll_template": poll_template(123456, identity=self.identity)}
+            if self.identity.get('public_resource_delivery') == PUBLIC_RESOURCE_DELIVERY:
+                result['public_resource_bundle'] = self._public_resource_bundle(manifest)
+                result['operations']['seal_session'] = {'requests': []}
+                result['request_file_payload'] = {'requests_path': 'requests.json', 'sha256': 'sealed request-file SHA256'}
+                result['instructions'] = (
+                    "Read the exact manifest-bound public_resource_bundle below; it contains all seven required public text resources. "
+                    "Read the frozen controller projection with read_projection, following next_offset until null. "
+                    "Use only the exact gateway and poll templates. Author UTF-8 source with write_chunk <=4096 bytes and seal_file using the returned whole-file SHA256. "
+                    "Submit a small batch directly with operation seal_session and payload {requests:[controller request envelopes]}; the complete gateway envelope must fit 8192 JSON bytes. "
+                    "For larger batches, upload and seal requests.json, then use the request_file_payload alternative with operation seal_session. "
+                    "Finish the current controller stage and seal promptly; do not combine unrelated later stages into this session. "
+                    "If necessary, one clean checkpoint with requests:[] preserves sealed notes/source for a fresh next context, consuming one of the six existing slots; no extra fit or test is granted. "
+                    "Unsealed uploads or pending fits prevent session sealing. Keep enough allocated time for sealing and final completion. "
+                    "Return exactly SESSION_SEALED. Accepted own files persist; unaccepted failed-session files are not promoted. "
+                    "This is an audited tool context with disclosed history, not OS isolation or a memory-free blind evaluation."
+                )
+                if session['projection'].get('state', {}).get('status') == 'brief':
+                    result['instructions'] += ' Current stage: brief only; write and submit the research brief, then end this session before any public fit.'
+            return result
         if not session["task_read"]:
             raise ValueError("Read task before coding")
         if operation == "read_projection" and set(payload) == {"offset"}:
@@ -540,6 +565,24 @@ class ProviderMailbox:
             return {"sealed_batch_sha256": _hash(sealed), "request_count": len(requests),
                     "authored_manifest_sha256": _hash(sealed["source_manifest"])}
         raise ValueError("Not a gateway capability")
+
+    def _public_resource_bundle(self, manifest: dict[str, Any]) -> dict[str, Any]:
+        """Deliver only frozen task/interface text; never infer paths from its content."""
+        declared = {row['path']: row for row in manifest['files']}
+        if not set(PUBLIC_TEXT_PATHS) <= declared.keys():
+            raise ValueError('Public text delivery requires all seven declared resources')
+        total = sum(declared[name]['bytes'] for name in PUBLIC_TEXT_PATHS)
+        if total > PUBLIC_TEXT_BYTES:
+            raise ValueError('Public text delivery exceeds aggregate byte cap')
+        files = []
+        for name in PUBLIC_TEXT_PATHS:
+            raw = _regular(_relative(self.public, name)).read_bytes()
+            row = declared[name]
+            if len(raw) != row['bytes'] or hashlib.sha256(raw).hexdigest() != row['sha256']:
+                raise ValueError('Public text changed after manifest verification')
+            files.append({'path': name, 'bytes': len(raw), 'sha256': row['sha256'], 'text': raw.decode('utf-8')})
+        return {'schema_version': PUBLIC_RESOURCE_DELIVERY, 'public_manifest_sha256': digest_file(self.public / 'PUBLIC_MANIFEST.json'),
+                'bytes': total, 'files': files}
 
     def deliveries(self, identifier: str) -> list[dict]:
         with self.transaction() as db:
@@ -681,18 +724,28 @@ def command(identity: dict, session: str) -> str:
 WAIT_STATUS_PREFIX = "await new Promise(resolve=>setTimeout(resolve,15000)); "
 
 
-def call_template(identity: dict, session: str, literal: str) -> str:
-    return ("const request = " + literal + "; const payload = encodeURIComponent(JSON.stringify(request)).replace(/[!'()*]/g,c=>'%'"
+def call_template(identity: dict, session: str, literal: str, *, wait: bool = False) -> str:
+    return (gateway_exec_pragma(identity) + (WAIT_STATUS_PREFIX if wait else '')
+            + "const request = " + literal + "; const payload = encodeURIComponent(JSON.stringify(request)).replace(/[!'()*]/g,c=>'%'"
             "+c.charCodeAt(0).toString(16).toUpperCase()); const result = await tools.exec_command({cmd:'"
             + command(identity, session) + "'+payload,workdir:'" + identity["gateway"]["workdir"]
-            + "',max_output_tokens:9000,yield_time_ms:1000}); text(result);")
+            + "',max_output_tokens:" + str(gateway_output_tokens(identity)) + ",yield_time_ms:1000}); text(result);")
 
 
-def poll_template(session_id: int) -> str:
+def gateway_output_tokens(identity: dict) -> int:
+    """The opt-in delivery policy fixes one audited tool-output allocation."""
+    return 20000 if identity.get('public_resource_delivery') == PUBLIC_RESOURCE_DELIVERY else 9000
+
+
+def gateway_exec_pragma(identity: dict) -> str:
+    return '// @exec: {"max_output_tokens":24000}\n' if identity.get('public_resource_delivery') == PUBLIC_RESOURCE_DELIVERY else ''
+
+
+def poll_template(session_id: int, *, identity: dict | None = None) -> str:
     if type(session_id) is not int or session_id <= 0:
         raise ValueError("Positive native transport session ID required")
-    return ("const result = await tools.write_stdin({session_id:" + str(session_id)
-            + ",chars:'',max_output_tokens:9000,yield_time_ms:1000}); text(result);")
+    return (gateway_exec_pragma(identity or {}) + "const result = await tools.write_stdin({session_id:" + str(session_id)
+            + ",chars:'',max_output_tokens:" + str(gateway_output_tokens(identity or {})) + ",yield_time_ms:1000}); text(result);")
 
 
 def bootstrap(identity: dict, identifier: str) -> str:
@@ -706,8 +759,8 @@ def bootstrap(identity: dict, identifier: str) -> str:
             "After sealing the authored source/request batch, return exactly SESSION_SEALED.\n"
             + call_template(identity, identifier, canonical_bytes(request).decode().strip())
             + "\nWAIT STATUS TEMPLATE (replace only the outer request_id for subsequent queries):\n"
-            + WAIT_STATUS_PREFIX + call_template(identity, identifier, canonical_bytes(status).decode().strip())
-            + "\nPOLL TEMPLATE (replace only observed positive session_id):\n" + poll_template(123456))
+            + call_template(identity, identifier, canonical_bytes(status).decode().strip(), wait=True)
+            + "\nPOLL TEMPLATE (replace only observed positive session_id):\n" + poll_template(123456, identity=identity))
 
 
 def _trace_records(path: Path, *, allow_partial: bool = True) -> list[dict]:

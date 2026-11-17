@@ -153,7 +153,7 @@ def test_residual_task_admission(tmp_path):
     assert episode.episode_time_limits({"task_id": TASK}) == (2700, 240)
     assert episode.validate_delegated_config(value)["task_id"] == TASK
     for update in ({"task_id": "unknown"}, {"max_attempts": 2}, {"recovery_policy": "validation-recovery-v1"},
-                   {"session_timeout_seconds": 481}, {"episode_timeout_seconds": 4201},
+                   {"session_timeout_seconds": 1201}, {"episode_timeout_seconds": 10801},
                    {"call_ids": [f"call-{i}" for i in range(7)]},
                    {"test_input": value["validation_input"]}):
         with pytest.raises(ValueError):
@@ -163,11 +163,26 @@ def test_residual_task_admission(tmp_path):
         episode.run_episode({"schema_version": "real_episode_config_v1", "task_id": TASK})
 
 
-def test_explicit_residual_time_calibration_preserves_defaults(tmp_path):
-    value = {**config(tmp_path), 'session_timeout_seconds': 480, 'episode_timeout_seconds': 4200}
-    assert episode.episode_time_limits(value) == (4200, 480)
+@pytest.mark.parametrize('context,wall', [(480, 4200), (1200, 10800)])
+def test_explicit_residual_time_calibration_preserves_defaults(tmp_path, context, wall):
+    value = {**config(tmp_path), 'session_timeout_seconds': context, 'episode_timeout_seconds': wall}
+    assert episode.episode_time_limits(value) == (wall, context)
     assert episode.validate_delegated_config(value)['task_id'] == TASK
     assert episode.episode_time_limits({'task_id': TASK}) == (2700, 240)
+
+
+def test_prospective_deadline_evaluator_requires_explicit_larger_ceiling():
+    from types import SimpleNamespace
+    worker = SimpleNamespace(deadline_epoch=None)
+    with pytest.raises(ValueError):
+        episode.DeadlineEvaluator(worker, 1000, timeout_seconds=10800, deadline_epoch=11800)
+    evaluator = episode.DeadlineEvaluator(worker, 1000, timeout_seconds=10800,
+        deadline_epoch=11800, timeout_ceiling_seconds=10800)
+    assert evaluator.deadline_epoch == worker.deadline_epoch == 11800
+    for ceiling in (10801, True, 10800.0):
+        with pytest.raises(ValueError):
+            episode.DeadlineEvaluator(worker, 1000, timeout_seconds=10800,
+                deadline_epoch=11800, timeout_ceiling_seconds=ceiling)
 
 
 @pytest.mark.parametrize("task,science,fit,allowed", [
@@ -318,7 +333,7 @@ RUNTIME = {"schema_version": "readout_host_runtime_v1",
            "modules": {"numpy": "b" * 64}, "libraries": [], "verifier_source_sha256": "c" * 64}
 
 
-def worker_fixture(tmp_path, monkeypatch, phase="baseline", split="validation", forged=False):
+def worker_fixture(tmp_path, monkeypatch, phase="baseline", split="validation", forged=False, bundled_text=False):
     """Real evaluator and scorer; only container execution/process identity mocked."""
     from eegfm.evaluation.bundle import create_public_bundle
     from eegfm.agent import processes
@@ -330,7 +345,14 @@ def worker_fixture(tmp_path, monkeypatch, phase="baseline", split="validation", 
     (source / "eeg_api.py").write_text("# synthetic cached API\n")
     (source / "resources/CACHE_SCHEMA.json").write_text("{}")
     bundle = tmp_path / "public"
-    create_public_bundle(source, bundle, ["train.npz", "validation.npz", "eeg_api.py", "resources/CACHE_SCHEMA.json"],
+    names = ["train.npz", "validation.npz", "eeg_api.py", "resources/CACHE_SCHEMA.json"]
+    if bundled_text:
+        from eegfm.agent.provider import PUBLIC_TEXT_PATHS
+        for name in PUBLIC_TEXT_PATHS:
+            if name not in names:
+                (source / name).write_bytes((f"Synthetic interface {name}\n" * 130).encode())
+                names.append(name)
+    create_public_bundle(source, bundle, names,
                          task_id=TASK, tier="synthetic_mechanism")
     split_path = tmp_path / "split.json"
     split_path.write_text("{}")

@@ -64,12 +64,12 @@ def test_registered_astra_identity_is_admitted_without_relaxing_budget(tmp_path)
     value = {**config(tmp_path), 'model': 'gpt-6-astra', 'reasoning_effort': 'ultra'}
     assert episode.validate_delegated_config(value)['previous_successful_test_job']
     for change in ({'model': 'unregistered'}, {'reasoning_effort': 'invented'},
-                   {'session_timeout_seconds': 481}):
+                   {'session_timeout_seconds': 1201}):
         with pytest.raises(ValueError):
             episode.validate_delegated_config({**value, **change})
 
 
-@pytest.mark.parametrize('context_seconds', [180, 480])
+@pytest.mark.parametrize('context_seconds', [180, 480, 1200])
 @pytest.mark.parametrize('task', [episode.READOUT_TASK, episode.RESIDUAL_RECOVERY_TASK])
 @pytest.mark.parametrize('model,effort', [('gpt-6.1-sol', 'high'), ('gpt-6-astra', 'ultra')])
 @pytest.mark.parametrize('session_context_policy', [None, 'trusted_root_pre_task_v1'])
@@ -83,7 +83,13 @@ def test_delegated_entry_constructs_real_driver_mailbox_and_service(
     from test_residual_recovery_episode import config as residual_config
 
     value = residual_config(tmp_path) if task == episode.RESIDUAL_RECOVERY_TASK else config(tmp_path)
+    if task == episode.READOUT_TASK and context_seconds == 1200:
+        with pytest.raises(ValueError):
+            episode.validate_delegated_config({**value, 'session_timeout_seconds': 1200})
+        return  # The native/historical readout task keeps its own 600-second cap.
     wall_seconds = 4200 if task == episode.RESIDUAL_RECOVERY_TASK and context_seconds == 480 else 2700
+    if context_seconds == 1200:
+        wall_seconds = 10800
     deadline = 1000 + wall_seconds
     from datetime import datetime, timezone
     _, _, enrollment = setup_provider

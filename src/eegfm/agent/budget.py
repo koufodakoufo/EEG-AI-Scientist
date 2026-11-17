@@ -141,12 +141,12 @@ def run_bounded(argv: Sequence[str], *, cwd: Path, output_dir: Path, timeout_sec
     groups. RSS is sampled; this is not a kernel cgroup memory ceiling. V8 control
     processes require limit_address_space=False because virtual reservations are
     much larger than resident RAM. CPU affinity and RSS limits still apply.
-    Trusted control-plane callers may explicitly declare a ceiling up to 3600
+    Trusted control-plane callers may explicitly declare a ceiling up to 10800
     seconds; ordinary compute callers retain the 1800-second ceiling.
     """
     if sys.platform != 'linux':
         raise RuntimeError('Bounded compute launcher requires Linux; fail closed')
-    if type(timeout_ceiling_seconds) is not int or not 0 < timeout_ceiling_seconds <= 3600:
+    if type(timeout_ceiling_seconds) is not int or not 0 < timeout_ceiling_seconds <= 10800:
         raise ValueError('Invalid explicit timeout ceiling')
     if not argv or not 0 < timeout_seconds <= timeout_ceiling_seconds or not 0 < threads <= 4 or not 0 < memory_limit_bytes <= 12 * 1024**3:
         raise ValueError('Requested resources exceed run limits')

@@ -13,7 +13,7 @@ from pathlib import Path
 import re
 from urllib.parse import quote, unquote_to_bytes
 
-from eegfm.agent.provider import MAX_DELEGATED_SESSION_SECONDS, WAIT_STATUS_PREFIX, _trace_records, audit_initial_context, call_template, poll_template, command
+from eegfm.agent.provider import MAX_DELEGATED_SESSION_SECONDS, WAIT_STATUS_PREFIX, _trace_records, audit_initial_context, call_template, poll_template, command, gateway_exec_pragma
 from eegfm.evaluation.bundle import canonical_bytes
 
 SHELL_PREFIX = [r"C:\Users\14090\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\powershell\pwsh.exe", "-Command"]
@@ -54,8 +54,15 @@ def parse_tool(code: str, identity: dict, session: str):
     if not isinstance(code, str):
         raise ValueError('Plaintext gateway tool source required')
     code = code.strip(' \t\r\n\v\f')
-    poll = re.fullmatch(r"const result = await tools\.write_stdin\(\{session_id:([1-9][0-9]*),chars:'',max_output_tokens:9000,yield_time_ms:1000\}\); text\(result\);", code)
+    original = code
+    pragma = gateway_exec_pragma(identity)
+    if not code.startswith(pragma):
+        raise ValueError('Exact enrolled gateway output pragma required')
+    code = code[len(pragma):]
+    poll = re.fullmatch(r"const result = await tools\.write_stdin\(\{session_id:([1-9][0-9]*),chars:'',max_output_tokens:[0-9]+,yield_time_ms:1000\}\); text\(result\);", code)
     if poll:
+        if original != poll_template(int(poll[1]), identity=identity):
+            raise ValueError('Coding poll template altered')
         return 'poll', int(poll[1])
     waited = code.startswith(WAIT_STATUS_PREFIX)
     if waited:
@@ -66,7 +73,7 @@ def parse_tool(code: str, identity: dict, session: str):
     body = code[len(prefix):]
     _, end = json.JSONDecoder().raw_decode(body)
     request = _json(body[:end])
-    if code != call_template(identity, session, body[:end]):
+    if original != call_template(identity, session, body[:end], wait=waited):
         raise ValueError('Coding gateway template altered')
     if not isinstance(request, dict):
         raise ValueError('Gateway request object required')

@@ -31,7 +31,7 @@ def source_sha256() -> str:
 
 
 def audit_profile(identity: dict) -> dict:
-    keys = PROFILE_KEYS + (('native_timing',) if 'native_timing' in identity else ())
+    keys = PROFILE_KEYS + tuple(key for key in ('native_timing', 'public_resource_delivery') if key in identity)
     return {key: identity[key] for key in keys}
 
 

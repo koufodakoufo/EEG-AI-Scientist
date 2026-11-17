@@ -26,6 +26,8 @@ def task_parser(command: str, *, description: str | None = None) -> argparse.Arg
         compare.add_argument('--report', type=Path, required=True, help='complete final report as UTF-8 text')
         compare.add_argument('--out', type=Path, required=True, help='separate comparison directory')
         compare.add_argument('--evidence', type=Path, help='trusted numerical verdicts and process checks as JSON')
+        compare.add_argument('--review-plan', type=Path, help='prospective opt-in full-inventory comparison review plan')
+        compare.add_argument('--evidence-review', type=Path, help='independent claim-bound numerical review after extraction')
     elif command == 'driver':
         parser.add_argument('command', choices=['run', 'start'])
         parser.add_argument('--run', required=True)

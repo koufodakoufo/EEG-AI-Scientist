@@ -992,7 +992,9 @@ def _comparison_markdown(status: dict[str, Any], freeze: dict[str, Any], task: d
 
 def compare_workflow(work: Path, report_path: Path, output: Path, *,
                      provider: assessment.Provider | None = None,
-                     evidence_path: Path | None = None) -> dict[str, Any]:
+                     evidence_path: Path | None = None,
+                     review_plan_path: Path | None = None,
+                     evidence_review_path: Path | None = None) -> dict[str, Any]:
     """Compare a complete UTF-8 report to frozen references and record exact replay evidence.
 
     A missing queue response yields an awaiting status only. A completed local
@@ -1001,6 +1003,13 @@ def compare_workflow(work: Path, report_path: Path, output: Path, *,
     judged pair, resolved numerical verdicts and a trusted process assessment
     status of complete. It can include unfavorable findings.
     """
+    if review_plan_path is not None:
+        from eegfm.evaluation.paper_review import compare_review_workflow
+        return compare_review_workflow(work, report_path, output, review_plan_path=review_plan_path,
+                                       evidence_path=evidence_path, evidence_review_path=evidence_review_path,
+                                       provider=provider)
+    if evidence_review_path is not None:
+        raise ValueError('An evidence review requires an explicit review plan')
     work, output = work.absolute(), output.absolute()
     freeze, policy, private_task = load_frozen_workflow(work)
     settings = _extraction_settings(policy)
@@ -1147,9 +1156,11 @@ def main() -> int:
         elif args.command == 'freeze':
             result = freeze_workflow(args.work, args.review)
         else:
-            result = compare_workflow(args.work, args.report, args.out, evidence_path=args.evidence)
+            result = compare_workflow(args.work, args.report, args.out, evidence_path=args.evidence,
+                                      review_plan_path=args.review_plan, evidence_review_path=args.evidence_review)
     except (OSError, ValueError, TypeError, KeyError, RecursionError) as exc:
         result = _pipeline('input_error', reason=str(exc))
 
     print(json.dumps(result, indent=2))
-    return {'awaiting_responses': 3, 'prepare_failed': 2, 'input_error': 2}.get(result['pipeline_status'], 0)
+    return {'awaiting_responses': 3, 'awaiting_evidence_review': 3,
+            'prepare_failed': 2, 'input_error': 2}.get(result['pipeline_status'], 0)

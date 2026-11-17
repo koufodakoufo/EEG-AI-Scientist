@@ -671,8 +671,9 @@ class DeadlineEvaluator:
     sandboxed = True
 
     def __init__(self, evaluator: Any, started_at: float, *, timeout_seconds: int = 5400,
-                 deadline_epoch: float | None = None) -> None:
-        if type(timeout_seconds) is not int or not 0 < timeout_seconds <= 5400:
+                 deadline_epoch: float | None = None, timeout_ceiling_seconds: int = 5400) -> None:
+        if (type(timeout_ceiling_seconds) is not int or not 0 < timeout_ceiling_seconds <= MAX_DELEGATED_EPISODE_SECONDS
+                or type(timeout_seconds) is not int or not 0 < timeout_seconds <= timeout_ceiling_seconds):
             raise ValueError("Invalid episode timeout")
         self.evaluator, self.started_at = evaluator, started_at
         self.deadline_epoch = started_at + timeout_seconds if deadline_epoch is None else deadline_epoch
@@ -871,7 +872,7 @@ def validate_delegated_config(config: dict[str, Any]) -> dict[str, Any]:
         raise ValueError('Audited provider config must not carry native authentication/isolation fields')
     wall, timeout = episode_time_limits(config)
     if not 180 <= timeout <= MAX_DELEGATED_SESSION_SECONDS or wall > MAX_DELEGATED_EPISODE_SECONDS:
-        raise ValueError('Audited session allocation must be 180-480 seconds within 4200 seconds')
+        raise ValueError('Audited session allocation must be 180-1200 seconds within 10800 seconds')
     if 'episode_deadline_epoch' in config and (type(config['episode_deadline_epoch']) is not int
                                                or config['episode_deadline_epoch'] <= 0):
         raise ValueError('Absolute episode deadline must be a positive integer epoch')
@@ -1013,7 +1014,8 @@ def run_delegated_episode(config: dict[str, Any]) -> dict[str, Any]:
     controller = EpisodeController(trusted_root=private / 'controller', case_root=case,
         episode_id=config['episode_id'], run_id=config['run_id'], public_manifest_sha256=public_hash,
         split_manifest_sha256=split.sha256, evaluator=DeadlineEvaluator(worker, enrollment['started_at_epoch'],
-                                                                       timeout_seconds=wall, deadline_epoch=deadline),
+                                                                       timeout_seconds=wall, deadline_epoch=deadline,
+                                                                       timeout_ceiling_seconds=MAX_DELEGATED_EPISODE_SECONDS),
         max_attempts=config.get('max_attempts', 1 if residual else 2), task_id=task_id,
         recovery_policy=config.get('recovery_policy', 'strict-v1'), session_guidance=config.get('session_guidance', 'fixed_stages_v1'))
 

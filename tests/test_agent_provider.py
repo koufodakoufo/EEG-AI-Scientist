@@ -39,7 +39,7 @@ def test_astra_mailbox_preserves_enrolled_identity(setup_provider):
     assert box.identity['model'] == 'gpt-6-astra'
     assert box.identity['effort'] == 'ultra'
     for index, change in enumerate(({'model': 'unknown'}, {'effort': 'invented'},
-                                    {'session_timeout_seconds': 481})):
+                                    {'session_timeout_seconds': 1201})):
         with pytest.raises(ValueError):
             provider.ProviderMailbox(root=controller.run/f'invalid-{index}', case_root=old.case,
                                      public_root=old.public, enrollment={**new, **change})
@@ -71,29 +71,44 @@ def test_longer_context_requires_new_enrollment_and_keeps_old_reservations(setup
     assert old.identity['session_timeout_seconds'] == 240
     with pytest.raises(ValueError):
         ResearchDriver(controller, launch=lambda _: None, session_provider=provider.PROVIDER,
-            provider_model='gpt-6-astra', provider_timeout_seconds=481)
+            provider_model='gpt-6-astra', provider_timeout_seconds=1201)
 
 
-def open_session(box,timeout=240,*,register=True,projection=None):
+def test_prospective_1200_seconds_does_not_extend_old_reservation(setup_provider):
+    controller, old, enrollment = setup_provider
+    projection = {'episode_id': 'episode', 'run_id': 'run', 'state': {'status': 'brief', 'version': 0}, 'lock': None}
+    original = old.publish('session-01', projection, timeout_seconds=240)
+    box = provider.ProviderMailbox(root=controller.run/'new-1200-provider', case_root=old.case,
+        public_root=old.public, enrollment={**enrollment, 'session_timeout_seconds': 1200})
+    assert box.publish('session-01', projection, timeout_seconds=1200)['timeout_seconds'] == 1200
+    assert old.publish('session-01', projection, timeout_seconds=240) == original
+    with pytest.raises(ValueError):
+        old.publish('session-01', projection, timeout_seconds=1200)
+    with pytest.raises(ValueError):
+        provider.ProviderMailbox(root=old.root, case_root=old.case, public_root=old.public,
+            enrollment={**enrollment, 'session_timeout_seconds': 1200})
+
+
+def open_session(box,timeout=240,*,register=True,projection=None,session_id='session-01',context_id='context'):
     if projection is None:
         projection={'episode_id':'episode','run_id':'run','state':{'status':'brief','version':0},'lock':None}
-    session=box.publish('session-01',projection,timeout_seconds=timeout)
-    path=box.root/'synthetic-native-prefix.jsonl'
-    records=[{'type':'session_meta','payload':{'id':'context','parent_thread_id':'parent','agent_path':session['agent_path']}},
+    session=box.publish(session_id,projection,timeout_seconds=timeout)
+    path=box.root/('synthetic-native-prefix.jsonl' if session_id=='session-01' else f'{session_id}-native-prefix.jsonl')
+    records=[{'type':'session_meta','payload':{'id':context_id,'parent_thread_id':'parent','agent_path':session['agent_path']}},
              {'type':'response_item','payload':{'type':'message','role':'developer','content':[{'type':'input_text','text':'========= MEMORY_SUMMARY BEGINS ========='+MEMORY+'========= MEMORY_SUMMARY ENDS ========='}],'internal_chat_message_metadata_passthrough':{'content_item_kinds':['memories.instructions']}}},
              {'type':'response_item','payload':{'type':'message','role':'user','content':[{'type':'input_text','text':ENV_TEXT}],'internal_chat_message_metadata_passthrough':{'content_item_kinds':['environments.environment_context']}}},
              {'type':'response_item','payload':{'type':'agent_message','author':'/root','recipient':session['agent_path'],'content':[{'type':'input_text','text':f"Message Type: NEW_TASK\nTask name: {session['agent_path']}\nSender: /root\nPayload:\n"},{'type':'encrypted_content','encrypted_content':'gAAAAAsynthetic'}]}},
              {'type':'turn_context','payload':{'turn_id':'turn-1','model':'gpt-6.1-sol','effort':'high'}}]
-    start=datetime.fromtimestamp(box.session('session-01')['started_epoch']+1,timezone.utc)
+    start=datetime.fromtimestamp(box.session(session_id)['started_epoch']+1,timezone.utc)
     for index,row in enumerate(records):row['timestamp']=(start+timedelta(seconds=index)).isoformat()
     path.write_text(''.join(json.dumps(row)+'\n' for row in records))
-    if register:box.register_context('session-01',context_id='context',trace_path=path)
+    if register:box.register_context(session_id,context_id=context_id,trace_path=path)
     return session
 
 
-def call(box,operation,payload=None,request_id=None):
+def call(box,operation,payload=None,request_id=None,*,session_id='session-01'):
     call.n+=1
-    return box.handle('session-01',{'request_id':request_id or f'gateway-{call.n}','operation':operation,'payload':payload or {}})
+    return box.handle(session_id,{'request_id':request_id or f'gateway-{call.n}','operation':operation,'payload':payload or {}})
 call.n=0
 
 
@@ -257,14 +272,14 @@ def test_task_waits_for_prospectively_bound_native_initial_history(setup_provide
     assert status['result']['response']['result']['inherited_context']['memory_summary_sha256']==box.identity['inherited_context']['memory_summary_sha256']
 
 
-def complete_trace(box,path=None):
+def complete_trace(box,path=None,*,session_id='session-01'):
     from eegfm.agent import provider_trace
-    session=box.session('session-01');path=path or Path(session['registered_context']['trace_path'])
+    session=box.session(session_id);path=path or Path(session['registered_context']['trace_path'])
     rows=[json.loads(line) for line in path.read_text().splitlines()]
-    for index,item in enumerate(box.deliveries('session-01')):
+    for index,item in enumerate(box.deliveries(session_id)):
         stdout=provider.canonical_bytes(item['response']).decode()+'\n'
-        rows.extend([{'type':'response_item','payload':{'type':'custom_tool_call','name':'exec','call_id':f'call-{index}','input':provider.call_template(box.identity,'session-01',json.dumps(item['request']))}},
-            {'type':'event_msg','payload':{'type':'item_completed','item':{'type':'CommandExecution','command':provider_trace.SHELL_PREFIX+[provider.command(box.identity,'session-01')+provider_trace.percent_encode(item['request'])],'aggregated_output':stdout,'status':'completed','exit_code':0}}},
+        rows.extend([{'type':'response_item','payload':{'type':'custom_tool_call','name':'exec','call_id':f'call-{index}','input':provider.call_template(box.identity,session_id,json.dumps(item['request']))}},
+            {'type':'event_msg','payload':{'type':'item_completed','item':{'type':'CommandExecution','command':provider_trace.SHELL_PREFIX+[provider.command(box.identity,session_id)+provider_trace.percent_encode(item['request'])],'aggregated_output':stdout,'status':'completed','exit_code':0}}},
             {'type':'response_item','payload':{'type':'custom_tool_call_output','call_id':f'call-{index}','output':[{'type':'input_text','text':'Script completed\nWall time 0.1 seconds\nOutput:\n'},{'type':'input_text','text':json.dumps({'output':stdout,'exit_code':0,'wall_time_seconds':0.1})}]}}])
     rows.extend([{'type':'response_item','payload':{'type':'message','role':'assistant','phase':'final_answer','id':'final','content':[{'type':'output_text','text':'SESSION_SEALED'}],'internal_chat_message_metadata_passthrough':{'turn_id':'turn-1'}}},{'type':'event_msg','payload':{'type':'task_complete','turn_id':'turn-1'}}])
     start=datetime.fromtimestamp(session['started_epoch']+1,timezone.utc)
