@@ -129,6 +129,7 @@ def tree_bytes(root: Path, *, stop_above: int = 10 * 1024**3) -> int:
 
 
 def run_bounded(argv: Sequence[str], *, cwd: Path, output_dir: Path, timeout_seconds: float,
+                timeout_ceiling_seconds: int = 1800,
                 env: Mapping[str, str] | None = None, memory_limit_bytes: int = 12 * 1024**3,
                 threads: int = 4, stdout_limit_bytes: int = 64 * 1024**2,
                 storage_scope: Path | None = None, storage_limit_bytes: int = 10 * 1024**3,
@@ -140,10 +141,14 @@ def run_bounded(argv: Sequence[str], *, cwd: Path, output_dir: Path, timeout_sec
     groups. RSS is sampled; this is not a kernel cgroup memory ceiling. V8 control
     processes require limit_address_space=False because virtual reservations are
     much larger than resident RAM. CPU affinity and RSS limits still apply.
+    Trusted control-plane callers may explicitly declare a ceiling up to 3600
+    seconds; ordinary compute callers retain the 1800-second ceiling.
     """
     if sys.platform != 'linux':
         raise RuntimeError('Bounded compute launcher requires Linux; fail closed')
-    if not argv or not 0 < timeout_seconds <= 1800 or not 0 < threads <= 4 or not 0 < memory_limit_bytes <= 12 * 1024**3:
+    if type(timeout_ceiling_seconds) is not int or not 0 < timeout_ceiling_seconds <= 3600:
+        raise ValueError('Invalid explicit timeout ceiling')
+    if not argv or not 0 < timeout_seconds <= timeout_ceiling_seconds or not 0 < threads <= 4 or not 0 < memory_limit_bytes <= 12 * 1024**3:
         raise ValueError('Requested resources exceed run limits')
     if output_dir.exists():
         raise FileExistsError('Run evidence directory already exists; no silent retry')
@@ -174,6 +179,7 @@ def run_bounded(argv: Sequence[str], *, cwd: Path, output_dir: Path, timeout_sec
     start = time.monotonic()
     record: dict[str, Any] = {'schema_version': 'bounded_run_v1', 'argv': list(argv), 'cwd': str(cwd), 'started_at': utc_now(),
                               'status': 'starting', 'timeout_seconds': timeout_seconds, 'memory_limit_bytes': memory_limit_bytes,
+                              'timeout_ceiling_seconds': timeout_ceiling_seconds,
                               'affinity_cpus': available, 'threads': threads, 'cost_usd': 'unknown', 'peak_group_rss_bytes': 0,
                               'storage_scope':str(scope),'storage_limit_bytes':storage_limit_bytes,
                               'storage_poll_seconds':1.0,'per_file_limit_bytes':512*1024**2,
