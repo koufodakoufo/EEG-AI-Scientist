@@ -50,6 +50,30 @@ def percent_encode(value: dict) -> str:
     return quote(text, safe='-_.~')
 
 
+def _javascript_request_numbers(value: object) -> object:
+    """Parse the supported JSON.stringify value, not Python's literal spelling.
+
+    JavaScript has one binary64 Number type: 1.0 and -0 serialize as 1 and 0.
+    Restrict integral values to its safe-integer range instead of silently
+    rounding large Python integers. Wire JSON and response parsing stay exact;
+    in particular this does not equate a boolean with the number 0 or 1.
+    """
+    if isinstance(value, dict):
+        return {key: _javascript_request_numbers(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_javascript_request_numbers(item) for item in value]
+    if type(value) in (int, float):
+        if type(value) is float:
+            if not math.isfinite(value):
+                raise ValueError('Finite JavaScript request number required')
+            if not value.is_integer():
+                return value
+        if abs(value) > 2**53 - 1:
+            raise ValueError('Request integer exceeds the JavaScript safe-integer range')
+        return int(value)
+    return value
+
+
 def parse_tool(code: str, identity: dict, session: str):
     if not isinstance(code, str):
         raise ValueError('Plaintext gateway tool source required')
@@ -79,7 +103,7 @@ def parse_tool(code: str, identity: dict, session: str):
         raise ValueError('Gateway request object required')
     if waited and request.get('operation') != 'request_status':
         raise ValueError('The fixed wait prefix is only for request_status')
-    return 'call', request
+    return 'call', _javascript_request_numbers(request)
 
 
 def _envelope(output):
