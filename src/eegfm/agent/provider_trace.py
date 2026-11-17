@@ -17,6 +17,18 @@ from eegfm.agent.provider import WAIT_STATUS_PREFIX, _trace_records, audit_initi
 from eegfm.evaluation.bundle import canonical_bytes
 
 SHELL_PREFIX = [r"C:\Users\14090\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\powershell\pwsh.exe", "-Command"]
+# Exact observed native launchers; no wildcard acceptance of installed versions.
+# Legacy traces keep their original path. New launchers require qualification.
+SUPPORTED_SHELL_PATHS = (
+    SHELL_PREFIX[0],
+    r"C:\Program Files\WindowsApps\OpenAI.CodexPrimaryRuntime.v26-1112-611-0_26.1112.611.0_x64__3k8sg7r9htsxt"
+    r"\dependencies\native\powershell\pwsh.exe",
+)
+
+
+def supported_shell_argv(argv: object) -> bool:
+    return (isinstance(argv, list) and len(argv) == 3
+            and argv[0] in SUPPORTED_SHELL_PATHS and argv[1] == '-Command')
 
 
 def _json(text: str):
@@ -277,7 +289,7 @@ def _audit_native_records(records: list[dict], identity: dict, session: dict, de
                 raise ValueError('Native command must complete successfully with matching exit code zero')
             prefix = command(identity, session['session_id'])
             argv = native.get('command')
-            if not isinstance(argv, list) or argv[:-1] != SHELL_PREFIX or not isinstance(argv[-1], str) or not argv[-1].startswith(prefix):
+            if not supported_shell_argv(argv) or not isinstance(argv[-1], str) or not argv[-1].startswith(prefix):
                 raise ValueError('Native gateway shell command changed')
             encoded = argv[-1][len(prefix):]
             if re.fullmatch(r'[A-Za-z0-9_.~%\-]+', encoded) is None or re.search(r'%(?![0-9A-Fa-f]{2})', encoded):

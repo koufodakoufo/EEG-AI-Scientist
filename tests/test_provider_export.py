@@ -19,6 +19,43 @@ def fixture(tmp_path, *, wait_status=False):
     return path,identity,session,deliveries
 
 
+PACKAGED_SHELL = (r'C:\Program Files\WindowsApps\OpenAI.CodexPrimaryRuntime.v26-1112-611-0_26.1112.611.0_x64__3k8sg7r9htsxt'
+                  r'\dependencies\native\powershell\pwsh.exe')
+
+
+@pytest.mark.parametrize('shell', [provider_trace.SHELL_PREFIX[0], PACKAGED_SHELL])
+def test_qualified_shell_paths_preserve_full_trace_and_export_audit(tmp_path, shell):
+    path, identity, session, deliveries = fixture(tmp_path)
+    rows = provider._trace_records(path)
+    native = next(r['payload']['item'] for r in rows
+                  if r['payload'].get('item', {}).get('type') == 'CommandExecution')
+    native['command'][0] = shell
+    path.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+    assert provider_trace.audit_native_context(path, identity, session, deliveries)['valid']
+    exported = provider_export.sanitize_admin_trace(path, identity, session, context_id='context', complete=True)
+    records, initial = provider_export.validate_admin_export(exported, identity, session, context_id='context')
+    assert provider_trace._audit_native_records(records, identity, session, deliveries, initial, sanitized=True)['valid']
+
+
+@pytest.mark.parametrize('prefix', [
+    [r'C:\unreviewed\pwsh.exe', '-Command'],
+    [PACKAGED_SHELL.replace('26-1112-611-0', '26-9999-999-0'), '-Command'],
+    [PACKAGED_SHELL, '-CommandWithArgs'],
+    [PACKAGED_SHELL, '-NoProfile', '-Command'],
+    [PACKAGED_SHELL],
+])
+def test_shell_path_or_invocation_changes_fail_both_audits(tmp_path, prefix):
+    path, identity, session, deliveries = fixture(tmp_path)
+    rows = provider._trace_records(path)
+    native = next(r['payload']['item'] for r in rows
+                  if r['payload'].get('item', {}).get('type') == 'CommandExecution')
+    native['command'] = prefix + [native['command'][-1]]
+    path.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+    assert not provider_trace.audit_native_context(path, identity, session, deliveries)['valid']
+    with pytest.raises(ValueError, match='Unauthorized native shell'):
+        provider_export.sanitize_admin_trace(path, identity, session, context_id='context', complete=True)
+
+
 def test_wait_status_prefix_survives_native_projection_and_delivery_audit(tmp_path):
     path,identity,session,deliveries=fixture(tmp_path,wait_status=True)
     exported=provider_export.sanitize_admin_trace(path,identity,session,context_id='context',complete=True)

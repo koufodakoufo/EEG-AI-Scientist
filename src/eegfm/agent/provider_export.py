@@ -13,7 +13,7 @@ import re
 from urllib.parse import unquote_to_bytes
 
 from eegfm.agent.provider import _audit_initial_records, _hash, _regular, _trace_records_from_bytes
-from eegfm.agent.provider_trace import SHELL_PREFIX, _audit_native_records, _envelope, _json, command, parse_tool
+from eegfm.agent.provider_trace import _audit_native_records, _envelope, _json, command, parse_tool, supported_shell_argv
 from eegfm.evaluation.bundle import canonical_bytes
 
 SCHEMA = 'trusted_admin_trace_v2'
@@ -149,7 +149,7 @@ def _shell(native: dict, identity: dict, session: dict, requests: list) -> dict:
     if (native.get('type') != 'CommandExecution' or native.get('status') != 'completed'
             or type(native.get('exit_code')) is not int or native['exit_code'] != 0
             or not isinstance(native.get('aggregated_output'), str)
-            or not isinstance(argv, list) or argv[:-1] != SHELL_PREFIX or not isinstance(argv[-1], str)
+            or not supported_shell_argv(argv) or not isinstance(argv[-1], str)
             or not argv[-1].startswith(prefix)):
         raise ValueError('Unauthorized native shell cannot be exported')
     encoded = argv[-1][len(prefix):]
