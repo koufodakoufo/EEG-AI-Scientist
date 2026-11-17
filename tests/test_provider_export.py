@@ -302,6 +302,98 @@ def test_variant_enrollment_requires_two_exact_bundles_with_common_context(tmp_p
     with pytest.raises(ValueError):provider_export.validate_binding(identity)
 
 
+def bundled_variant_fixture(tmp_path, *, different_metadata=False):
+    """Native platform layout: generic instructions and memory share one message."""
+    path,identity,session,_=fixture(tmp_path)
+    original=provider._trace_records(path)
+    memory=original[1]['payload']['content'][0]['text']
+    kinds=['generic.developer_instructions','memories.instructions','host_skills.instructions',
+           'permissions.instructions','collaboration_mode.instructions','tools.deferred_namespaces',
+           'plugins.recommendations']
+    variants=[]
+    for index,version in enumerate(('1.0.103','1.0.89')):
+        rows=copy.deepcopy(original)
+        text=memory+'\nSynthetic generic developer instructions\nvisualize/'+version+'/skills/visualize/SKILL.md'
+        if index==0:text+='\n- mcp__codex_apps__search_service: Tool for accessing the internet.'
+        rows[1]['payload']['content']=[{'type':'input_text','text':text}]
+        rows[1]['payload']['internal_chat_message_metadata_passthrough']['content_item_kinds']=kinds
+        tool={'type':'additional_tools','role':'developer','tools':[{'name':'synthetic','version':index if different_metadata else 0}],
+              'id':'at_00000000-0000-0000-0000-000000000001'}
+        rows.insert(1,{'type':'response_item','payload':tool})
+        messages=copy.deepcopy(identity['inherited_context']['initial_messages'])
+        messages[0].update(kinds=kinds,content_sha256=provider._hash(rows[2]['payload']['content']))
+        bundle={'initial_messages':messages,'memory_summary_sha256':identity['inherited_context']['memory_summary_sha256'],
+                'initial_metadata':[{'kind':'additional_tools','payload_sha256':provider_export.initial_metadata_sha256('additional_tools',tool)}]}
+        variants.append((rows,bundle))
+    identity['inherited_context']['initial_messages']=variants[0][1]['initial_messages']
+    identity['trace_export'].update(audit_profile_sha256=provider._hash(provider_export.audit_profile(identity)),
+        initial_metadata=variants[0][1]['initial_metadata'],context_variants=[bundle for _,bundle in variants])
+    return path,identity,session,variants
+
+
+@pytest.mark.parametrize('index',[0,1])
+def test_predeclared_bundled_generic_memory_variants_pass_raw_and_export_audits(tmp_path,index):
+    path,identity,session,variants=bundled_variant_fixture(tmp_path)
+    rows,bundle=variants[index]
+    path.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+    provider_export.validate_binding(identity)
+    assert provider.audit_initial_context(path,identity=identity,agent_path=session['agent_path'],context_id='context')['valid']
+    result=provider_export.sanitize_admin_trace(path,identity,session,context_id='context',complete=True)
+    _,audit=provider_export.validate_admin_export(result,identity,session,context_id='context')
+    assert audit['valid'] and audit['memory_summary_sha256']==bundle['memory_summary_sha256']
+    assert result['binding']['context_variants']==[value for _,value in variants]
+    assert 'Synthetic generic developer instructions' not in json.dumps(result)
+
+
+@pytest.mark.parametrize('case',['pure_memory','memory_with_skills','system_bundle','memory_summary','environment'])
+def test_bundled_variant_enrollment_keeps_memory_and_environment_guards(tmp_path,case):
+    _,identity,_,_=bundled_variant_fixture(tmp_path)
+    variants=identity['trace_export']['context_variants']
+    if case in {'pure_memory','memory_with_skills','system_bundle'}:
+        for bundle in variants:
+            message=bundle['initial_messages'][0]
+            if case=='system_bundle':message['role']='system'
+            else:message['kinds']=['memories.instructions']+(['host_skills.instructions'] if case=='memory_with_skills' else [])
+    elif case=='memory_summary':variants[1]['memory_summary_sha256']='f'*64
+    else:variants[1]['initial_messages'][-1]['content_sha256']='f'*64
+    identity['trace_export']['audit_profile_sha256']=provider._hash(provider_export.audit_profile(identity))
+    with pytest.raises(ValueError,match='common ordered structure, memory and environment'):
+        provider_export.validate_binding(identity)
+
+
+@pytest.mark.parametrize('case',['unregistered_text','memory_summary','environment','cross_bundle_metadata'])
+def test_bundled_variants_reject_raw_drift_and_cross_bundle_mix(tmp_path,case):
+    path,identity,session,variants=bundled_variant_fixture(tmp_path,different_metadata=True)
+    provider_export.validate_binding(identity)
+    rows=copy.deepcopy(variants[1][0])
+    if case=='cross_bundle_metadata':rows[1]=copy.deepcopy(variants[0][0][1])
+    elif case=='environment':rows[3]['payload']['content'][0]['text']+='\nChanged environment'
+    elif case=='memory_summary':
+        rows[2]['payload']['content'][0]['text']=rows[2]['payload']['content'][0]['text'].replace('common','changed')
+        # Even an exact enrolled message hash cannot change the separately bound summary.
+        variants[1][1]['initial_messages'][0]['content_sha256']=provider._hash(rows[2]['payload']['content'])
+    else:rows[2]['payload']['content'][0]['text']+='\nUnregistered instruction'
+    path.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+    audit=provider.audit_initial_context(path,identity=identity,agent_path=session['agent_path'],context_id='context')
+    assert not audit['valid']
+    if case=='memory_summary':assert 'inherited memory summary mismatch or missing' in audit['issues']
+    with pytest.raises(ValueError,match='prospective profile'):
+        provider_export.sanitize_admin_trace(path,identity,session,context_id='context')
+
+
+def test_bundled_variants_reject_remote_cross_bundle_hash_mix(tmp_path):
+    path,identity,session,variants=bundled_variant_fixture(tmp_path,different_metadata=True)
+    exports=[]
+    for rows,_ in variants:
+        path.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+        exports.append(provider_export.sanitize_admin_trace(path,identity,session,context_id='context'))
+    mixed=copy.deepcopy(exports[0])
+    metadata=next(row for row in mixed['records'] if row['type']=='sanitized_metadata')
+    metadata['payload']=next(row for row in exports[1]['records'] if row['type']=='sanitized_metadata')['payload']
+    with pytest.raises(ValueError,match='prospective profile'):
+        provider_export.validate_admin_export(mixed,identity,session,context_id='context')
+
+
 @pytest.mark.parametrize('changed_content',[False,True])
 def test_current_developer_profile_requires_exact_ordered_content_hashes(tmp_path,changed_content):
     path,identity,session,_=fixture(tmp_path)

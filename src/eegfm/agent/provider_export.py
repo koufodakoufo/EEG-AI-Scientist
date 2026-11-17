@@ -87,8 +87,13 @@ def _validate_context_variants(identity: dict) -> None:
         if (_message_shape(messages) != message_shape or not _metadata_profile(metadata)
                 or [row['kind'] for row in metadata] != metadata_shape
                 or bundle['memory_summary_sha256'] != primary['memory_summary_sha256']
+                # Platforms may bundle generic instructions with memory in one
+                # developer message. Its full hash must still match one exact
+                # enrolled bundle; the summary and standalone memory stay fixed.
                 or any(actual != expected for actual, expected in zip(messages, primary['initial_messages'])
-                       if expected['role'] == 'user' or 'memories.instructions' in expected['kinds'])):
+                       if expected['role'] == 'user' or ('memories.instructions' in expected['kinds']
+                           and not (expected['role'] == 'developer'
+                                    and 'generic.developer_instructions' in expected['kinds'])))):
             raise ValueError('Context variants require common ordered structure, memory and environment')
 
 
