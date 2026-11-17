@@ -14,7 +14,7 @@ import re
 from urllib.parse import unquote_to_bytes
 
 from eegfm.agent.provider import _audit_initial_records, _hash, _regular, _trace_records_from_bytes
-from eegfm.agent.provider_trace import _audit_native_records, _envelope, _json, command, parse_tool, supported_shell_argv
+from eegfm.agent.provider_trace import _audit_native_records, _envelope, _json, command, parse_tool, supported_shell_argv, local_rejections_enabled, local_payload_limit_rejection
 from eegfm.evaluation.bundle import canonical_bytes
 
 SCHEMA = 'trusted_admin_trace_v2'
@@ -167,7 +167,7 @@ def matches_context_bundle(identity: dict, messages: list, metadata: list, memor
 def validate_binding(identity: dict) -> None:
     binding = identity.get('trace_export')
     required = {'schema_version', 'client_source_sha256', 'sanitizer_source_sha256', 'audit_profile_sha256', 'initial_metadata'}
-    if (not isinstance(binding, dict) or not required <= set(binding) or set(binding) - required - {'context_variants', 'session_context_policy'}
+    if (not isinstance(binding, dict) or not required <= set(binding) or set(binding) - required - {'context_variants', 'session_context_policy', 'local_validation_rejections'}
             or binding['schema_version'] != SCHEMA
             or any(not isinstance(binding[key], str) or re.fullmatch('[0-9a-f]{64}', binding[key]) is None
                    for key in ('client_source_sha256', 'sanitizer_source_sha256', 'audit_profile_sha256'))
@@ -175,6 +175,8 @@ def validate_binding(identity: dict) -> None:
             or binding['audit_profile_sha256'] != _hash(audit_profile(identity))
             or not _metadata_profile(binding['initial_metadata'])):
         raise ValueError('Prospective trusted-admin sanitizer/profile binding required')
+    if 'local_validation_rejections' in binding and not local_rejections_enabled(identity):
+        raise ValueError('Local rejection policy requires the exact reviewed fixed client')
     if 'session_context_policy' in binding:
         if binding['session_context_policy'] != SESSION_CONTEXT_POLICY or 'context_variants' in binding:
             raise ValueError('Session context policy must be explicit and excludes context variants')
@@ -213,8 +215,7 @@ def _output(value: list) -> list:
 def _shell(native: dict, identity: dict, session: dict, requests: list) -> dict:
     argv = native.get('command')
     prefix = command(identity, session['session_id'])
-    if (native.get('type') != 'CommandExecution' or native.get('status') != 'completed'
-            or type(native.get('exit_code')) is not int or native['exit_code'] != 0
+    if (native.get('type') != 'CommandExecution'
             or not isinstance(native.get('aggregated_output'), str)
             or not supported_shell_argv(argv) or not isinstance(argv[-1], str)
             or not argv[-1].startswith(prefix)):
@@ -223,6 +224,9 @@ def _shell(native: dict, identity: dict, session: dict, requests: list) -> dict:
     if (re.fullmatch(r'[A-Za-z0-9_.~%\-]+', encoded) is None or re.search(r'%(?![A-Fa-f0-9]{2})', encoded)
             or canonical_bytes(_json(unquote_to_bytes(encoded).decode('utf-8'))) not in requests):
         raise ValueError('Native shell does not bind an approved request')
+    if not (native.get('status') == 'completed' and type(native.get('exit_code')) is int and native['exit_code'] == 0
+            or local_payload_limit_rejection(identity, encoded, native)):
+        raise ValueError('Unauthorized native shell cannot be exported')
     return {key: native.get(key) for key in ('type', 'command', 'aggregated_output', 'status', 'exit_code')}
 
 

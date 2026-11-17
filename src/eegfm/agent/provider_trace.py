@@ -24,6 +24,25 @@ SUPPORTED_SHELL_PATHS = (
     r"C:\Program Files\WindowsApps\OpenAI.CodexPrimaryRuntime.v26-1112-611-0_26.1112.611.0_x64__3k8sg7r9htsxt"
     r"\dependencies\native\powershell\pwsh.exe",
 )
+# This exact client checks these byte limits before its first RPC and emits the
+# fixed one-newline error below. Other clients/failures need separate review.
+LOCAL_REJECTION_POLICY = 'fixed_windows_payload_limit_v1'
+LOCAL_REJECTION_CLIENT_SHA256 = '0c4ea5dcaeb0bf6e41461f5b0ea74b12d9e70aaf9dc59ca8547cb1c1ac75539a'
+LOCAL_REJECTION_OUTPUT = canonical_bytes({'error_type': 'ValueError', 'status': 'gateway_rejected'}).decode()
+
+
+def local_rejections_enabled(identity: dict) -> bool:
+    binding = identity.get('trace_export', {})
+    return (binding.get('local_validation_rejections') == LOCAL_REJECTION_POLICY
+            and binding.get('client_source_sha256') == LOCAL_REJECTION_CLIENT_SHA256)
+
+
+def local_payload_limit_rejection(identity: dict, encoded: str, native: dict) -> bool:
+    """Call only after proving safe URL JSON equals the exact allowed literal."""
+    return (local_rejections_enabled(identity)
+            and native.get('status') == 'failed' and type(native.get('exit_code')) is int
+            and native['exit_code'] == 1 and native.get('aggregated_output') == LOCAL_REJECTION_OUTPUT
+            and (len(encoded) > 25000 or len(unquote_to_bytes(encoded)) > 8192))
 
 
 def supported_shell_argv(argv: object) -> bool:
@@ -299,12 +318,12 @@ def _audit_native_records(records: list[dict], identity: dict, session: dict, de
                 pending['native_session'] = native_session
                 pending['last_running_output'] = retained[0][0]
             else:
-                if envelope.get('exit_code') != 0:
+                if (envelope.get('exit_code') != 0
+                        and not (not pre_task and local_rejections_enabled(identity) and envelope.get('exit_code') == 1)):
                     raise ValueError('Gateway transport did not complete successfully')
                 pending['terminal_output_position'] = retained[0][0]
+                pending['exit_code'] = envelope['exit_code']
                 logical.append(pending)
-                verified.append({'request_id': pending['request'].get('request_id'),
-                                 'stdout_sha256': hashlib.sha256(pending['stdout'].encode()).hexdigest()})
                 pending = None
         except (ValueError, TypeError, KeyError) as error:
             issues.append(str(error))
@@ -312,10 +331,9 @@ def _audit_native_records(records: list[dict], identity: dict, session: dict, de
         issues.append('Unresolved native transport session remains')
     if set(outputs) != seen:
         issues.append('Orphan, encrypted or missing native outputs')
-    if (not calls or len(calls) > 192 or len(shells) != len(logical)
-            or deliveries is not None and (len(logical) > len(deliveries) if pre_task else len(logical) != len(deliveries))):
+    if not calls or len(calls) > 192 or len(shells) != len(logical):
         issues.append('Native gateway/delivery/command count mismatch')
-    waiting = []
+    waiting, local_rejections, delivery_index = [], [], 0
     for index, actual in enumerate(logical):
         try:
             expected_stdout = actual['stdout']
@@ -328,15 +346,7 @@ def _audit_native_records(records: list[dict], identity: dict, session: dict, de
                     if request != {'request_id': 'task', 'operation': 'task', 'payload': {}} or response != expected_response:
                         raise ValueError('Task must have completed only an awaiting-context response')
                     waiting.append({'request': request, 'response': response})
-            if deliveries is not None:
-                delivered = deliveries[index]
-                if canonical_bytes(actual['request']) != canonical_bytes(delivered['request']):
-                    raise ValueError('Native request differs from durable gateway delivery')
-                if expected_stdout != canonical_bytes(delivered['response']).decode() + '\n':
-                    raise ValueError('Actual native stdout differs from durable gateway response')
             native_position, native = shells[index]
-            if native.get('status') != 'completed' or type(native.get('exit_code')) is not int or native['exit_code'] != 0:
-                raise ValueError('Native command must complete successfully with matching exit code zero')
             prefix = command(identity, session['session_id'])
             argv = native.get('command')
             if not supported_shell_argv(argv) or not isinstance(argv[-1], str) or not argv[-1].startswith(prefix):
@@ -349,12 +359,36 @@ def _audit_native_records(records: list[dict], identity: dict, session: dict, de
             if (native.get('aggregated_output') != expected_stdout
                     or not actual['last_running_output'] < native_position < actual['terminal_output_position']):
                 raise ValueError('Native command/output/chronology mismatch')
+            if (not pre_task and actual['exit_code'] == 1
+                    and local_payload_limit_rejection(identity, encoded, native)):
+                local_rejections.append({'request_id': actual['request'].get('request_id'),
+                    'request_sha256': hashlib.sha256(canonical_bytes(actual['request'])).hexdigest(),
+                    'encoded_characters': len(encoded), 'decoded_bytes': len(unquote_to_bytes(encoded)),
+                    'reason': 'fixed_client_payload_limit_before_rpc'})
+                continue
+            if (actual['exit_code'] != 0 or native.get('status') != 'completed'
+                    or type(native.get('exit_code')) is not int or native['exit_code'] != 0):
+                raise ValueError('Native command must complete successfully with matching exit code zero')
+            if deliveries is not None:
+                delivered = deliveries[delivery_index]
+                if canonical_bytes(actual['request']) != canonical_bytes(delivered['request']):
+                    raise ValueError('Native request differs from durable gateway delivery')
+                if expected_stdout != canonical_bytes(delivered['response']).decode() + '\n':
+                    raise ValueError('Actual native stdout differs from durable gateway response')
+            delivery_index += 1
+            verified.append({'request_id': actual['request'].get('request_id'),
+                             'stdout_sha256': hashlib.sha256(expected_stdout.encode()).hexdigest()})
         except (ValueError, TypeError, KeyError, IndexError, UnicodeError) as error:
             issues.append(str(error))
+    if deliveries is not None and (delivery_index > len(deliveries) if pre_task else delivery_index != len(deliveries)):
+        issues.append('Native gateway/delivery/command count mismatch')
     if pre_task and not waiting:
         issues.append('Completed awaiting-context task delivery required before admission')
-    return {'valid': not issues, 'issues': sorted(set(issues)), 'context_id': initial['context_id'],
+    result = {'valid': not issues, 'issues': sorted(set(issues)), 'context_id': initial['context_id'],
             'gateway_calls': len(logical), 'native_poll_calls': polls, 'actual_tool_calls': len(calls),
             'initial_context': initial, 'deliveries': verified,
             'timing': timing,
             'boundary': 'Audited tool context with disclosed inherited history; not OS isolation or blind capability measurement.'}
+    if local_rejections_enabled(identity):
+        result.update(gateway_dispatched_calls=delivery_index, local_validation_rejections=local_rejections)
+    return result
