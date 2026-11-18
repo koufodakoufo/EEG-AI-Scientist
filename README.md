@@ -6,15 +6,14 @@
 
 ## 现在到哪了
 
-已完成真实 EEG 分析，以及独立研究者的写代码、拟合、选择、测试和报告验证；结果与局限集中在下方研究报告。
+独立 AI 已在火山云完成 EEG 实验。对六名测试参与者，线性擦除以后，高斯核读出没有比线性读出找回更多有用的 delta 功率信息。另一套复算从源码得到相同的参数、预测和统计结果。
 
-正在继续完成论文工作流试验的原定目标。上次尝试只完成一次基线拟合，完整科研链和 BrainPEC 报告评价均未完成；失败记录保留。此次先修复任务交付、分段提交和长报告比较，再推进实验、独立复算及完整报告对照，详见[阶段进度](docs/research/phase-completion.md)。
-
-目前尚无可靠的科研能力提升或 RSI 证据。BrainPEC 只完成了缩减的 Q1 试点，整篇论文没有复现完成。
+本阶段已归档。两份报告均已与原论文逐项对照。BrainPEC 得到了局部“哪些特征可以读出”的证据，后面的分类决策和性能解释问题仍待实验。LEACE 只检验了两种具体读出。当前证据尚不能判断 AI 的科研能力是否因方法更新而提高。[本阶段结果与边界](docs/research/phase-completion.md)
 
 ## 从这里看
 
-- [本阶段做了什么、结果如何](docs/research/evidence-guided-results.md)
+- [当前阶段：实验结果与论文对照](docs/research/phase-completion.md)
+- [此前研究做了什么](docs/research/evidence-guided-results.md)
 - [代码怎样组成一个研究流程](docs/architecture.md)
 - [本地、火山云、NCC 和 GitHub 怎么使用](docs/workspaces.md)
 - [以前的实验与版本](docs/history/README.md)
