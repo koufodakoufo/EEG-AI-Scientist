@@ -1,6 +1,6 @@
 # Evidence-guided EEG research
 
-Status: implementation verified; Builder experiments and independent decision diagnostics underway. Completed evidence is tracked in [the results report](evidence-guided-results.md). These are separate from the native coding-track pilot, whose model authentication failed qualification.
+This is the historical design for the Builder EEG experiments and independent research-decision trials. The native coding pilot described below failed its initial authentication check. Subsequent coding runs completed synthetic and real EEG tasks. See the [experiment results](evidence-guided-results.md) and the [final paper-workflow report](phase-completion.md).
 
 ## Design
 

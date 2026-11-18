@@ -1,8 +1,8 @@
 # EEG RSI Scientist：研究者改进与 ignition 试验草案
 
-状态：2026-11-02，第一组方法迁移试点的六个目标回合及审计已完成，未观察到Q2/Q3证据覆盖增益。新被试上的Builder读出研究已完成数值与缓存审计；第二组六份Actor候选均已通过独立数值复验，四份最终报告完成，两次总结因后端不可用而中断。ignition尚未准入。
+本文保留 2026-11-02 的方法迁移试点记录与长期 ignition 草案。“本轮执行”一节的时间窗和调用预算只适用于当时的试点。同一起点比较两种更新机制的 ignition 仍未运行。最近一次收尾提出先检验原分类器是否依赖已能读出的 EEG 特征。[阶段结果与下一题](phase-completion.md)
 
-本文是主计划；已执行结果见[方法迁移结果](method-transfer-results.md)、[Builder读出结果](readout-bottleneck-results.md)及[读出研究者对照](readout-method-transfer-results.md)，原论文与改编任务的比较边界见[BrainPEC主张索引](brainpec-claim-map.md)。文献结果均为作者报告，尚未由本项目复现。历史准备状态与失败记录保留在Git和原运行账本，不在本文重复展开；运行和预算不重置。
+第一组的六次目标运行均未增加干预或残余读出证据。随后完成了新被试上的 Builder 读出研究；第二组六份研究者候选均通过独立数值复验，其中四份完成最终报告，两份在总结时遇到后端中断。文献数值为作者报告，历史运行与预算保留在原账本。[方法迁移试点](method-transfer-results.md) · [Builder 读出研究](readout-bottleneck-results.md) · [独立研究者读出对照](readout-method-transfer-results.md) · [BrainPEC 主张索引](brainpec-claim-map.md)
 
 ## 本轮执行：method-transfer-v1
 

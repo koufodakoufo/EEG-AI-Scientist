@@ -1,27 +1,18 @@
-# 历史成果与恢复
+# 早期实验与原始记录
 
-这些资料描述过去发生了什么，不是当前运行命令。正文保留原始内容，包括旧目录、版本和编号；原路径在对应 Git 标签中。
+想知道项目现在做到哪里，从[项目首页](../../README.md)开始。下面按当时实际做过的实验列出原报告。
 
-| 阶段 | 阅读入口 | 原代码标签 |
-|---|---|---|
-| 早期提案研究 | 标签中的原 README 和报告 | `archive/proposal-agent-v1` |
-| 合成科研与方法提示 | [结果](synthetic-pilot/RESULTS.md) | `archive/synthetic-pilot-v1` |
-| 真实 EEG 与受测 AI | [参考结果](brainpec-pilot/SCIENCE_RESULT.zh-CN.md)、[AI 对照](reference-expansion/AGENT_CASE_STUDY.zh-CN.md) | `archive/brainpec-pilot-v1` |
-| 表示基线和第二任务 | [基线比较](reference-expansion/REPRESENTATION_BASELINES.zh-CN.md)、[睁闭眼任务](reference-expansion/EEGMMIDB_REFERENCE.zh-CN.md) | `archive/brainpec-pilot-v1` |
-| 方法迁移与读出研究 | [迁移试点](../research/method-transfer-results.md)、[Builder参考](../research/readout-bottleneck-results.md)、[研究者对照](../research/readout-method-transfer-results.md) | `archive/method-transfer-v1` |
+| 想查什么 | 从哪里读 |
+|---|---|
+| 最早的小模型有没有真正做实验？ | [提案试点报告](https://github.com/koufodakoufo/EEG-AI-Scientist/blob/d0bbb6efbed5933275f4d6d9a46b90e4bbe82930/reports/MORNING_REPORT.md)和[结果表](https://github.com/koufodakoufo/EEG-AI-Scientist/blob/d0bbb6efbed5933275f4d6d9a46b90e4bbe82930/reports/RESULTS_TABLE.md) |
+| 在答案已知的合成数据上，一份方法提示有帮助吗？ | [配对结果及评分局限](synthetic-pilot/RESULTS.md) |
+| BrainPEC 的问题怎样落到真实 EEG 上？ | [构建者做的 EEGMAT 参考实验](brainpec-pilot/SCIENCE_RESULT.zh-CN.md)和[独立 AI 实际完成的部分](reference-expansion/AGENT_CASE_STUDY.zh-CN.md) |
+| 换个模型对照或 EEG 任务，结果如何？ | [预训练、随机编码器和手工属性的比较](reference-expansion/REPRESENTATION_BASELINES.zh-CN.md)和[睁眼与闭眼实验](reference-expansion/EEGMMIDB_REFERENCE.zh-CN.md) |
 
-旧报告位置变换：`docs/overnight/2026-10-29` → `synthetic-pilot`；`docs/research/2026-10-29-brainpec-real` → `brainpec-pilot`；`docs/research/2026-10-30-extension` → `reference-expansion`。移动不修改历史论断。
+## 查旧版本
 
-当前主线不再携带整套旧源码和运行副本。原 `archive/` 的977个已跟踪文件可从 `archive/workspace-layout-v1` 标签恢复；完整本地原件（包括未跟踪材料）集中保存在 `.local/history/archive/`，不再随新checkout重复展开。原bundle仅是历史证据，不再用作同步方式。
+旧入口、机器配置、排班、进度稿和交接文档保存在 `archive/paper-workflow-trial-v2`。该标签的固定提交保存了整理前的整个 `docs/history/`，包括后来移出主线的文件。[浏览完整历史目录](https://github.com/koufodakoufo/EEG-AI-Scientist/tree/c53051bd8e0fa1fb05a9417c6a695c32a75e8c49/docs/history)
 
-旧工具的恢复点为 `2d22483`，也包含在上述标签中；本地位置为 `.local/history/archive/tools/`。它们含旧机器路径，仅供查证；历史执行请用原标签的完整布局。
+部分原报告沿用最初目录名，文中的相对路径与那时的代码配套。按当时布局阅读，可打开[合成试点快照](https://github.com/koufodakoufo/EEG-AI-Scientist/tree/58b8d71b2b2b060e6b1d77eefd1b5d1cdb5c6e1f/docs/overnight/2026-10-29)、[EEGMAT 试点快照](https://github.com/koufodakoufo/EEG-AI-Scientist/tree/fc8d7e18ee91bd07d2dc74f8f2a20c00e8b1db79/docs/research/2026-10-29-brainpec-real)和[后续对照快照](https://github.com/koufodakoufo/EEG-AI-Scientist/tree/fc8d7e18ee91bd07d2dc74f8f2a20c00e8b1db79/docs/research/2026-10-30-extension)。
 
-服务器旧冻结工作区保持原路径。不要用新 checkout 路径直接替换旧锁的绝对路径，更不要修改哈希或测试预约。
-
-原导入框架说明保存在 `imported-framework/`；机器路径和授权状态属于当时记录。当前规则以根 AGENTS 和最新用户指令为准。
-
-本地原 `framework/` 的旧运行、缓存和未跟踪材料集中保存在 `.local/history/framework/`。旧入口和说明也保存在 `imported-framework/`，不构成第二套当前工程。
-
-## 如何查证和恢复
-
-查看旧文件无需切换当前工程，例如 `git show archive/workspace-layout-v1:archive/README.md`。需要完整历史checkout时，在独立的复现目录检出对应标签；不要让当前main退回旧布局。涉及绝对路径的旧运行需按原记录恢复路径，不能就地更改锁或哈希。仅本地保有的材料应从上述`.local/history/`原件恢复；迁移前后的逐文件SHA256清单在`.local/preparation/archive-relocation-manifest.json`。
+本地也能查看单个旧文件，无需切换当前分支。例如 `git show archive/paper-workflow-trial-v2:docs/history/navigation/HANDOFF.md`。更早的整套工程布局见 `archive/workspace-layout-v1`。仅保存在本地的原件位于 `.local/history/archive/` 和 `.local/history/framework/`，归档复制清单为 `.local/preparation/archive-relocation-manifest.json`。服务器冻结运行按证据记录中的原路径查找。

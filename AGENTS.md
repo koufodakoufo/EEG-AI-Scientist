@@ -16,4 +16,4 @@
 - Keep task and final-test boundaries fixed. Fit on training data, choose on selection/validation, freeze before held-out evaluation. Already viewed data stays exploratory.
 - Before moving an owned directory, verify source/destination scope, ownership, active use and recovery route. No destructive cleanup for a visually clean tree.
 - Use existing environments where valid. Run relevant regressions and the complete supported suite; distinguish Linux execution tests from portable science checks. Report failures and skips accurately.
-- This preparation is recorded in docs/development/project-renewal.md. For subsequent studies, update their own protocol/report rather than extending the refactor log. Routine decisions within authorized scope are autonomous; record material assumptions and limitations.
+- The original refactor log is archived at archive/paper-workflow-trial-v2:docs/development/project-renewal.md. Record subsequent studies in their own protocol/report. Routine decisions within authorized scope are autonomous; record material assumptions and limitations.
