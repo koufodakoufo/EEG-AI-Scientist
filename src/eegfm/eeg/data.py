@@ -550,12 +550,13 @@ def compute_feature_panel(x: np.ndarray) -> np.ndarray:
         return torch.cat(output, dim=1).numpy().astype(np.float32)
 
 
-def _load_strict_backbone(model: Any, checkpoint_path: Path) -> None:
+def _load_strict_backbone(model: Any, checkpoint_path: Path, *, frozen: bool = True) -> None:
     import torch
     state = torch.load(checkpoint_path, map_location='cpu', weights_only=True)
     model.load_state_dict(state, strict=True)
-    model.proj_out = torch.nn.Identity()
-    model.requires_grad_(False).cpu().eval()
+    if frozen:
+        model.proj_out = torch.nn.Identity()
+        model.requires_grad_(False).cpu().eval()
 
 
 class CBraModCPU:
@@ -599,7 +600,7 @@ class CBraModCPU:
         return self.continue_from(last, layer=self.n_layers).mean(axis=(1, 2))
 
 
-def load_cbramod(cache_dir: Path | str, *, threads: int = 4) -> CBraModCPU:
+def load_cbramod_model(cache_dir: Path | str, *, threads: int = 4, frozen: bool = True) -> Any:
     """Verify all official code/weight bytes, then import and strictly load on CPU."""
     import torch
     if not 1 <= threads <= 4:
@@ -631,5 +632,9 @@ def load_cbramod(cache_dir: Path | str, *, threads: int = 4) -> CBraModCPU:
     module.__package__ = package_name
     exec(compile(source, module.__file__, 'exec'), module.__dict__)
     model = module.CBraMod()
-    _load_strict_backbone(model, cache / 'pretrained_weights.pth')
-    return CBraModCPU(model)
+    _load_strict_backbone(model, cache / 'pretrained_weights.pth', frozen=frozen)
+    return model
+
+
+def load_cbramod(cache_dir: Path | str, *, threads: int = 4) -> CBraModCPU:
+    return CBraModCPU(load_cbramod_model(cache_dir, threads=threads))

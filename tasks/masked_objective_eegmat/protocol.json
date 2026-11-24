@@ -1,0 +1,37 @@
+{
+  "version": "masked-objective-eegmat-public-v1",
+  "parent": "masked-objective-eegmat-v1",
+  "purpose": "EEGMAT 上已预训练 CBraMod 的短程全参数继续训练：同一波形预测头，换监督域，是否更易用冻结读出读取枕部 alpha？",
+  "dataset": "PhysioNet EEGMAT 1.0.0, both conditions; legacy participant-disjoint 24/6/6 split; previously used cohort, exploratory only",
+  "preprocessing": "eegfm.eeg.data.prepare_eegmat, raw EDF hash-verified, native reference, MNE resample 200 Hz, scale uV/100, up to four nonoverlapping 5 s windows spread per EDF. Keep first 19 named scalp channels from CHANNELS, exclude auxiliary A2-A1.",
+  "checkpoint_sha256": "0792cb808c14e6b7a2bb2ce1dff379bc47bc54c49a779825bdfeb33bf8157178",
+  "dataset_root": ".local/eegmat-resources",
+  "seeds": [
+    42,
+    43
+  ],
+  "arms": [
+    "recon",
+    "spectral"
+  ],
+  "baseline": "init, identical pretrained and never updated",
+  "steps": 24,
+  "batch_size": 4,
+  "threads": 4,
+  "training_wall_cap_s": 1800,
+  "window_cap": 4,
+  "lr": 0.00002,
+  "weight_decay": 0.01,
+  "clip_norm": 1,
+  "ridge_alpha": 100,
+  "mask": "Exactly floor(C*5/2) uniformly chosen tokens per window; same batches/masks/dropout seed between arms. Uniform without replacement within each batch, resample each step.",
+  "optimizer": "AdamW defaults incl betas=(0.9,0.999), eps=1e-8, constant lr; update all trainable encoder and original waveform head parameters, eval without masks or dropout, final fixed step only.",
+  "loss": "recon = mean squared error on masked waveform samples. spectral = equal-weight MSE of natural log Hann-window periodogram band energies for [1,4),[4,8),[8,13) Hz on the SAME predicted and true masked one-second waveforms. Center each patch; periodic Hann; rfft unnormalized; energy=sum(|FFT|²)/sum(hann)²; log(energy+1e-8). Same prediction head and clipping threshold, with no per-condition loss or gradient matching.",
+  "readout": "Independent standardized ridge with alpha=100 fit on training participants; no validation selection. For each target 200 dimensions from final encoder mean across patches and O1/O2 (alpha), C3/C4 (beta), or all 19 channels (condition). Targets: mean log band energy across same pair and 5 one-second patches using above formula, [8,13) or [13,30). Condition 0 before, 1 during, threshold 0.5; fixed record order may confound. Third readout sees no participant or filename.",
+  "primary": "Per seed pooled held-participant R² spectral minus recon on occipital_alpha; average across two seeds descriptive; patient/participant bootstrap 2000 seed 20261124, same six people, CIs conditional on fit. No pooling seeds as independent participants.",
+  "secondary": "central_beta (frequency intentionally held outside direct target), rest vs task BA, both relative to init and held-out-arm comparisons. Report validation diagnostics separately. No ranking by different pretext losses.",
+  "prediction": "Spectral supervision should increase alpha accessibility relative to recon; beta and condition need not benefit. Alternative: short training has little effect versus init, or different gradient scales/optimization alter both. Even a positive result on alpha is near-target transfer.",
+  "decision": "Advance this frequency-target lead only if both seeds beat recon and init by >=0.02 absolute alpha R² and paired 95% CIs for spectral minus recon exclude zero in both seeds. If both arms lose to init, first diagnose update/calibration; otherwise mixed/small differences remain unresolved; next equal-budget seed or scale control, not new objectives by leaderboard.",
+  "stops": "CPU only, 0 GPU hours. Stop training on nonfinite loss/grad, data hash or split mismatch, less than 2 GiB free or cumulative training wall >1800s. Do not extend steps, remove subjects, select checkpoints or tune on validation/test. Engineering failures logged and retried only without changing estimand. Freeze all four training receipts before authorizing test decode.",
+  "scope": "Normal research context may see known history. This run is neither an unseen population validation, an agent generalization test, nor an RSI effect estimate."
+}
