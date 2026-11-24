@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import io
 import importlib.metadata
+import json
 import os
 import platform
 import shutil
@@ -20,7 +22,7 @@ import numpy as np
 import torch
 from threadpoolctl import threadpool_limits
 
-from eegfm.common import ROOT, append_jsonl, atomic_write, now, read_json, sha256, write_json
+from eegfm.common import ROOT, append_jsonl, atomic_write, now, read_json, read_jsonl, sha256, write_json
 from eegfm.eeg import data, statistics
 
 PROTOCOL = ROOT / "tasks/masked_objective_eegmat/protocol.json"
@@ -663,6 +665,254 @@ def execute_research_plan(run: Path, plan: dict[str, Any]) -> dict[str, Any]:
                         if k in ("steps", "wall_s", "cpu_s")} for a in cfg["arms"]}
             result["seeds"][str(seed)] = {"metrics": _research_scores(seed_dir), "training_cost_by_arm": cost}
         return result
+
+
+def validate_diagnostic_plan(plan: dict, parent_plan: dict) -> None:
+    """Only replay the paired four-band contrast that this diagnostic tests."""
+    validate_research_plan(parent_plan)
+    a, b = parent_plan["arms"]
+    if (a["spectral_mix"] != 1 or b["spectral_mix"] != 1 or a["lr"] != b["lr"]
+            or a["mask_fraction"] != b["mask_fraction"] or len(a["bands"]) != 4
+            or len(b["bands"]) != 4 or a["bands"][:3] != b["bands"][:3]
+            or a["bands"][3] == b["bands"][3] or parent_plan["steps"] > 24):
+        raise ValueError("diagnostic needs a paired pure spectral four-band replacement, at most 24 steps")
+    steps = plan.get("measure_steps")
+    if (plan.get("action") != "diagnose" or not isinstance(steps, list) or not 1 <= len(steps) <= 4
+            or any(type(s) is not int or not 1 <= s <= parent_plan["steps"] for s in steps)
+            or steps != sorted(set(steps))):
+        raise ValueError("measure_steps must contain 1..4 distinct increasing parent step numbers")
+
+
+def _angle(x: torch.Tensor, y: torch.Tensor) -> float | None:
+    norm = x.norm() * y.norm()
+    return float(torch.dot(x, y) / norm) if norm > 0 else None
+
+
+def _band_gradients(predicted, batch, mask, bands, parameters):
+    """Observe the existing forward pass; autograd.grad leaves parameter .grad untouched."""
+    target = band_log_energy(batch[mask], bands)
+    losses = (band_log_energy(predicted[mask], bands) - target).square().mean(0)
+    grads = []
+    for loss in losses.unbind():
+        g = torch.autograd.grad(loss, parameters, retain_graph=True, allow_unused=True)
+        grads.append(torch.cat([(v if v is not None else torch.zeros_like(p)).reshape(-1)
+                                for p, v in zip(parameters, g)]).double())
+    common = sum(grads[:3])
+    common_square = torch.dot(common, common)
+    norms = [float(g.norm()) for g in grads]
+    details = {
+        "masked_tokens": len(target), "target_mean": target.mean(0).tolist(),
+        "target_var": target.var(0, unbiased=False).tolist(),
+        "target_q10_q50_q90": torch.quantile(target, target.new_tensor([.1, .5, .9]), dim=0).T.tolist(),
+        "band_mse": losses.detach().tolist(), "raw_band_encoder_grad_norm": norms,
+        "pairwise_grad_cos": [_angle(grads[i], grads[j]) for i in range(4) for j in range(i+1, 4)],
+        "shared_three_sum_norm": float(common.norm()), "fourth_vs_shared_cos": _angle(grads[3], common),
+        "fourth_opposing_fraction": float(-torch.dot(grads[3], common)/common_square) if common_square > 0 else None,
+    }
+    return details, common + grads[3]
+
+
+def _state_identical(a, b) -> bool:
+    if isinstance(a, torch.Tensor):
+        return isinstance(b, torch.Tensor) and a.dtype == b.dtype and torch.equal(a, b)
+    if isinstance(a, dict):
+        return isinstance(b, dict) and a.keys() == b.keys() and all(_state_identical(a[k], b[k]) for k in a)
+    if isinstance(a, (list, tuple)):
+        return type(a) is type(b) and len(a) == len(b) and all(_state_identical(x, y) for x, y in zip(a, b))
+    return a == b
+
+
+def _diagnose_arm(src, seed, arm, cfg, x, schedule, measure, deadline):
+    """Replay the original AdamW path and compare every step, then verify the terminal state."""
+    recorded = read_jsonl(src / "steps.jsonl")
+    if len(recorded) != len(schedule) or len(schedule) != cfg["steps"]:
+        raise ValueError("parent schedule or step log length mismatch")
+    torch.manual_seed(seed)
+    encoder, head = load_model(cfg)
+    encoder.train()
+    head.train()
+    enc = [p for p in encoder.parameters() if p.requires_grad]
+    params = enc + [p for p in head.parameters() if p.requires_grad]
+    opt = torch.optim.AdamW(params, lr=cfg["lr"], weight_decay=cfg["weight_decay"])
+    bands = tuple(tuple(b) for b in cfg["objective"]["bands"])
+    torch.manual_seed(seed)
+    observations = []
+    for step, (entry, reference) in enumerate(zip(schedule, recorded), 1):
+        if time.monotonic() >= deadline:
+            raise TimeoutError("diagnostic wall budget reached")
+        batch = x[entry["rows"]]
+        mask = torch.zeros(batch.shape[:-1], dtype=torch.bool)
+        for row, positions in zip(mask.flatten(1), entry["masked_positions"], strict=True):
+            row[positions] = True
+        opt.zero_grad(set_to_none=True)
+        prediction = head(encoder(batch, mask=mask))
+        loss = masked_objective(prediction, batch, mask, arm, spectral_mix=1, bands=bands)
+        if step in measure:
+            rng = torch.get_rng_state()
+            observation, grad_sum = _band_gradients(prediction, batch, mask, bands, enc)
+            if not torch.equal(rng, torch.get_rng_state()):
+                raise ValueError("diagnostic consumed training randomness")
+            before = torch.nn.utils.parameters_to_vector(enc).detach()
+        loss.backward()
+        norm = torch.nn.utils.clip_grad_norm_(params, cfg["clip_norm"], error_if_nonfinite=True)
+        if (reference["step"] != step or reference["loss"] != loss.detach().item()
+                or reference["grad_norm_before_clip"] != norm.item() or reference["masked_tokens"] != int(mask.sum())
+                or reference["examples"] != len(batch)):
+            raise ValueError(f"parent numerical trajectory mismatch at seed {seed}, arm {arm}, step {step}")
+        if step in measure:
+            after_clip = float(torch.linalg.vector_norm(torch.stack([
+                torch.linalg.vector_norm(p.grad, dtype=torch.float64) for p in params if p.grad is not None
+            ])))
+        opt.step()
+        if step in measure:
+            update = (torch.nn.utils.parameters_to_vector(enc).detach() - before).double()
+            clip = float((cfg["clip_norm"] / (norm + 1e-6)).clamp(max=1))
+            observation.update(step=step, whole_grad_before_clip=float(norm), whole_grad_after_clip=after_clip,
+                               clip_multiplier=clip, actual_encoder_update_norm=float(update.norm()),
+                               update_vs_descent_cos=_angle(update, -grad_sum),
+                               clipped_weighted_band_grad_norm=[v*clip/len(bands)
+                                                                for v in observation["raw_band_encoder_grad_norm"]])
+            observations.append(observation)
+    state = torch.load(src / "final.pt", map_location="cpu", weights_only=True)
+    if (state["step"] != len(recorded) or state["config"] != read_json(src / "config.json")
+            or not _state_identical(encoder.state_dict(), state["encoder"])
+            or not _state_identical(head.state_dict(), state["head"])
+            or not _state_identical(opt.state_dict(), state["optimizer"])
+            or not torch.equal(torch.get_rng_state(), state["rng_after"])):
+        raise ValueError("replayed encoder, head, optimizer, RNG or config differs from frozen checkpoint")
+    return observations
+
+
+def _diagnostic_worker() -> None:
+    """Standalone CPU process with a fresh native numerical runtime for exactly one trajectory."""
+    request = json.load(sys.stdin)
+    exp = Path(request["experiment"])
+    seed, arm = request["seed"], request["arm"]
+    src = exp / f"seed-{seed}" / arm
+    cfg = {**read_json(PROTOCOL), **read_json(src / "config.json")}
+    with threadpool_limits(limits=4):
+        torch.set_num_threads(4)
+        torch.set_num_interop_threads(1)
+        torch.use_deterministic_algorithms(True)
+        x = torch.from_numpy(read_split(exp, "train")["x"])
+        rows = _diagnose_arm(src, seed, arm, cfg, x, read_json(src.parent / f"schedule-{arm}.json"),
+                             request["measure"], time.monotonic() + request["remaining_s"])
+    print(json.dumps({"rows": rows, "cpu_s": time.process_time()}, allow_nan=False), flush=True)
+
+
+def _arm_process(exp, seed, arm, measure, deadline):
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise TimeoutError("diagnostic wall budget reached")
+    cmd = [sys.executable, "-B", "-X", "faulthandler", "-c",
+           "from eegfm.eeg.objective_pilot import _diagnostic_worker; _diagnostic_worker()"]
+    env = {**os.environ, "OMP_NUM_THREADS": "4", "MKL_NUM_THREADS": "4",
+           "OPENBLAS_NUM_THREADS": "4", "CUDA_VISIBLE_DEVICES": "-1", "PYTHONPATH": str(ROOT / "src")}
+    request = {"experiment": str(exp.resolve()), "seed": seed, "arm": arm, "measure": measure,
+               "remaining_s": remaining}
+    # Leave stderr on the parent's executor.log, including any native crash traceback.
+    completed = subprocess.run(cmd, input=json.dumps(request), stdout=subprocess.PIPE, text=True,
+                               env=env, cwd=ROOT, timeout=remaining, check=True)
+    return json.loads(completed.stdout)
+
+
+def _record_digest(value: dict) -> str:
+    return hashlib.sha256(json.dumps(value, sort_keys=True, allow_nan=False).encode()).hexdigest()
+
+
+def execute_band_diagnostic(run: Path, plan: dict, parent: Path, cpu_threads: int = 4, *,
+                            isolated_arms: bool = False) -> dict:
+    """Read only the parent's training inputs and log replay; no validation/test data or new weights."""
+    parent_plan = read_json(parent / "plan.json")
+    validate_diagnostic_plan(plan, parent_plan)
+    if (cpu_threads != 4 or run.resolve() == parent.resolve() or read_json(run / "plan.json") != plan):
+        raise ValueError("diagnostic needs a separate frozen episode and the original four CPU threads")
+    exp = parent / "experiment"
+    source, frozen = read_json(exp / "admission.json"), read_json(exp / "frozen.json")
+    parent_hash = sha256(parent / "plan.json")
+    if source["plan_sha256"] != parent_hash or frozen["protocol_sha256"] != parent_hash:
+        raise ValueError("parent evidence does not match frozen plan")
+    start, cpu_start = time.monotonic(), time.process_time()
+    deadline = start + min(600, int(os.environ.get("EEGFM_DIAGNOSTIC_WALL_S", "600")))
+    cfg = read_json(PROTOCOL)
+    live = bindings(cfg)
+    runner_name = Path(__file__).relative_to(ROOT).as_posix()
+    if any(live.get(k) != v for k, v in source["sources"].items() if k != runner_name):
+        raise ValueError("parent model, resources, protocol or supporting code changed")
+    train_file = "development_data/train.npz"
+    if sha256(exp / train_file) != source["prepared"][train_file]:
+        raise ValueError("parent training data hash mismatch")
+    block = read_split(exp, "train")
+    x = torch.from_numpy(block["x"])
+    evidence = {"plan_sha256": sha256(run / "plan.json"), "parent_plan_sha256": parent_hash,
+                "parent_frozen_sha256": sha256(exp / "frozen.json"), "admission_sha256": sha256(exp / "admission.json"),
+                "train_sha256": source["prepared"][train_file], "original_runner_sha256": source["sources"][runner_name],
+                "diagnostic_runner_sha256": live[runner_name], "parent_artifacts": {}}
+    reports = {}
+    child_cpu = 0.0
+    cache = run / ".band-replay-progress.json"
+    progress = read_json(cache, {}) if isolated_arms else {}
+    verified = {e["sha256"] for e in read_jsonl(run / "trajectory.jsonl")
+                if e.get("action") == "diagnostic_arm_verified"}
+    with threadpool_limits(limits=cpu_threads):
+        torch.set_num_threads(cpu_threads)
+        torch.use_deterministic_algorithms(True)
+        for seed in (42, 43):
+            records = {}
+            paired_schedule = None
+            for outcome in parent_plan["arms"]:
+                arm = outcome["name"]
+                subdir = f"seed-{seed}/{arm}"
+                src = exp / subdir
+                config, receipt = read_json(src / "config.json"), read_json(src / "trained.json")
+                schedule_path = src.parent / f"schedule-{arm}.json"
+                hashes = {n: sha256(src / n) for n in ("final.pt", "config.json", "steps.jsonl", "trained.json")}
+                hashes["schedule"] = sha256(schedule_path)
+                evidence["parent_artifacts"][subdir] = hashes
+                if (hashes["final.pt"] != frozen["candidates"][subdir + "/final.pt"]
+                        or hashes["final.pt"] != receipt["checkpoint_sha256"] or hashes["config.json"] != receipt["config_sha256"]
+                        or hashes["steps.jsonl"] != receipt["step_log_sha256"] or hashes["schedule"] != config["schedule_sha256"]
+                        or config["protocol_sha256"] != parent_hash or config["initial_sha256"] != cfg["checkpoint_sha256"]
+                        or config["objective"] != outcome or config["threads"] != cpu_threads or config["seed"] != seed
+                        or config["arm"] != arm or config["steps"] != parent_plan["steps"] or config["lr"] != outcome["lr"]):
+                    raise ValueError("parent checkpoint, config, schedule or log differs from admitted contrast")
+                if paired_schedule is not None and paired_schedule != hashes["schedule"]:
+                    raise ValueError("arms did not share windows and mask positions")
+                paired_schedule = hashes["schedule"]
+                print(f"replaying seed {seed} arm {arm}", flush=True)
+                if isolated_arms:
+                    identity = _record_digest({**evidence, "parent_artifacts": {subdir: hashes}})
+                    if subdir in progress:
+                        entry = progress[subdir]
+                        if entry["identity"] != identity or _record_digest(entry) not in verified:
+                            raise ValueError("diagnostic progress binding or verified receipt changed")
+                    else:
+                        completed = _arm_process(exp, seed, arm, plan["measure_steps"], deadline)
+                        entry = {"identity": identity, "result": completed}
+                        event(run, "diagnostic_arm_verified", seed=seed, arm=arm, sha256=_record_digest(entry))
+                        progress[subdir] = entry
+                        write_json(cache, progress)
+                    records[arm] = entry["result"]["rows"]
+                    child_cpu += entry["result"]["cpu_s"]
+                else:
+                    records[arm] = _diagnose_arm(src, seed, arm, {**cfg, **config}, x, read_json(schedule_path),
+                                                  plan["measure_steps"], deadline)
+                print(f"verified seed {seed} arm {arm} against frozen checkpoint", flush=True)
+            reports[str(seed)] = records
+    if time.monotonic() > deadline:
+        raise TimeoutError("diagnostic wall budget reached")
+    return {"action": "diagnose", "parent_plan_sha256": parent_hash, "plan_sha256": evidence["plan_sha256"],
+            "measure_steps": plan["measure_steps"], "bands": {a["name"]: a["bands"] for a in parent_plan["arms"]},
+            "training_scope": {"windows": len(x), "participants": len(np.unique(block["subjects"])),
+                               "unit": "masked channel x one-second patch in one training batch; descriptive"},
+            "definitions": "Band arrays in listed order. Pair cosines 12,13,14,23,24,34. Population variance and "
+                           "quantiles of target log energies. Raw encoder gradients are per single-band MSE; clipped "
+                           "contributions include the 1/4 objective weight and joint encoder/head clipping factor. "
+                           "fourth_opposing_fraction = -dot(g4, g123)/||g123||^2. Update cosine compares "
+                           "the actual AdamW encoder step with the negative sum of raw gradients.",
+            "checkpoints_reproduced": 4, "max_step_loss_error": 0, "max_step_grad_error": 0,
+            "gpu_hours": 0, "cpu_threads": cpu_threads, "wall_s": time.monotonic() - start,
+            "cpu_s": time.process_time() - cpu_start + child_cpu, "source_bindings": evidence, "by_seed_arm": reports}
 
 
 def main() -> None:

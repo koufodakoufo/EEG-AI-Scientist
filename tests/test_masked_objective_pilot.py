@@ -9,6 +9,128 @@ from eegfm.eeg.objective_pilot import band_log_energy, masked_objective, plan_fo
 TRAINING_BANDS = ((1, 4), (4, 8), (8, 13))
 
 
+@pytest.fixture
+def diagnostic_family(tmp_path, monkeypatch):
+    from eegfm.common import append_jsonl, sha256, write_json
+    from eegfm.eeg import scientist
+
+    monkeypatch.setattr(scientist, "EPISODES", tmp_path)
+    parent = scientist.episode_path("parent-study")
+    arm = {"name": "A", "spectral_mix": 1., "lr": 1e-5, "mask_fraction": .5,
+           "bands": [[1, 4], [4, 8], [8, 13], [30, 47]]}
+    parent_plan = {"action": "experiment", "steps": 8, "primary": "central_beta",
+                   "arms": [arm, {**arm, "name": "B", "bands": [*arm["bands"][:3], [13, 30]]}]}
+    for name, payload, event, field in (
+        ("plan", parent_plan, "plan_frozen", "sha256"),
+        ("results", {"assessment": "historical aggregate"}, "experiment_returned", "results_sha256"),
+        ("decision", {"verdict": "redirect"}, "decision_recorded", "sha256"),
+    ):
+        path = parent / f"{name}.json"
+        write_json(path, payload)
+        append_jsonl(parent / "trajectory.jsonl", {"action": event, field: sha256(path)})
+    write_json(parent / "experiment/frozen.json", {"candidates": {}})
+    child = scientist.episode_path("child-study")
+    child.mkdir()
+    choice = {field: f"Test reasoning for {field}" for field in scientist.PLAN_FIELDS}
+    choice.update(action="diagnose", measure_steps=[1, 8])
+    return parent, child, choice
+
+
+def test_scientist_offers_diagnostic_alongside_experiment_and_decline(diagnostic_family):
+    from eegfm.common import read_json, sha256
+    from eegfm.eeg import scientist
+
+    parent, child, choice = diagnostic_family
+    brief = scientist.freeze_brief(child, parent.name)
+    assert brief["diagnostic_parent"] == {"name": parent.name, "plan_sha256": sha256(parent / "plan.json")}
+    prompt = scientist.request_text("design", brief, child).lower()
+    assert all(term in prompt for term in ("action=diagnose", "experiment", "decline", "training-only", "measure_steps"))
+    scientist.validate_plan(choice, brief)
+    experiment = {**choice, **read_json(parent / "plan.json")}
+    experiment.pop("measure_steps")
+    scientist.validate_plan(experiment, brief)
+    scientist.validate_plan({"action": "decline", "rationale": "None would distinguish my alternatives"}, brief)
+    for bad_steps in ([], [0], [9], [3, 2], [1, 1], [True], [1, 2, 3, 4, 5]):
+        with pytest.raises(ValueError):
+            scientist.validate_plan({**choice, "measure_steps": bad_steps}, brief)
+    with pytest.raises(ValueError):
+        scientist.validate_plan({**choice, "decision_rule": ""}, brief)
+
+
+@pytest.mark.parametrize("explicit_parent", [True, False])
+def test_scientist_rejects_diagnostic_without_replayable_parent(diagnostic_family, explicit_parent):
+    from eegfm.eeg import scientist
+
+    parent, child, choice = diagnostic_family
+    if explicit_parent:
+        (parent / "experiment/frozen.json").unlink()
+    brief = scientist.freeze_brief(child, parent.name if explicit_parent else None)
+    assert not brief.get("diagnostic_parent")
+    with pytest.raises(ValueError):
+        scientist.validate_plan(choice, brief)
+
+
+def test_scientist_routes_only_frozen_plan_and_rechecks_parent(diagnostic_family, monkeypatch):
+    from eegfm.common import append_jsonl, sha256, write_json
+    from eegfm.eeg import scientist
+
+    parent, child, choice = diagnostic_family
+    scientist.freeze_brief(child, parent.name)
+    write_json(child / "plan.json", choice)
+    append_jsonl(child / "trajectory.jsonl", {"action": "plan_frozen", "sha256": sha256(child / "plan.json")})
+    calls = []
+    def diagnostic(run, plan, source, *, isolated_arms):
+        calls.append((run, plan, source, isolated_arms))
+        return {"scope": "train"}
+    monkeypatch.setattr(scientist.pilot, "execute_band_diagnostic", diagnostic)
+    monkeypatch.setattr(scientist.pilot, "execute_research_plan",
+                        lambda *_: pytest.fail("A diagnosis entered the ordinary training/validation route"))
+    assert scientist.execute_frozen(child) == {"scope": "train"}
+    assert calls == [(child, choice, parent, True)]
+    write_json(parent / "plan.json", {"action": "decline", "rationale": "different parent plan"})
+    with pytest.raises(ValueError):
+        scientist.execute_frozen(child)
+    assert len(calls) == 1
+
+
+def test_scientist_exhausted_diagnostic_budget_rejects_before_subprocess(diagnostic_family, monkeypatch):
+    from eegfm.common import append_jsonl, write_json
+    from eegfm.eeg import scientist
+
+    _, child, choice = diagnostic_family
+    write_json(child / "plan.json", choice)
+    append_jsonl(child / "trajectory.jsonl", {"action": "experiment_failed", "elapsed_s": 600.})
+    monkeypatch.setattr(scientist.subprocess, "run", lambda *_a, **_kw: pytest.fail("Elapsed budget resubmitted"))
+    with pytest.raises((RuntimeError, TimeoutError, ValueError), match="budget|remaining"):
+        scientist.execute_bounded(child, choice)
+
+
+@pytest.mark.parametrize("interrupted", [True, False])
+def test_scientist_recovers_only_finished_diagnostic_attempts(diagnostic_family, interrupted):
+    from eegfm.common import append_jsonl, read_jsonl, sha256, write_json
+    from eegfm.eeg import scientist
+
+    parent, child, choice = diagnostic_family
+    scientist.freeze_brief(child, parent.name)
+    write_json(child / "plan.json", choice)
+    append_jsonl(child / "trajectory.jsonl", {"action": "plan_frozen", "sha256": sha256(child / "plan.json")})
+    def first_attempt(*_):
+        if interrupted:
+            raise KeyboardInterrupt("controller lost while the worker may still be running")
+        raise RuntimeError("worker exited and was observed by the controller")
+    with pytest.raises(KeyboardInterrupt if interrupted else RuntimeError):
+        scientist.advance(child, through="experiment", execute=first_attempt)
+    events = [r["action"] for r in read_jsonl(child / "trajectory.jsonl")]
+    assert events.count("experiment_started") == 1
+    if interrupted:
+        with pytest.raises(RuntimeError):
+            scientist.advance(child, through="experiment", execute=lambda *_: pytest.fail("duplicate worker"))
+        assert not (child / "results.json").exists()
+    else:
+        assert events.count("experiment_failed") == 1
+        assert scientist.advance(child, through="experiment", execute=lambda *_: {"ok": True}) == "interpret"
+
+
 def reference_log_energy(waveforms, bands):
     """One-second, 200 Hz windows; bin k is k Hz."""
     window = np.hanning(201)[:-1]
@@ -318,3 +440,94 @@ def test_scientist_declined_research_has_no_executor_or_interpretation(tmp_path)
     assert scientist.advance(tmp_path, launch=unexpected, execute=unexpected) == "closed"
     assert read_json(tmp_path / "decision.json")["verdict"] == "declined_without_training"
     assert not (tmp_path / "results.json").exists()
+
+
+def _diagnostic_parent_plan():
+    common = [[1, 4], [4, 8], [8, 13]]
+    arm = {"name": "A", "spectral_mix": 1, "lr": 1e-5, "mask_fraction": .5, "bands": common+[[30, 47]]}
+    return {"action": "experiment", "primary": "central_beta", "steps": 8,
+            "arms": [arm, {**arm, "name": "B", "bands": common+[[13, 30]]}]}
+
+
+@pytest.mark.parametrize("steps", [[], [0], [9], [2, 1], [1, 1], [1, 2, 3, 4, 5], [True]])
+def test_diagnostic_uses_only_bounded_distinct_measurements(steps):
+    from eegfm.eeg import objective_pilot as pilot
+    with pytest.raises(ValueError, match="measure_steps"):
+        pilot.validate_diagnostic_plan({"action": "diagnose", "measure_steps": steps}, _diagnostic_parent_plan())
+
+
+def test_band_diagnostic_reproduces_original_optimizer_without_evaluation(tmp_path, monkeypatch):
+    from pathlib import Path
+    from eegfm.common import read_json, sha256, write_json
+    from eegfm.eeg import objective_pilot as pilot
+    parent, child = tmp_path / "parent", tmp_path / "child"
+    exp = parent / "experiment"
+    train = exp / "development_data/train.npz"
+    train.parent.mkdir(parents=True)
+    child.mkdir()
+    rng = np.random.default_rng(16)
+    samples = rng.normal(size=(8, 20, 5, 200)).astype("float32")
+    np.savez(train, x=samples, channels=pilot.data.CHANNELS, subject_ids=[f"s{i//2}" for i in range(8)],
+             sample_ids=[f"w{i}" for i in range(8)], y=np.arange(8)%2)
+    source_plan = _diagnostic_parent_plan()
+    plan = {"action": "diagnose", "measure_steps": [1, 8]}
+    write_json(parent / "plan.json", source_plan)
+    write_json(child / "plan.json", plan)
+    cfg = {**read_json(pilot.PROTOCOL), "steps": 8, "arms": ["A", "B"], "seeds": [42, 43]}
+    original = pilot.read_split
+    def only_train(p, split):
+        assert p == exp and split == "train"
+        return original(p, split)
+    monkeypatch.setattr(pilot, "read_split", only_train)
+    runner = Path(pilot.__file__).relative_to(pilot.ROOT).as_posix()
+    monkeypatch.setattr(pilot, "bindings", lambda cfg: {runner: "synthetic-check"})
+    write_json(exp / "admission.json", {"plan_sha256": sha256(parent / "plan.json"),
+               "sources": pilot.bindings(cfg), "prepared": {"development_data/train.npz": sha256(train)}})
+    class TinyEncoder(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.gain = torch.nn.Parameter(torch.tensor([.75, -.13]))
+            self.dropout = torch.nn.Dropout(.15)
+        def forward(self, x, mask):
+            return self.dropout(x * self.gain[0] + x.roll(1, -1) * self.gain[1])
+    monkeypatch.setattr(pilot, "load_model", lambda cfg: (TinyEncoder(), torch.nn.Linear(200, 200, bias=False)))
+    torch.set_num_threads(4)
+    torch.use_deterministic_algorithms(True)
+    pilot.training(exp, cfg, objectives={a["name"]: a for a in source_plan["arms"]}, protocol_path=parent/"plan.json")
+    result = pilot.execute_band_diagnostic(child, plan, parent)
+    assert result["checkpoints_reproduced"] == 4 and result["gpu_hours"] == 0
+    assert result["source_bindings"]["train_sha256"] == sha256(train)
+    assert result["cpu_s"] > 0 and result["cpu_threads"] == 4
+    assert result["training_scope"]["participants"] == 4
+    for arms in result["by_seed_arm"].values():
+        for rows in arms.values():
+            assert [v["step"] for v in rows] == [1, 8]
+            for row in rows:
+                assert len(row["pairwise_grad_cos"]) == 6
+                assert row["masked_tokens"] == 4 * 47
+                assert row["whole_grad_after_clip"] == pytest.approx(min(1., row["whole_grad_before_clip"]), abs=2e-5)
+                assert row["actual_encoder_update_norm"] > 0
+                assert np.asarray(row["clipped_weighted_band_grad_norm"]) == pytest.approx(
+                    np.asarray(row["raw_band_encoder_grad_norm"])*row["clip_multiplier"]*.25)
+    # Every original minibatch and mask is shared; consequently each shared target distribution is identical.
+    for arms in result["by_seed_arm"].values():
+        assert arms["A"][1]["target_var"][:3] == arms["B"][1]["target_var"][:3]
+    for row in result["by_seed_arm"]["42"]["A"]:
+        assert row["fourth_opposing_fraction"] == pytest.approx(
+            -row["fourth_vs_shared_cos"]*row["raw_band_encoder_grad_norm"][3]/row["shared_three_sum_norm"])
+    # Simulate a worker exiting after a completed sibling. Resume checks its digest and skips that arm.
+    calls = []
+    def isolated(exp, seed, arm, measure, deadline):
+        calls.append((seed, arm))
+        if len(calls) == 2:
+            raise RuntimeError("worker failed")
+        return {"rows": result["by_seed_arm"][str(seed)][arm], "cpu_s": 1.0}
+    monkeypatch.setattr(pilot, "_arm_process", isolated)
+    with pytest.raises(RuntimeError, match="worker failed"):
+        pilot.execute_band_diagnostic(child, plan, parent, isolated_arms=True)
+    resumed = pilot.execute_band_diagnostic(child, plan, parent, isolated_arms=True)
+    assert calls == [(42, "A"), (42, "B"), (42, "B"), (43, "A"), (43, "B")]
+    assert resumed["by_seed_arm"] == result["by_seed_arm"] and resumed["cpu_s"] >= 4
+    train.write_bytes(b"tampered")
+    with pytest.raises(ValueError, match="training data hash"):
+        pilot.execute_band_diagnostic(child, plan, parent)

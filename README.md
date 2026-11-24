@@ -22,11 +22,12 @@ python -m eegfm --help
 
 ### 启动科研会话
 
-在有科学计算依赖、已登录原生 Codex CLI 和 EEGMAT/CBraMod 缓存的项目根目录运行。首次准备缓存见下方小试。以下第一条只查看已经完成的本地研究；第二条会使用本机 CPU 和 Codex 会话额度，启动下一轮并明确交给它上一轮的方案、结果和判断。
+在有科学计算依赖、已登录原生 Codex CLI 和 EEGMAT/CBraMod 缓存的项目根目录运行。首次准备缓存见下方小试。下面依次是查看本轮、让下一位研究者继承材料并停在方案阶段、审阅 `plan.json` 后继续。
 
 ```sh
-python -m eegfm.eeg.scientist status objective-choice-eegmat-r01
-python -m eegfm.eeg.scientist run objective-choice-eegmat-r02 --parent objective-choice-eegmat-r01
+python -m eegfm.eeg.scientist status objective-choice-eegmat-r02
+python -m eegfm.eeg.scientist run objective-choice-eegmat-r03 --parent objective-choice-eegmat-r02 --through design
+python -m eegfm.eeg.scientist run objective-choice-eegmat-r03
 ```
 
 在新克隆中用 `python -m eegfm.eeg.scientist run my-first-study` 开始。每个轮次的材料保存在本机 `.local/research-episodes/<轮次名>/`。想亲自审阅研究者的选择，可以加 `--through design`，阅读 `plan.json` 后再用同名 `run` 继续。也可用 `--through experiment` 在实验结果落盘后退出。同名运行会核对已登记的记录，再从下一阶段接续。已结束的轮次可反复查看。[会话控制器](src/eegfm/eeg/scientist.py) · [CPU 训练与评价](src/eegfm/eeg/objective_pilot.py)
@@ -41,6 +42,12 @@ python -m eegfm.eeg.scientist run objective-choice-eegmat-r02 --parent objective
 研究者事先要求两个种子各自提高至少 0.02，且区间下限都高于零。接续研究者据此判为不确定。它选择下一步只在训练人群中检查各频带能量的方差、各目标产生的梯度大小和方向；本轮到判读为止。区间固定了已拟合模型，两个种子共用同一批人。独立重拟合复现了 864 个窗口级预测，最大绝对差小于 8.1×10⁻¹⁵。
 
 两次设计回复因字段格式被拒收。开发者修正接口提示并允许再提交一次，研究者保留了原对照、指标和门槛。方案落盘后由受限的 CPU 执行器训练和评价；控制进程退出并重启后，一个新的原生线程取得此前声明的材料、冻结方案和计算结果。在本机查看 `trajectory.jsonl`、`decision.json` 及各会话的 `receipt.json` 可追溯这些步骤。这个例子验证了一轮跨会话研究接续；科研方法是否随经验改善，还需要独立评价。
+
+**第二轮训练诊断**（`objective-choice-eegmat-r02`）。独立研究者选择重放第一轮四条 CPU 训练轨迹，仅打开训练分区。它预先选择第 1、8、16、24 步，以第四频带梯度在前三带合计梯度方向上的投影来衡量抵消。每个种子要有至少三步满足同向判据；每一步既要求两臂抵消比例相差至少 0.20，也要求相应一臂确实发生抵消。
+
+八个配对观测全部判为不确定。两个种子的第 1、8 步中，两臂的第四频带都顺着前三带的合计方向。八次比较里，30–47 Hz 臂的第四带目标值方差都更小，预测误差和未裁剪的编码器梯度都更大。以首步为例，两种子的第四带原始梯度范数分别约为 β 臂的 4.4 和 5.4 倍；全模型的合计梯度经裁剪后范数约为 1，四条轨迹的 AdamW 实际编码器位移范数都约为 0.021。该观察无法确立梯度尺度对 β 读出的因果作用。
+
+逐步损失及裁剪前全模型梯度范数与第一轮一致，四个终点的编码器、输出头、优化器和随机状态也逐一相同。Windows 原生数值进程曾三次异常退出，分臂核验及接续保留了已完成的工作。计入失败尝试，执行器保守计时约 249 秒，上限 600 秒，最多四个 CPU 线程，GPU 用量为零。接续研究者选择下一步保留等权对照，另用训练批次校准第四带权重后比较。此干预需要扩展训练损失，本轮停在决定处。[诊断实现](src/eegfm/eeg/objective_pilot.py) · [运行及恢复](src/eegfm/eeg/scientist.py)
 
 ### CBraMod 小试
 

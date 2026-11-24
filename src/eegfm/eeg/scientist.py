@@ -9,6 +9,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any, Callable
 
@@ -39,6 +40,16 @@ in [1e-7,1e-3]. Primary endpoint is your choice; effects are B minus A in R2 or 
 Intervals resample people conditional on the fitted models. Both seeds use the same people. Maximum four
 short fits, CPU only, no new data, internet fetch, shell or arbitrary Python by the researcher. The trusted
 executor will do the experiment you select. No validation tuning, no final-test access; no forced winner."""
+DIAGNOSTIC = """A second available action is a training-only diagnostic replay of the declared parent
+experiment. The two arms, batches, masks, seeds 42/43, optimizer and length of the parent's training
+trajectory stay fixed. Choose one to four observation steps, numbered from one.
+Available measurements at each selected update: distribution of masked target log energies per band;
+norm of each band's loss gradient on shared encoder parameters; pairwise gradient cosines and fourth
+versus the sum of the first three; combined global gradient norm before and after actual clipping
+(encoder and head); actual AdamW encoder parameter displacement and alignment with the negative
+combined encoder gradient. Clipping rescales a combined gradient; AdamW also uses its history.
+Four CPU threads, one replay of each fitted arm and seed, 600 seconds maximum for the diagnostic,
+zero GPU. Measurements are on paired training minibatches. No new validation scores are produced."""
 PLAN_FIELDS = ("question", "rationale", "alternative", "prediction", "controls", "decision_rule")
 DECISION_FIELDS = (
     "evidence",
@@ -82,12 +93,25 @@ def freeze_brief(run: Path, parent: str | None) -> dict:
             raise ValueError("this episode already has a different parent")
         return brief
     prior = None
+    diagnostic_parent = None
     if parent is not None:
         source = episode_path(parent)
         if source == run or stage(source) != "closed":
             raise ValueError("parent must be a different completed research episode")
         verify_milestones(source)
         prior = {key: read_json(source / f"{key}.json") for key in ("plan", "results", "decision")}
+        if prior["results"]:
+            prior["results"].pop("source_bindings", None)  # Per-file hashes stay in the audit record.
+        if (source / "experiment/frozen.json").is_file():
+            try:
+                pilot.validate_diagnostic_plan({"action": "diagnose", "measure_steps": [1]}, prior["plan"])
+            except ValueError:
+                pass  # Other training objectives retain the ordinary experiment route.
+            else:
+                diagnostic_parent = {"name": parent, "plan_sha256": sha256(source / "plan.json")}
+        elif prior["plan"] and prior["plan"].get("action") == "diagnose":
+            # A later researcher can still inspect the original training trajectories.
+            diagnostic_parent = read_json(source / "brief.json").get("diagnostic_parent")
     brief = {
         "question": QUESTION,
         "resources": RESOURCES,
@@ -96,6 +120,8 @@ def freeze_brief(run: Path, parent: str | None) -> dict:
         "parent": parent,
         "parent_record": prior,
     }
+    if diagnostic_parent:
+        brief.update(diagnostic_parent=diagnostic_parent, resources=RESOURCES + "\n" + DIAGNOSTIC)
     write_json(path, brief)
     code = [
         Path(__file__),
@@ -123,15 +149,28 @@ def require_text(value: dict, fields: tuple[str, ...]) -> None:
         raise ValueError(f"expected nonempty text fields: {', '.join(fields)}")
 
 
+def execute_frozen(run: Path) -> dict:
+    """Execute the on-disk plan. The episode ID, never a researcher path, selects a replay."""
+    verify_milestones(run)
+    plan = read_json(run / "plan.json")
+    if plan["action"] == "experiment":
+        return pilot.execute_research_plan(run, plan)
+    brief = read_json(run / "brief.json")
+    validate_plan(plan, brief)
+    if plan["action"] != "diagnose":
+        raise ValueError("declined research has no executable action")
+    parent = episode_path(brief["diagnostic_parent"]["name"])
+    return pilot.execute_band_diagnostic(run, plan, parent, isolated_arms=True)
+
+
 def execute_bounded(run: Path, plan: dict) -> dict:
     """A hard wall timeout surrounds the CPU process, including data preparation and evaluation."""
     if read_json(run / "plan.json") != plan:
         raise ValueError("worker requires the frozen plan")
     code = (
-        "from pathlib import Path; import sys; from eegfm.common import read_json, write_json; "
-        "from eegfm.eeg.objective_pilot import execute_research_plan; "
-        "run=Path(sys.argv[1]); write_json(run/'results.json', "
-        "execute_research_plan(run,read_json(run/'plan.json')))"
+        "from pathlib import Path; import sys; from eegfm.common import write_json; "
+        "from eegfm.eeg.scientist import execute_frozen; "
+        "run=Path(sys.argv[1]); write_json(run/'results.json', execute_frozen(run))"
     )
     env = {
         **os.environ,
@@ -141,6 +180,14 @@ def execute_bounded(run: Path, plan: dict) -> dict:
         "MKL_NUM_THREADS": "4",
         "OPENBLAS_NUM_THREADS": "4",
     }
+    timeout = 1800
+    if plan["action"] == "diagnose":
+        spent = sum(row.get("elapsed_s", 0) for row in read_jsonl(run / "trajectory.jsonl")
+                    if row["action"] in ("experiment_failed", "previous_attempts_charged"))
+        timeout = int(600 - spent)
+        if timeout <= 15:
+            raise TimeoutError("diagnostic wall budget exhausted")
+        env["EEGFM_DIAGNOSTIC_WALL_S"] = str(timeout - 15)
     with (run / "executor.log").open("ab") as log:
         subprocess.run(
             [sys.executable, "-B", "-c", code, str(run)],
@@ -148,10 +195,13 @@ def execute_bounded(run: Path, plan: dict) -> dict:
             env=env,
             stdout=log,
             stderr=subprocess.STDOUT,
-            timeout=1800,
+            timeout=timeout,
             check=True,
         )
-    return read_json(run / "results.json")
+    results = read_json(run / "results.json")
+    if not isinstance(results, dict):
+        raise RuntimeError("worker exited without a result record")
+    return results
 
 
 def verify_milestones(run: Path) -> None:
@@ -176,13 +226,23 @@ def verify_milestones(run: Path) -> None:
             )
 
 
-def validate_plan(value: dict) -> None:
+def validate_plan(value: dict, brief: dict | None = None) -> None:
     if value.get("action") == "decline":
         require_text(value, ("rationale",))
         return
-    if value.get("action") != "experiment":
-        raise ValueError("action must be experiment or decline")
     require_text(value, PLAN_FIELDS)
+    if value.get("action") == "diagnose":
+        binding = (brief or {}).get("diagnostic_parent")
+        if not binding:
+            raise ValueError("diagnose requires a declared parent with a compatible frozen training run")
+        parent = episode_path(binding["name"])
+        verify_milestones(parent)
+        if sha256(parent / "plan.json") != binding["plan_sha256"]:
+            raise ValueError("diagnostic parent plan identity changed")
+        pilot.validate_diagnostic_plan(value, read_json(parent / "plan.json"))
+        return
+    if value.get("action") != "experiment":
+        raise ValueError("action must be experiment, diagnose with an eligible parent, or decline")
     if value.get("primary") not in (*pilot.TARGETS, "condition"):
         raise ValueError(
             "primary must be exactly one string: occipital_alpha, central_beta, or condition. Put explanations in the other fields."
@@ -213,12 +273,20 @@ def request_text(role: str, brief: dict, run: Path) -> str:
             "(integer), arms (two objects in order: name A/B, spectral_mix, bands, mask_fraction, lr). "
             "For decline only action and rationale are needed."
         )
+        if brief.get("diagnostic_parent"):
+            instruction += (
+                " You may instead select action=diagnose, choose the question to ask of the training "
+                "trace, alternative explanation and observation steps yourself. For diagnose supply the "
+                "same six explanatory string fields plus measure_steps, a sorted unique list of 1 to 4 "
+                "one-based training steps. Propose a decision rule using the specified measurements. "
+                "The parent's suggestion is optional; you may revise it, run a different experiment, or decline."
+            )
         inputs = {"admitted_brief": brief}
     else:
         instruction = (
             "An earlier independent researcher selected the frozen plan. Your responsibility is to interpret "
-            "the actual returned results. Compare the predeclared prediction and thresholds with the measured "
-            "B minus A and evidence from each seed. Mention any controls or physical interpretations that "
+            "the actual returned results. Apply the predeclared rule to the recorded metrics for each seed. "
+            "Distinguish descriptive training diagnostics from any causal or downstream claim. Mention controls that "
             "remain unresolved. Choose the next action yourself (it will be recorded, not executed). "
             "Return text fields evidence, interpretation, unresolved, next_decision, alternative_rejected, "
             "limits, and verdict (continue, redirect or stop)."
@@ -228,7 +296,9 @@ def request_text(role: str, brief: dict, run: Path) -> str:
             "frozen_plan": {
                 k: v for k, v in read_json(run / "plan.json").items() if k != "researcher_session"
             },
-            "executor_results": read_json(run / "results.json"),
+            "executor_results": {
+                k: v for k, v in read_json(run / "results.json").items() if k != "source_bindings"
+            },
         }
     return common + instruction + "\n" + json.dumps(inputs, ensure_ascii=False, sort_keys=True)
 
@@ -323,25 +393,37 @@ def advance(
         for role in ("design", "experiment", "interpret"):
             if stage(run) == role:
                 if role == "experiment":
+                    plan = read_json(run / "plan.json")
+                    if plan["action"] == "diagnose":
+                        attempts = [r["action"] for r in read_jsonl(run / "trajectory.jsonl")
+                                    if r["action"] in ("experiment_started", "experiment_failed", "experiment_returned")]
+                        if attempts and attempts[-1] == "experiment_started":
+                            raise RuntimeError("Unresolved diagnostic worker: check its process and account for its time before retrying")
+                        append_jsonl(run / "trajectory.jsonl", {"action": "experiment_started"})
+                    start = time.monotonic()
                     try:
-                        results = execute(run, read_json(run / "plan.json"))
+                        results = execute(run, plan)
                     except Exception as exc:
                         append_jsonl(
-                            run / "trajectory.jsonl", {"action": "experiment_failed", "error": str(exc)}
+                            run / "trajectory.jsonl", {"action": "experiment_failed", "error": str(exc),
+                                                      "elapsed_s": time.monotonic() - start}
                         )
                         raise
                     if not (run / "results.json").exists():
                         write_json(run / "results.json", results)
                     append_jsonl(
                         run / "trajectory.jsonl",
-                        {"action": "experiment_returned", "results_sha256": sha256(run / "results.json")},
+                        {"action": "experiment_returned", "results_sha256": sha256(run / "results.json"),
+                         "elapsed_s": time.monotonic() - start},
                     )
+                    if plan["action"] == "diagnose":
+                        (run / ".band-replay-progress.json").unlink(missing_ok=True)
                 else:
                     value, identity = choose(
                         run,
                         role,
                         request_text(role, brief, run),
-                        validate_plan if role == "design" else validate_decision,
+                        (lambda answer: validate_plan(answer, brief)) if role == "design" else validate_decision,
                         launch,
                     )
                     if (
