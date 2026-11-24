@@ -43,7 +43,8 @@ def band_log_energy(x: torch.Tensor, bands: tuple[tuple[int, int], ...]) -> torc
 
 
 def masked_objective(
-    prediction: torch.Tensor, truth: torch.Tensor, mask: torch.Tensor, arm: str
+    prediction: torch.Tensor, truth: torch.Tensor, mask: torch.Tensor, arm: str,
+    *, spectral_mix: float | None = None, bands: tuple[tuple[int, int], ...] = BANDS,
 ) -> torch.Tensor:
     """Identical masked waveform output; only the comparison target differs."""
     if prediction.shape != truth.shape or mask.shape != truth.shape[:-1] or mask.dtype != torch.bool:
@@ -51,16 +52,21 @@ def masked_objective(
     if not mask.any():
         raise ValueError("empty mask")
     predicted, actual = prediction[mask], truth[mask]
-    if arm == "spectral":
-        predicted = band_log_energy(predicted, BANDS)
-        actual = band_log_energy(actual, BANDS)
-    elif arm != "recon":
-        raise ValueError(f"unknown training objective {arm}")
-    return (predicted - actual).square().mean()
+    if spectral_mix is None:
+        if arm not in {"recon", "spectral"}:
+            raise ValueError(f"unknown training objective {arm}")
+        spectral_mix = float(arm == "spectral")
+    if spectral_mix == 0:
+        return (predicted - actual).square().mean()
+    spectral = (band_log_energy(predicted, bands) - band_log_energy(actual, bands)).square().mean()
+    if spectral_mix == 1:
+        return spectral
+    waveform = (predicted - actual).square().mean()
+    return (1 - spectral_mix) * waveform + spectral_mix * spectral
 
 
 def plan_for_seed(
-    n: int, seed: int, steps: int, batch: int, channels: int, patches: int
+    n: int, seed: int, steps: int, batch: int, channels: int, patches: int, mask_fraction: float = 0.5
 ) -> list[tuple[torch.Tensor, torch.Tensor]]:
     if not 0 < batch <= n or steps <= 0 or channels * patches < 2:
         raise ValueError("invalid paired training schedule")
@@ -70,7 +76,7 @@ def plan_for_seed(
     for _ in range(steps):
         indices = torch.randperm(n, generator=g)[:batch]
         ranks = torch.rand((batch, tokens), generator=g).argsort(dim=1)
-        mask = (ranks < tokens // 2).reshape(batch, channels, patches)
+        mask = (ranks < int(tokens * mask_fraction)).reshape(batch, channels, patches)
         plan.append((indices, mask))
     return plan
 
@@ -236,8 +242,9 @@ def check_admission(run: Path, cfg: dict[str, Any]) -> None:
             raise ValueError(f"changed input {path}")
 
 
-def schedule_file(run: Path, seed: int, plan: list[tuple[torch.Tensor, torch.Tensor]]) -> str:
-    path = run / f"seed-{seed}" / "paired_schedule.json"
+def schedule_file(run: Path, seed: int, plan: list[tuple[torch.Tensor, torch.Tensor]],
+                  filename: str = "paired_schedule.json") -> str:
+    path = run / f"seed-{seed}" / filename
     value = [
         {
             "rows": ids.tolist(),
@@ -261,6 +268,7 @@ def train_arm(
     plan: list[tuple[torch.Tensor, torch.Tensor]],
     schedule_hash: str,
     stop_at: float,
+    *, objective: dict[str, Any] | None = None, protocol_path: Path = PROTOCOL,
 ) -> None:
     dest = run / f"seed-{seed}" / arm
     receipt = dest / "trained.json"
@@ -274,7 +282,7 @@ def train_arm(
         "arm": arm,
         "initial_sha256": cfg["checkpoint_sha256"],
         "schedule_sha256": schedule_hash,
-        "protocol_sha256": sha256(PROTOCOL),
+        "protocol_sha256": sha256(protocol_path),
         **{
             k: cfg[k]
             for k in (
@@ -289,6 +297,8 @@ def train_arm(
             )
         },
     }
+    if objective is not None:
+        effective["objective"] = objective
     write_json(dest / "config.json", effective)
     event(run, "training_started", seed=seed, arm=arm, schedule_sha256=schedule_hash)
     wall, cpu = time.monotonic(), time.process_time()
@@ -304,7 +314,12 @@ def train_arm(
             raise RuntimeError("training wall or storage guard reached")
         batch = x[indices]
         optimizer.zero_grad(set_to_none=True)
-        loss = masked_objective(head(encoder(batch, mask=mask)), batch, mask, arm)
+        predicted = head(encoder(batch, mask=mask))
+        if objective is None:
+            loss = masked_objective(predicted, batch, mask, arm)
+        else:
+            loss = masked_objective(predicted, batch, mask, arm, spectral_mix=objective["spectral_mix"],
+                                    bands=tuple(tuple(b) for b in objective["bands"]))
         if not torch.isfinite(loss):
             raise ValueError("nonfinite training loss")
         loss.backward()
@@ -349,26 +364,33 @@ def train_arm(
     event(run, "training_complete", arm=arm, seed=seed, **result)
 
 
-def training(run: Path, cfg: dict[str, Any]) -> None:
+def training(run: Path, cfg: dict[str, Any], *, objectives: dict[str, dict[str, Any]] | None = None,
+             protocol_path: Path = PROTOCOL) -> None:
     x = torch.from_numpy(read_split(run, "train")["x"])
     spent = sum(read_json(f)["wall_s"] for f in run.glob("seed-*/*/trained.json"))
     stop = time.monotonic() + cfg["training_wall_cap_s"] - spent
     for seed in cfg["seeds"]:
-        plan = plan_for_seed(len(x), seed, cfg["steps"], cfg["batch_size"], x.shape[1], x.shape[2])
-        fingerprint = schedule_file(run, seed, plan)
         for arm in cfg["arms"]:
-            train_arm(run, cfg, seed, arm, x, plan, fingerprint, stop)
+            objective = objectives[arm] if objectives else None
+            fraction = objective["mask_fraction"] if objective else 0.5
+            plan = plan_for_seed(len(x), seed, cfg["steps"], cfg["batch_size"], x.shape[1], x.shape[2], fraction)
+            filename = f"schedule-{arm}.json" if objective else "paired_schedule.json"
+            fingerprint = schedule_file(run, seed, plan, filename)
+            arm_cfg = {**cfg, "lr": objective["lr"]} if objective else cfg
+            train_arm(run, arm_cfg, seed, arm, x, plan, fingerprint, stop,
+                      objective=objective, protocol_path=protocol_path)
     frozen = {
         f"seed-{s}/{a}/final.pt": read_json(run / f"seed-{s}" / a / "trained.json")["checkpoint_sha256"]
         for s in cfg["seeds"]
         for a in cfg["arms"]
     }
     if (run / "frozen.json").exists():
-        if read_json(run / "frozen.json")["candidates"] != frozen:
+        existing = read_json(run / "frozen.json")
+        if existing["candidates"] != frozen or existing["protocol_sha256"] != sha256(protocol_path):
             raise ValueError("frozen candidate mismatch")
         return
     write_json(
-        run / "frozen.json", {"at": now(), "candidates": frozen, "protocol_sha256": sha256(PROTOCOL)}
+        run / "frozen.json", {"at": now(), "candidates": frozen, "protocol_sha256": sha256(protocol_path)}
     )
     event(run, "all_candidates_frozen", candidates=frozen)
 
@@ -413,6 +435,7 @@ def evaluate_seed(
     seed: int,
     splits: dict[str, dict[str, np.ndarray]],
     frozen: dict[str, str],
+    *, evaluation_split: str = "test",
 ) -> None:
     seed_dir = run / f"seed-{seed}"
     if (seed_dir / "evaluated.json").exists():
@@ -440,9 +463,9 @@ def evaluate_seed(
             for prefix, array in zip(("x", "y"), pair)
         }
         archive = dest / "readout_inputs.npz"
-        bundle = dict(
-            inputs, subject_test=splits["test"]["subjects"], window_test=splits["test"]["windows"]
-        )
+        assessment = splits[evaluation_split]
+        bundle = {**inputs, f"subject_{evaluation_split}": assessment["subjects"],
+                  f"window_{evaluation_split}": assessment["windows"]}
         if archive.exists():
             with np.load(archive, allow_pickle=False) as prior:
                 if set(prior.files) != set(bundle) or any(
@@ -466,9 +489,10 @@ def evaluate_seed(
                 if j < 2
                 else float(np.mean([((pv[yv == k] >= 0.5) == bool(k)).mean() for k in (0, 1)]))
             )
-            pt = statistics.predict_probe(fit, inputs["x_test"][:, j]).ravel()
-            for i, (pid, wid) in enumerate(zip(splits["test"]["subjects"], splits["test"]["windows"])):
-                truth = float(inputs["y_test"][i, j])
+            pt = pv.ravel() if evaluation_split == "validation" else statistics.predict_probe(
+                fit, inputs[f"x_{evaluation_split}"][:, j]).ravel()
+            for i, (pid, wid) in enumerate(zip(assessment["subjects"], assessment["windows"])):
+                truth = float(inputs[f"y_{evaluation_split}"][i, j])
                 if j < 2:
                     predictions.append((pid, wid, arm, target, truth, float(pt[i])))
                 else:
@@ -484,12 +508,12 @@ def evaluate_seed(
         conditions,
     )
     write_csv(
-        seed_dir / "test_windows.csv",
+        seed_dir / f"{evaluation_split}_windows.csv",
         ("subject", "window"),
-        list(zip(splits["test"]["subjects"], splits["test"]["windows"])),
+        list(zip(splits[evaluation_split]["subjects"], splits[evaluation_split]["windows"])),
     )
     write_json(seed_dir / "validation.json", valid)
-    files = ["predictions.csv", "condition_predictions.csv", "test_windows.csv", "validation.json"] + [
+    files = ["predictions.csv", "condition_predictions.csv", f"{evaluation_split}_windows.csv", "validation.json"] + [
         f"{a}/readout_inputs.npz" for a in ["init", *cfg["arms"]]
     ]
     write_json(
@@ -519,6 +543,126 @@ def evaluation(run: Path, cfg: dict[str, Any]) -> None:
     statistics.validate_partitions({s: z["subjects"] for s, z in splits.items()})
     for seed in cfg["seeds"]:
         evaluate_seed(run, cfg, seed, splits, freeze["candidates"])
+
+
+def validate_research_plan(plan: dict[str, Any]) -> None:
+    """Accept only bounded numeric choices; never execute researcher-provided code."""
+    if not isinstance(plan, dict) or plan.get("primary") not in (*TARGETS, "condition"):
+        raise ValueError("primary must name a supported validation endpoint")
+    steps = plan.get("steps")
+    if type(steps) is not int or not 8 <= steps <= 32:
+        raise ValueError("require 8..32 steps per arm")
+    arms = plan.get("arms")
+    if not isinstance(arms, list) or len(arms) != 2:
+        raise ValueError("exactly two arms, A and B, are required")
+    treatments = []
+    for name, arm in zip(("A", "B"), arms):
+        if not isinstance(arm, dict) or arm.get("name") != name:
+            raise ValueError("arms must be named A and B in order")
+        for key, low, high in (("spectral_mix", 0, 1), ("mask_fraction", .1, .9), ("lr", 1e-7, 1e-3)):
+            value = arm.get(key)
+            if type(value) not in (int, float) or not low <= value <= high:
+                raise ValueError(f"{key} must be numeric and in [{low}, {high}]")
+        bands = arm.get("bands")
+        if not isinstance(bands, list) or len(bands) > 8 or (arm["spectral_mix"] > 0 and not bands):
+            raise ValueError("supply 1..8 frequency bands for spectral supervision")
+        end = 1
+        for band in bands:
+            if (not isinstance(band, list) or len(band) != 2 or any(type(v) is not int for v in band)
+                    or not end <= band[0] < band[1] <= 100):
+                raise ValueError("bands must be ordered, disjoint integer [lo, hi) intervals within 1..100")
+            end = band[1]
+        treatments.append((arm["spectral_mix"], bands if arm["spectral_mix"] else [],
+                           int(95 * arm["mask_fraction"]), arm["lr"]))
+    if treatments[0] == treatments[1]:
+        raise ValueError("A and B must differ in at least one effective training setting")
+
+
+def _research_scores(seed_dir: Path) -> dict[str, Any]:
+    """Re-score paired saved predictions by participant, independently of model fitting."""
+    from eegfm.eeg.verify_objective_pilot import _r2, _ba
+    arms = ("init", "A", "B")
+    with (seed_dir / "validation_windows.csv").open(encoding="utf-8") as stream:
+        keys = [(r["subject"], r["window"]) for r in csv.DictReader(stream)]
+    if len(keys) != len(set(keys)):
+        raise ValueError("duplicate validation window")
+    index = {key: i for i, key in enumerate(keys)}
+    n = len(keys)
+    samples = statistics.cluster_bootstrap_indices(np.array([s for s, _ in keys]), resamples=2000, seed=20261124)
+    result = {}
+    for filename, targets in (("predictions.csv", TARGETS), ("condition_predictions.csv", ("condition",))):
+        with (seed_dir / filename).open(encoding="utf-8") as stream:
+            rows = list(csv.DictReader(stream))
+        for target in targets:
+            truths, preds = np.full((n, 3), np.nan), np.full((n, 3), np.nan)
+            for row in rows:
+                if row.get("target", "condition") == target:
+                    i, j = index[row["subject"], row["window"]], arms.index(row["arm"])
+                    if np.isfinite(preds[i, j]):
+                        raise ValueError("duplicate prediction")
+                    truths[i, j], preds[i, j] = float(row["truth"]), float(row["prediction"])
+            if (not np.isfinite(truths).all() or not np.isfinite(preds).all()
+                    or not (truths == truths[:, :1]).all()):
+                raise ValueError("incomplete or inconsistent paired predictions")
+            y = truths[:, 0]
+            scorer = _ba if target == "condition" else _r2
+            point = scorer(y, preds)
+            draws = np.array([scorer(y[ix], preds[ix]) for ix in samples])
+            delta = draws[:, 2] - draws[:, 1]
+            if not np.isfinite(point).all() or not np.isfinite(delta).all():
+                raise ValueError("undefined evaluation or bootstrap estimate")
+            result[target] = {"by_arm": dict(zip(arms, map(float, point))),
+                              "B_minus_A": float(point[2] - point[1]),
+                              "A_minus_init": float(point[1] - point[0]), "B_minus_init": float(point[2] - point[0]),
+                              "B_minus_A_ci95": statistics.interval(delta), "metric": "BA" if target == "condition" else "R2"}
+    return result
+
+
+def execute_research_plan(run: Path, plan: dict[str, Any]) -> dict[str, Any]:
+    """Trusted CPU service for an actor's already frozen proposal; ordinary exploratory validation."""
+    validate_research_plan(plan)
+    protocol = run / "plan.json"
+    if read_json(protocol) != plan:
+        raise ValueError("research proposal must be frozen before execution")
+    experiment = run / "experiment"
+    experiment.mkdir(exist_ok=True)
+    cfg = read_json(PROTOCOL)
+    cfg.update(steps=plan["steps"], arms=["A", "B"], seeds=[42, 43], threads=4, training_wall_cap_s=1800,
+               loss="(1-spectral_mix)*masked-waveform MSE + spectral_mix*masked-log-band-energy MSE")
+    if os.environ.get("EEGFM_EEGMAT_RESOURCES"):
+        cfg["dataset_root"] = os.environ["EEGFM_EEGMAT_RESOURCES"]
+    objectives = {arm["name"]: arm for arm in plan["arms"]}
+    with exclusive(experiment), threadpool_limits(limits=4):
+        torch.set_num_threads(4)
+        torch.use_deterministic_algorithms(True)
+        admission = experiment / "admission.json"
+        identity = {"plan_sha256": sha256(protocol), "sources": bindings(cfg)}
+        if not admission.exists():
+            if (experiment / "development_data").exists():
+                raise RuntimeError("incomplete preparation retained; inspect before a new execution")
+            prepared = make_data(experiment, cfg, ("train", "validation"))
+            write_json(admission, {"at": now(), **identity, "prepared": prepared})
+        receipt = read_json(admission)
+        if any(receipt[k] != v for k, v in identity.items()) or any(
+            sha256(experiment / p) != h for p, h in receipt["prepared"].items()
+        ):
+            raise ValueError("admitted proposal, code, or EEG inputs changed")
+        training(experiment, cfg, objectives=objectives, protocol_path=protocol)
+        frozen = read_json(experiment / "frozen.json")["candidates"]
+        splits = {s: read_split(experiment, s) for s in ("train", "validation")}
+        counts = statistics.validate_partitions({s: block["subjects"] for s, block in splits.items()})
+        result = {"plan_sha256": identity["plan_sha256"], "primary": plan["primary"], "seeds": {},
+                  "participants": counts, "windows": {s: len(b["x"]) for s,b in splits.items()},
+                  "assessment": "known EEGMAT validation people; exploratory, no historical test used",
+                  "uncertainty": "2000 paired participant bootstrap draws, conditioned on fitted models; seeds share people",
+                  "gpu_hours": 0, "steps_per_arm_seed": cfg["steps"]}
+        for seed in cfg["seeds"]:
+            evaluate_seed(experiment, cfg, seed, splits, frozen, evaluation_split="validation")
+            seed_dir = experiment / f"seed-{seed}"
+            cost = {a: {k: v for k,v in read_json(seed_dir / a / "trained.json").items()
+                        if k in ("steps", "wall_s", "cpu_s")} for a in cfg["arms"]}
+            result["seeds"][str(seed)] = {"metrics": _research_scores(seed_dir), "training_cost_by_arm": cost}
+        return result
 
 
 def main() -> None:

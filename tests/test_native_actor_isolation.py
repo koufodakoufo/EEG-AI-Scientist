@@ -66,3 +66,40 @@ def test_prepare_readonly_mode_never_opens_source_and_mounts_only_named_file(tmp
     auth.chmod(0o644)
     with pytest.raises(ValueError, match='Authentication source'):
         actor.readonly_auth_argv(metadata,['codex','exec'],tmp_path/'output',binary_dir)
+
+@pytest.mark.parametrize('violation', ['none', 'undeclared_history', 'extra_tool', 'broader_fs', 'tool_call'])
+def test_ordinary_context_gates_science_on_actual_rollout(tmp_path, violation):
+    import json
+
+    home = tmp_path / 'home'
+    work = tmp_path / 'empty-workspace'
+    work.mkdir()
+    thread = '00000000-0000-4000-8000-000000000001'
+    tree = home / 'sessions/2026/11/24'
+    tree.mkdir(parents=True)
+    source = tree / ('rollout-2026-11-24-' + thread + '.jsonl')
+    tool = 'unexpected_command' if violation == 'extra_tool' else 'wait'
+    entry = {'type': 'path', 'path': str(tmp_path if violation == 'broader_fs' else work)}
+    rows = [
+        ('session_meta', {'id': thread, 'source': 'exec', 'cwd': str(work)}),
+        ('response_item', {'type': 'additional_tools', 'tools': [
+            {'type':'namespace', 'name':'functions', 'tools':[{'name':tool}]}]}),
+        ('response_item', {'type':'message', 'role':'developer', 'content':[
+            {'text':'You are Codex, an agent with ordinary platform instructions.'}]}),
+        ('turn_context', {'cwd':str(work), 'approval_policy':'never',
+            'permission_profile':{'network':'restricted', 'file_system':{
+                'type':'restricted','entries':[{'path':entry,'access':'read'}]}}}),
+        ('response_item', {'type':'message', 'role':'user', 'content':[{'text':'bootstrap'}]})
+    ]
+    if violation == 'undeclared_history':
+        rows.append(('response_item', {'type':'message','role':'user','content':[{'text':'earlier research answer'}]}))
+    if violation == 'tool_call':
+        rows.append(('response_item', {'type':'function_call','name':'read_results'}))
+    source.write_text(''.join(json.dumps({'type': k, 'payload': v}) + '\n' for k,v in rows), encoding='utf-8')
+    if violation == 'none':
+        evidence = actor._ordinary_context(home,thread,work,['bootstrap'])
+        assert evidence['declared_user_messages_verified'] == 1
+        assert evidence['visible_tools'] == ['functions.wait']
+    else:
+        with pytest.raises(ValueError):
+            actor._ordinary_context(home,thread,work,['bootstrap'])

@@ -9,6 +9,7 @@ import hashlib
 import inspect
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import stat
@@ -305,3 +306,191 @@ def validate_isolation_gate(metadata: dict[str,Any],report: dict[str,Any] | None
         raise RuntimeError('Blind launch blocked: positive canaries missing')
     if probes.get('proxy_environment_present') is not False or not report.get('tool_surface_verified') or not report.get('model_control_succeeded'):
         raise RuntimeError('Blind launch blocked: tool/control boundary unverified')
+
+# Ordinary research calls deliver data in the prompt. The trusted controller executes
+# experiments outside Codex. Auditing a visible transcript does not certify blindness.
+def _ordinary_args(binary: str, work: Path, thread: str | None) -> list[str]:
+    args = [binary, 'exec', '--ignore-user-config', '--json', '--skip-git-repo-check', '-C', str(work)]
+    configs = ('approval_policy="never"', 'default_permissions="research"',
+               'permissions.research.network.enabled=false',
+               'permissions.research.filesystem={' + _quote(work.as_posix()) + '="read"}',
+               'project_doc_max_bytes=0', 'skills.include_instructions=false',
+               'skills.bundled.enabled=false', 'cloud.skills.enabled=false', 'agents.enabled=false',
+               'web_search="disabled"', 'model_reasoning_effort="medium"')
+    for item in configs:
+        args.extend(('-c', item))
+    for feature in ('memories', 'apps', 'plugins', 'hooks', 'multi_agent', 'shell_tool', 'unified_exec',
+                    'skill_mcp_dependency_install', 'skill_search', 'view_image', 'image_generation',
+                    'browser_use', 'computer_use', 'goals', 'code_mode', 'code_mode_host'):
+        args.extend(('--disable', feature))
+    args.extend(('--enable', 'skip_host_skill_discovery'))
+    if thread:
+        args.extend(('resume', thread))
+    return args + ['-']
+
+
+def _ordinary_context(home: Path, thread: str, work: Path, prompts: list[str]) -> dict[str, Any]:
+    """Read only this native thread; record hashes and source categories, not host instructions."""
+    from uuid import UUID
+    from xml.etree import ElementTree
+    from eegfm.improvement.trace import declared_names
+
+    if str(UUID(thread)) != thread:
+        raise ValueError('Invalid native thread ID')
+    files = list((home / 'sessions').glob(f'*/*/*/rollout-*-{thread}.jsonl'))
+    if len(files) != 1 or files[0].is_symlink():
+        raise ValueError('Expected one native rollout for this thread')
+    helpers = (home / 'tmp').resolve()
+    developer, persona, inputs, turns = [], [], [], []
+    tools: set[str] = set()
+    nested: set[str] = set()
+    seen_meta = False
+    for line in files[0].read_text(encoding='utf-8').splitlines():
+        row = json.loads(line)
+        payload = row['payload']
+        kind = row['type']
+        if kind == 'session_meta':
+            if (payload.get('id') != thread or payload.get('source') != 'exec'
+                    or Path(payload['cwd']).resolve() != work or payload.get('forked_from_id')):
+                raise ValueError('Unexpected session origin')
+            seen_meta = True
+        if kind in {'compacted', 'context_snapshot'}:
+            raise ValueError('Unexpected context replacement')
+        if kind == 'turn_context':
+            policy = payload.get('permission_profile', {})
+            fs = policy.get('file_system', {})
+            if (Path(payload['cwd']).resolve() != work or payload.get('approval_policy') != 'never'
+                    or policy.get('network') != 'restricted' or fs.get('type') != 'restricted'):
+                raise ValueError('Unexpected native sandbox')
+            roots = []
+            for entry in fs.get('entries', []):
+                path = entry.get('path', {})
+                if path.get('type') != 'path' or entry.get('access') != 'read':
+                    raise ValueError('Unexpected filesystem grant')
+                target = Path(path['path']).resolve()
+                helper = target.parent.name in {'arg0-windows', 'arg0-linux'} and target.parent.parent == helpers
+                if target != work and not (helper and target.name.startswith('codex-arg0')):
+                    raise ValueError('Read access extends outside the empty workspace and native helper')
+                roots.append('empty-workspace' if target == work else 'native-arg0-helper')
+            if 'empty-workspace' not in roots:
+                raise ValueError('Missing declared workspace')
+            turns.append({'model':payload.get('model'), 'effort':payload.get('effort'), 'roots':roots})
+        if kind != 'response_item':
+            continue
+        item = payload.get('type')
+        if item == 'additional_tools':
+            offered = payload['tools']
+            tools.update(declared_names(offered))
+            for namespace in offered:
+                for tool in namespace.get('tools', []):
+                    if tool.get('name') == 'exec':
+                        nested.update(re.findall(r'^### `([^`]+)`', tool.get('description', ''), re.M))
+            continue
+        if item == 'reasoning':
+            continue
+        if item != 'message':
+            raise ValueError(f'Unexpected action in text-only session: {item}')
+        role = payload.get('role')
+        if role == 'assistant':
+            continue
+        if role not in ('developer', 'user'):
+            raise ValueError('Unknown context message role')
+        content = ''.join(c['text'] for c in payload['content']).replace('\r\n', '\n').strip()
+        digest = hashlib.sha256(content.encode()).hexdigest()
+        if role == 'developer':
+            if not content.startswith(('You are Codex, an agent', '<permissions instructions>')):
+                raise ValueError('Unrecognized developer context')
+            if any(marker in content for marker in ('MEMORY_SUMMARY BEGINS', '<skills_instructions>', '<app-context>')):
+                raise ValueError('Unapproved memory, skill or app context')
+            developer.append(digest)
+        elif content.startswith(('# AGENTS.md instructions', '<environment_context>')):
+            prefix, marker, xml = content.partition('<environment_context>')
+            if not marker:
+                raise ValueError('Unexpected standalone workspace instructions')
+            if prefix.strip():
+                match = re.fullmatch(r'# AGENTS\.md instructions\s*<INSTRUCTIONS>\s*(.*?)\s*</INSTRUCTIONS>', prefix.strip(), re.S)
+                global_doc = home / 'AGENTS.md'
+                if not match or not global_doc.is_file() or match[1].strip() != global_doc.read_text(encoding='utf-8-sig').strip():
+                    raise ValueError('Undeclared project or inherited user instructions')
+                persona.append(hashlib.sha256(match[1].strip().encode()).hexdigest())
+            env = ElementTree.fromstring(marker + xml)
+            if {n.tag for n in env} - {'cwd','shell','current_date','timezone','filesystem'}:
+                raise ValueError('Unrecognized environment context source')
+        else:
+            inputs.append(content)
+    allowed = {'functions.exec', 'functions.wait', 'functions.request_user_input',
+               'functions.request_user_input_async', 'functions.send_message_to_user_async', 'clock.sleep'}
+    if tools - allowed or nested - {'apply_patch','list_mcp_resources','list_mcp_resource_templates','read_mcp_resource','clock__curr_time'}:
+        raise ValueError('Unexpected tools offered to the text-only researcher')
+    if not seen_meta or not developer or len(turns) != len(prompts) or inputs != [p.replace('\r\n','\n').strip() for p in prompts]:
+        raise ValueError('Actual visible user turns do not match the declared projection')
+    return {'trace_sha256': digest_file(files[0]), 'turns': turns, 'developer_sha256': developer,
+            'global_agents_sha256': persona, 'visible_tools': sorted(tools),
+            'advertised_nested_tools': sorted(nested), 'observed_tool_calls': 0,
+            'declared_user_messages_verified': len(inputs)}
+
+
+def ordinary_session(folder: Path, prompt: str, *, timeout_seconds: int = 360) -> dict[str, Any]:
+    """Start a *new* text-only Codex; admit benign bootstrap before releasing the scientific prompt."""
+    import subprocess
+    import time
+    from eegfm.common import now
+    from eegfm.improvement.trace import cli_usage
+
+    if not prompt.strip() or timeout_seconds <= 0:
+        raise ValueError('Empty prompt or nonpositive budget')
+    folder = folder.resolve()
+    folder.mkdir(parents=True, exist_ok=False)
+    work = folder / 'empty-workspace'
+    work.mkdir()
+    receipt: dict[str, Any] = {'status':'starting','calls':[], 'started_at':now()}
+    receipt_path = folder / 'receipt.json'
+    write_atomic(receipt_path, receipt)
+    deadline = time.monotonic() + timeout_seconds
+    bootstrap = 'Session admission only. Use no tools. Respond with exactly READY.'
+    home = Path(os.environ.get('CODEX_HOME') or Path.home()/'.codex').resolve()
+    binary = shutil.which('codex.exe' if os.name == 'nt' else 'codex')
+    try:
+        if binary is None:
+            raise RuntimeError('Native codex executable is unavailable')
+        thread = None
+        for phase, instruction in [('bootstrap', bootstrap), ('research', prompt)]:
+            argv = _ordinary_args(binary, work, thread)
+            call: dict[str, Any] = {'phase':phase, 'started_at':now(),
+                    'prompt_sha256':hashlib.sha256(instruction.encode()).hexdigest(), 'usage':None}
+            receipt['calls'].append(call)
+            (folder / f'{phase}.txt').write_text(instruction, encoding='utf-8')
+            write_atomic(receipt_path, receipt)
+            left = deadline - time.monotonic()
+            if left <= 0:
+                raise TimeoutError('Session wall budget exhausted')
+            # The native CLI authenticates itself; neither the controller nor the
+            # researcher opens or copies credentials. No shell interprets the prompt.
+            result = subprocess.run(argv, input=instruction, cwd=work, capture_output=True,
+                                    encoding='utf-8', errors='replace', timeout=left,
+                                    creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+            call.update(exit_code=result.returncode, ended_at=now(), usage=cli_usage(result.stdout),
+                        stderr_sha256=hashlib.sha256(result.stderr.encode()).hexdigest())
+            events = [json.loads(l) for l in result.stdout.splitlines() if l.strip()]
+            ids = [e['thread_id'] for e in events if e.get('type') == 'thread.started']
+            answers = [e['item']['text'] for e in events if e.get('type') == 'item.completed'
+                       and e['item'].get('type') == 'agent_message']
+            call['events'] = [e.get('type') for e in events]
+            if (result.returncode or len(ids) != 1 or (thread and thread != ids[0])
+                    or not answers or not events or events[-1].get('type') != 'turn.completed'):
+                raise RuntimeError('Native invocation did not complete a single declared thread')
+            thread = ids[0]
+            receipt['thread_id'] = thread
+            call['context'] = _ordinary_context(home,thread,work,[bootstrap] if phase=='bootstrap' else [bootstrap,prompt])
+            if phase == 'bootstrap' and answers[-1].strip() != 'READY':
+                raise ValueError('Unexpected admission reply')
+            receipt['text'] = answers[-1] if phase == 'research' else ''
+            write_atomic(receipt_path, receipt)
+        receipt['status'] = 'completed'
+    except Exception as err:
+        receipt.update(status='failed', error=f'{type(err).__name__}: {err}')
+        raise
+    finally:
+        receipt['ended_at'] = now()
+        write_atomic(receipt_path, receipt)
+    return receipt
